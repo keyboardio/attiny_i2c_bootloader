@@ -296,21 +296,9 @@ void ProcessSlaveReceive (void) {
             SlaveReceiveByteAndNACK (&commandCode);
             state = 1;
             break;
-        /*
-        case TWI_CMD_CRCCHECK:
-          SlaveReceiveByteAndNACK (&commandCode);
-          ProcessCRCCheck();
-          state = 3;
-        break;
-        */
         case TWI_CMD_ERASEFLASH:
             SlaveReceiveByteAndNACK (&commandCode);
             ProcessPageErase ();
-            break;
-
-        case TWI_CMD_GETERRCONDN: // except TWI failure because that is the medium
-            SlaveReceiveByteAndNACK (&commandCode);
-            state = 4;
             break;
 
         default:
