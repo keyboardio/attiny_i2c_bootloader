@@ -27,7 +27,6 @@
 
 //
 uint8_t state = 0;
-uint8_t volatile gtimeout;
 
 /***********************************************************************/
 
@@ -278,8 +277,7 @@ void ProcessSlaveReceive (void) {
     case TWI_CMD_EXECUTEAPP:
         // Read dummy byte and NACK, just to be nice to our TWI master.
         SlaveReceiveByteAndNACK (&commandCode);
-        gtimeout = WDT_TIMEOUT_min; // Set WDT min for cleanup using reset
-        wdt_enable(gtimeout);     // Apply the changes
+        wdt_enable(WDT_TIMEOUT_min);  // Set WDT min for cleanup using reset
         while(1); // Wait for WDT reset
 
     case TWI_CMD_ERASEFLASH:
@@ -375,8 +373,7 @@ int main (void) {
 
     if (IsBootPinLow ()) {
         InitTWI();
-        gtimeout = WDT_TIMEOUT_8s;
-        wdt_enable(gtimeout);
+        wdt_enable(WDT_TIMEOUT_8s);
 
         while (1) {
             // Process the TWI Commands
