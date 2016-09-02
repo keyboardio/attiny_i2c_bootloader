@@ -21,7 +21,7 @@
 #define TWI_SLAVE_RX_NACK_RETURNED 	0x88	// Status slave receive and no acknowledgement or last byte
 
 // 10 s delay code for allowing ARM9 linux to boot
-#define HOST_BOOT_DELAY_SEC 10
+#define HOST_BOOT_DELAY_SEC 5
 
 
 
