@@ -28,7 +28,6 @@
 //
 uint8_t state = 0;
 uint8_t volatile gtimeout;
-uint8_t statusCode = 0;
 
 /***********************************************************************/
 
@@ -65,6 +64,7 @@ uint8_t IsBootPinLow (void) {
 
 /***********************************************************************/
 uint8_t GetStatusCode (void) {
+    uint8_t statusCode = 0;
     // Check if SPM operation is complete
     if ((SPMCSR & (1 << SELFPROGEN)) != 0)
         statusCode |= STATUSMASK_SPMBUSY;
