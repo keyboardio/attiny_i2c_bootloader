@@ -14,9 +14,6 @@
 #define INTVECT_PAGE_ADDRESS      	0x000	// The location of the start of the interrupt vector table address
 
 
-
-#define __TWI__
-
 /***************************************************************/
 
 
