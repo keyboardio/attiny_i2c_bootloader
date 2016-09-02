@@ -164,12 +164,9 @@ void update_page (uint16_t pageAddress) {
     if (pageAddress < BOOT_PAGE_ADDRESS) {
         boot_page_erase_safe (pageAddress);
 
-        // Load temporary page buffer.
-        uint8_t *bufferPtr = pageBuffer;
         for (uint8_t i = 0; i < PAGE_SIZE; i += 2) {
-            uint16_t tempWord = ((bufferPtr[1] << 8) | bufferPtr[0]);
+            uint16_t tempWord = ((pageBuffer[i+1] << 8) | pageBuffer[i]);
             boot_page_fill_safe (pageAddress + i, tempWord); // Fill the temporary buffer with the given data
-            bufferPtr += 2;
         }
         // Write page from temporary buffer to the given location in flasm memory
         boot_page_write_safe (pageAddress);
