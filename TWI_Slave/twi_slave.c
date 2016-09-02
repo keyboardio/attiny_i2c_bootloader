@@ -36,7 +36,6 @@ uint8_t statusCode = 0;
 
 /***********************************************************************/
 void InitTWI (void) {
-
     DDRC &= ~((1 << PORTC5) | (1 << PORTC4)); // Set SCL and SDA as input
     PORTC &= ~((1 << PORTC5) | (1 << PORTC4)); // Set SCL and SDA low
     // Note: PORTC4 and PORT5 commonly used for tiny48. tiny88, mega48 TWI based devices
@@ -44,7 +43,6 @@ void InitTWI (void) {
     TWAR = SLAVE_ADDRESS;
     TWCR = (1 << TWEN);
     // Enable, but don't enable ACK until we are ready to receive packets.
-
 }
 /***********************************************************************/
 
