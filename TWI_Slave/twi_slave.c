@@ -202,21 +202,21 @@ void ProcessPageUpdate (void) {
 
         // Receive two-byte page address.
         if (SlaveReceiveByteAndACK (&pageAddressLo) ) {
-        if (SlaveReceiveByteAndACK (&pageAddressHi) ) {
-        // Receive page data.
-            for (uint8_t i = 0; i < (PAGE_SIZE - 1); ++i) {
-                if (SlaveReceiveByteAndACK (bufferPtr) != 0) {
-                    ++bufferPtr;
-                } else {
-                    return;
+            if (SlaveReceiveByteAndACK (&pageAddressHi) ) {
+                // Receive page data.
+                for (uint8_t i = 0; i < (PAGE_SIZE - 1); ++i) {
+                    if (SlaveReceiveByteAndACK (bufferPtr) != 0) {
+                        ++bufferPtr;
+                    } else {
+                        return;
+                    }
+                }
+
+                if (SlaveReceiveByteAndNACK (bufferPtr) ) {
+                    // Now program if everything went well.
+                    UpdatePage ((pageAddressHi << 8) | pageAddressLo);
                 }
             }
-
-            if (SlaveReceiveByteAndNACK (bufferPtr) ) {
-        // Now program if everything went well.
-            UpdatePage ((pageAddressHi << 8) | pageAddressLo);
-            }
-        }
         }
     }
 }
@@ -271,27 +271,27 @@ void ProcessSlaveReceive (void) {
     if (! SlaveReceiveByteAndACK (&commandCode) ) {
         return;
     }
-        // Process command byte.
-        switch (commandCode) {
-        case TWI_CMD_PAGEUPDATE:
-            ProcessPageUpdate ();
-            break;
+    // Process command byte.
+    switch (commandCode) {
+    case TWI_CMD_PAGEUPDATE:
+        ProcessPageUpdate ();
+        break;
 
-        case TWI_CMD_EXECUTEAPP:
-            // Read dummy byte and NACK, just to be nice to our TWI master.
-            SlaveReceiveByteAndNACK (&commandCode);
-            gtimeout = WDT_TIMEOUT_min; // Set WDT min for cleanup using reset
-            wdt_enable(gtimeout);     // Apply the changes
-            while(1); // Wait for WDT reset
+    case TWI_CMD_EXECUTEAPP:
+        // Read dummy byte and NACK, just to be nice to our TWI master.
+        SlaveReceiveByteAndNACK (&commandCode);
+        gtimeout = WDT_TIMEOUT_min; // Set WDT min for cleanup using reset
+        wdt_enable(gtimeout);     // Apply the changes
+        while(1); // Wait for WDT reset
 
-        case TWI_CMD_ERASEFLASH:
-            SlaveReceiveByteAndNACK (&commandCode);
-            ProcessPageErase ();
-            break;
+    case TWI_CMD_ERASEFLASH:
+        SlaveReceiveByteAndNACK (&commandCode);
+        ProcessPageErase ();
+        break;
 
-        default:
-            AbortTWI ();
-        }
+    default:
+        AbortTWI ();
+    }
 }
 /***********************************************************************/
 
