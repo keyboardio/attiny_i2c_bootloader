@@ -282,10 +282,6 @@ void ProcessSlaveReceive (void) {
             wdt_enable(gtimeout);     // Apply the changes
             while(1); // Wait for WDT reset
 
-        case TWI_CMD_BVERSION:
-            SlaveReceiveByteAndNACK (&commandCode);
-            state = 1;
-            break;
         case TWI_CMD_ERASEFLASH:
             SlaveReceiveByteAndNACK (&commandCode);
             ProcessPageErase ();
@@ -317,10 +313,6 @@ void ReadAndProcessPacket (void) {
     case TWI_SLAR_RECEIVED:
         if (state == 0)
             ProcessSlaveTransmit (GetStatusCode () & STATUSMASK_SPMBUSY);
-        else if (state == 1) {
-            state = 0;
-            ProcessSlaveTransmit (BVERSION);
-        }
         break;
 
     default:

@@ -3,7 +3,6 @@
 /*****************************************************************************/
 #define TWI_CMD_PAGEUPDATE        	0x01	// TWI Command to program a flash page
 #define TWI_CMD_EXECUTEAPP        	0x02	// TWI Command to jump to the application program
-#define TWI_CMD_BVERSION          	0x04	// TWI Command to get the bootloader revision identifier
 #define TWI_CMD_ERASEFLASH        	0x05	// TWI Command to erase the entire application section of flash memory
 #define TWI_CMD_GETERRCONDN             0x07    // TWI Command to get Error condition
 
