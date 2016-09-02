@@ -23,6 +23,8 @@
 // 10 s delay code for allowing ARM9 linux to boot
 #define HOST_BOOT_DELAY_SEC 5
 
+#define ACK TWI_SLAVE_RX_ACK_RETURNED
+#define NAK TWI_SLAVE_RX_NACK_RETURNED
 
 
 void init_twi (void) {
@@ -73,42 +75,27 @@ void process_slave_transmit (uint8_t data) {
     }
 }
 
-uint8_t slave_receive_byte_and_ack (uint8_t * data) {
+uint8_t slave_receive_byte (uint8_t * data, uint8_t ack) {
     // Receive byte and return ACK.
-    TWCR = _BV(TWINT) | _BV(TWEA) | _BV(TWEN);
+    TWCR = _BV(TWINT) | _BV(TWEN) | ( ack == ACK  ? _BV(TWEA) : 0 );
 
     wait_for_activity();
-    // Check TWI status code for SLAVE_RX_ACK.
-    switch (TWSR) {
-    case TWI_SLAVE_RX_ACK_RETURNED:
-        // Get byte and return non-zero for success.
+            
+    // Check TWI status code for SLAVE_RX_ACK. or SLAVE_RX_NACK
+    // Basically, if the status register has the same value as
+    // the type of packet we're looking for, then proceeed
+   
+    if ( TWSR == ack) {
+        // Get byte 
         *data = TWDR;
+        if (ack == TWI_SLAVE_RX_NACK_RETURNED) {
+        // If we're doing a NACK, then twiddle TWCR
+            TWCR = _BV(TWINT) | _BV(TWEN);
+        }
         return 1;
-
-    default:
-        abort_twi ();
-        return 0;
     }
-}
-
-uint8_t slave_receive_byte_and_nack (uint8_t * data) {
-    // Receive byte and return NACK.
-    TWCR = _BV(TWINT) | _BV(TWEN);
-
-    wait_for_activity();
-
-    // Check TWI status code for SLAVE_RX_ACK.
-    switch (TWSR) {
-    case TWI_SLAVE_RX_NACK_RETURNED:
-        // Get byte, end communication and return non-zero for success.
-        *data = TWDR;
-        TWCR = _BV(TWINT) | _BV(TWEN);
-        return 1;
-
-    default:
-        abort_twi ();
-        return 0;
-    }
+    abort_twi ();
+    return 0;
 }
 
 void update_page (uint16_t pageAddress) {
@@ -148,17 +135,17 @@ void process_page_update (void) {
     uint8_t *bufferPtr = pageBuffer;
 
     // Receive two-byte page address.
-    if (slave_receive_byte_and_ack (&pageAddressLo) ) {
-        if (slave_receive_byte_and_ack (&pageAddressHi) ) {
+    if (slave_receive_byte (&pageAddressLo, ACK) ) {
+        if (slave_receive_byte (&pageAddressHi, ACK) ) {
             // Receive page data.
             for (uint8_t i = 0; i < (PAGE_SIZE - 1); ++i) {
-                if (slave_receive_byte_and_ack (bufferPtr) == 0) {
+                if (slave_receive_byte (bufferPtr, ACK) == 0) {
                     return;
                 }
                 ++bufferPtr;
             }
 
-            if (slave_receive_byte_and_nack (bufferPtr) ) {
+            if (slave_receive_byte(bufferPtr, NAK) ) {
                 // Now program if everything went well.
                 update_page ((pageAddressHi << 8) | pageAddressLo);
             }
@@ -200,7 +187,7 @@ void process_page_erase (void) {
 void process_slave_receive (void) {
     uint8_t commandCode;
 
-    if (! slave_receive_byte_and_ack (&commandCode) ) {
+    if (! slave_receive_byte (&commandCode, ACK) ) {
         return;
     }
     // Process command byte.
@@ -208,15 +195,14 @@ void process_slave_receive (void) {
     case TWI_CMD_PAGEUPDATE:
         process_page_update ();
         break;
-
     case TWI_CMD_EXECUTEAPP:
         // Read dummy byte and NACK, just to be nice to our TWI master.
-        slave_receive_byte_and_nack (&commandCode);
+        slave_receive_byte (&commandCode, NAK);
         wdt_enable(WDTO_15MS  );  // Set WDT min for cleanup using reset
         for (;;); // Wait for WDT reset
 
     case TWI_CMD_ERASEFLASH:
-        slave_receive_byte_and_nack (&commandCode);
+        slave_receive_byte (&commandCode, NAK);
         process_page_erase ();
         break;
 
