@@ -189,8 +189,8 @@ void process_page_update (void) {
     // Check the SPM is ready, abort if not.
     if ((SPMCSR & _BV(SELFPROGEN)) != 0) {
         abort_twi ();
-
-    } else {
+        return;
+    } 
         uint8_t pageAddressLo;
         uint8_t pageAddressHi;
         uint8_t *bufferPtr = pageBuffer;
@@ -214,7 +214,6 @@ void process_page_update (void) {
                 }
             }
         }
-    }
 }
 
 /***********************************************************************/
