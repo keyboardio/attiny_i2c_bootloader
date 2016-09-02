@@ -324,7 +324,7 @@ void start_timer (void) {
 
 /***********************************************************************/
 void host_boot_delay () {
-    int16_t time_lapse_sec = HOST_BOOT_DELAY_SEC;
+    uint8_t time_lapse_sec = HOST_BOOT_DELAY_SEC;
 
     start_timer ();
     do {
