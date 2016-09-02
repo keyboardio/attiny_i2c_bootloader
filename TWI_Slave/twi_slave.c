@@ -37,18 +37,6 @@ void init_twi (void) {
 
 
 
-//! Return non-zero if "Enter Bootloader" pin is held low externally.
-uint8_t is_boot_pin_low (void) {
-    // Make sure "Enter Bootloader" pin is input with internal pull-up.
-
-    DDRB &= ~_BV(PORTB0);  //making port pin as input
-    PORTB |= _BV(PORTB0);
-    // Let it settle.
-    _delay_us (BOOT_SETTLE_DELAY);
-    // Return non-zero if pin is low.
-    return ((PINB & _BV(PORTB0)) == 0);
-
-}
 
 void wait_for_activity(void) {
     do {} while ((TWCR & _BV(TWINT)) == 0);
@@ -288,16 +276,16 @@ int main (void) {
     if (MCUSR & _BV (PORF)) {	// Only in case of Power On Reset
         MCUSR = 0;
         host_boot_delay ();
+    init_twi();
+    wdt_enable(WDT_TIMEOUT_8s);
+
+    while (1) {
+        read_and_process_packet (); // Process the TWI Commands
     }
-
-    if (is_boot_pin_low ()) {
-        init_twi();
-        wdt_enable(WDT_TIMEOUT_8s);
-
-        while (1) {
-            read_and_process_packet (); // Process the TWI Commands
-        }
     } else {
+
         cleanup_and_run_application ();
     }
+
+
 }
