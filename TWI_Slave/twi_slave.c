@@ -213,7 +213,7 @@ void process_slave_receive (void) {
         // Read dummy byte and NACK, just to be nice to our TWI master.
         slave_receive_byte_and_nack (&commandCode);
         wdt_enable(WDTO_15MS  );  // Set WDT min for cleanup using reset
-        while(1); // Wait for WDT reset
+        for (;;); // Wait for WDT reset
 
     case TWI_CMD_ERASEFLASH:
         slave_receive_byte_and_nack (&commandCode);
