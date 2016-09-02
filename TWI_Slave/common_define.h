@@ -22,31 +22,31 @@
 
 
 // Page size selection for the controller with 8K flash
-    // The flash memory page size for these devices
-#define PAGE_SIZE 64      
+// The flash memory page size for these devices
+#define PAGE_SIZE 64
 
-    // Page 112, the start of bootloader section
-#define BOOT_PAGE_ADDRESS 0X1C00   
-  
-    // 8KB of flash divided by pages of size 64 bytes
-#define TOTAL_NO_OF_PAGES  128    
-    
-    // The number of pages being used for bootloader code
-#define BOOTLOADER_PAGES          	(TOTAL_NO_OF_PAGES - BOOT_PAGE_ADDRESS/PAGE_SIZE)	
+// Page 112, the start of bootloader section
+#define BOOT_PAGE_ADDRESS 0X1C00
 
-    // For bounds check during page write/erase operation to protect the bootloader code from being corrupted
-#define LAST_PAGE_NO_TO_BE_ERASED 	(TOTAL_NO_OF_PAGES - BOOTLOADER_PAGES)	
+// 8KB of flash divided by pages of size 64 bytes
+#define TOTAL_NO_OF_PAGES  128
+
+// The number of pages being used for bootloader code
+#define BOOTLOADER_PAGES          	(TOTAL_NO_OF_PAGES - BOOT_PAGE_ADDRESS/PAGE_SIZE)
+
+// For bounds check during page write/erase operation to protect the bootloader code from being corrupted
+#define LAST_PAGE_NO_TO_BE_ERASED 	(TOTAL_NO_OF_PAGES - BOOTLOADER_PAGES)
 
 
- /*****************************************************************************/
- /*****************************************************************************/
+/*****************************************************************************/
+/*****************************************************************************/
 // Select the correct Bit name of to SELFPROGRAMming
 #define SELFPROGEN     SELFPRGEN
 
 
 uint8_t pageBuffer[PAGE_SIZE];
- /*****************************************************************************/
- /*****************************************************************************/
+/*****************************************************************************/
+/*****************************************************************************/
 
 
 #define WDT_TIMEOUT_8s      		( _BV( WDP3 ) | _BV( WDP0 ) )	        // Watchdog timeout for inactivity in the boot section
@@ -71,4 +71,4 @@ uint8_t pageBuffer[PAGE_SIZE];
 #define BVERSION 			0x96	// This bootloader revision identifier
 
 
-void UpdatePage (uint16_t);  
+void UpdatePage (uint16_t);

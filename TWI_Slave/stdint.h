@@ -133,7 +133,7 @@ typedef unsigned long long uintmax_t;
 #define SIZE_MAX ((size_t)-1)
 
 /* --- The following are also defined in IAR's wchar.h file ---
-#ifndef WCHAR_MIN 
+#ifndef WCHAR_MIN
 #define WCHAR_MIN 0
 #define WCHAR_MAX ((wchar_t)-1)
 #endif
