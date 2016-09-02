@@ -20,9 +20,9 @@
 /*****************************************************************************/
 #define TWI_SLAW_RECEIVED         	0x60	// Status slave address and write command received
 #define TWI_SLAR_RECEIVED         	0xa8	// Status slave address and read command received
-#define TWI_SLAVETX_NACK_RECEIVED 	0xc0	// Status slave transmit and no acknowledgement or last byte
-#define TWI_SLAVERX_ACK_RETURNED  	0x80	// Status slave receive and acknowledgement returned
-#define TWI_SLAVERX_NACK_RETURNED 	0x88	// Status slave receive and no acknowledgement or last byte
+#define TWI_SLAVE_TX_NACK_RECEIVED 	0xc0	// Status slave transmit and no acknowledgement or last byte
+#define TWI_SLAVE_RX_ACK_RETURNED  	0x80	// Status slave receive and acknowledgement returned
+#define TWI_SLAVE_RX_NACK_RETURNED 	0x88	// Status slave receive and no acknowledgement or last byte
 
 
 //
@@ -92,9 +92,9 @@ void ProcessSlaveTransmit (uint8_t data) {
     // Wait for activity.
     do {} while ((TWCR & (1 << TWINT)) == 0);
     wdt_reset ();
-    // Check TWI status code for SLAVETX_NACK.
+    // Check TWI status code for SLAVE_TX_NACK.
     switch (TWSR) {
-    case TWI_SLAVETX_NACK_RECEIVED:
+    case TWI_SLAVE_TX_NACK_RECEIVED:
         // End communication.
         TWCR = (1 << TWINT) | (1 << TWEN);
         break;
@@ -113,9 +113,9 @@ uint8_t SlaveReceiveByteAndACK (uint8_t * data) {
     // Wait for activity.
     do {} while ((TWCR & (1 << TWINT)) == 0);
     wdt_reset ();
-    // Check TWI status code for SLAVERX_ACK.
+    // Check TWI status code for SLAVE_RX_ACK.
     switch (TWSR) {
-    case TWI_SLAVERX_ACK_RETURNED:
+    case TWI_SLAVE_RX_ACK_RETURNED:
         // Get byte and return non-zero for success.
         *data = TWDR;
         return 1;
@@ -136,9 +136,9 @@ uint8_t SlaveReceiveByteAndNACK (uint8_t * data) {
     do {} while ((TWCR & (1 << TWINT)) == 0);
     wdt_reset ();
 
-    // Check TWI status code for SLAVERX_ACK.
+    // Check TWI status code for SLAVE_RX_ACK.
     switch (TWSR) {
-    case TWI_SLAVERX_NACK_RETURNED:
+    case TWI_SLAVE_RX_NACK_RETURNED:
         // Get byte, end communication and return non-zero for success.
         *data = TWDR;
         TWCR = (1 << TWINT) | (1 << TWEN);
