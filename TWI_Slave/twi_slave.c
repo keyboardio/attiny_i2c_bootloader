@@ -32,12 +32,12 @@ uint8_t state = 0;
 
 /***********************************************************************/
 void init_twi (void) {
-    DDRC &= ~((1 << PORTC5) | (1 << PORTC4)); // Set SCL and SDA as input
-    PORTC &= ~((1 << PORTC5) | (1 << PORTC4)); // Set SCL and SDA low
+    DDRC &= ~(_BV(PORTC5) | _BV(PORTC4)); // Set SCL and SDA as input
+    PORTC &= ~(_BV(PORTC5) | _BV(PORTC4)); // Set SCL and SDA low
     // Note: PORTC4 and PORT5 commonly used for tiny48. tiny88, mega48 TWI based devices
 
     TWAR = SLAVE_ADDRESS;
-    TWCR = (1 << TWEN);
+    TWCR = _BV(TWEN);
     // Enable, but don't enable ACK until we are ready to receive packets.
 }
 /***********************************************************************/
@@ -49,12 +49,12 @@ void init_twi (void) {
 uint8_t is_boot_pin_low (void) {
     // Make sure "Enter Bootloader" pin is input with internal pull-up.
 
-    DDRB &= ~(1 << PORTB0);  //making port pin as input
-    PORTB |= (1 << PORTB0);
+    DDRB &= ~_BV(PORTB0);  //making port pin as input
+    PORTB |= _BV(PORTB0);
     // Let it settle.
     _delay_us (BOOT_SETTLE_DELAY);
     // Return non-zero if pin is low.
-    return ((PINB & (1 << PORTB0)) == 0);
+    return ((PINB & _BV(PORTB0)) == 0);
 
 }
 /***********************************************************************/
@@ -65,7 +65,7 @@ uint8_t is_boot_pin_low (void) {
 uint8_t get_status_code (void) {
     uint8_t statusCode = 0;
     // Check if SPM operation is complete
-    if ((SPMCSR & (1 << SELFPROGEN)) != 0)
+    if ((SPMCSR & _BV(SELFPROGEN)) != 0)
         statusCode |= STATUSMASK_SPMBUSY;
 
     return statusCode;
@@ -76,7 +76,7 @@ uint8_t get_status_code (void) {
 /***********************************************************************/
 void abort_twi (void) {
     // Recover from error condition by releasing bus lines.
-    TWCR = (1 << TWINT) | (1 << TWSTO) | (1 << TWEN);
+    TWCR = _BV(TWINT) | _BV(TWSTO) | _BV(TWEN);
 }
 /***********************************************************************/
 
@@ -85,15 +85,15 @@ void abort_twi (void) {
 void process_slave_transmit (uint8_t data) {
     // Prepare data for transmission.
     TWDR = data;
-    TWCR = (1 << TWINT) | (1 << TWEN);	// Send byte, NACK expected from master.
+    TWCR = _BV(TWINT) | _BV(TWEN);	// Send byte, NACK expected from master.
     // Wait for activity.
-    do {} while ((TWCR & (1 << TWINT)) == 0);
+    do {} while ((TWCR & _BV(TWINT)) == 0);
     wdt_reset ();
     // Check TWI status code for SLAVE_TX_NACK.
     switch (TWSR) {
     case TWI_SLAVE_TX_NACK_RECEIVED:
         // End communication.
-        TWCR = (1 << TWINT) | (1 << TWEN);
+        TWCR = _BV(TWINT) | _BV(TWEN);
         break;
 
     default:
@@ -106,9 +106,9 @@ void process_slave_transmit (uint8_t data) {
 /***********************************************************************/
 uint8_t slave_receive_byte_and_ack (uint8_t * data) {
     // Receive byte and return ACK.
-    TWCR = (1 << TWINT) | (1 << TWEA) | (1 << TWEN);
+    TWCR = _BV(TWINT) | _BV(TWEA) | _BV(TWEN);
     // Wait for activity.
-    do {} while ((TWCR & (1 << TWINT)) == 0);
+    do {} while ((TWCR & _BV(TWINT)) == 0);
     wdt_reset ();
     // Check TWI status code for SLAVE_RX_ACK.
     switch (TWSR) {
@@ -128,9 +128,9 @@ uint8_t slave_receive_byte_and_ack (uint8_t * data) {
 /***********************************************************************/
 uint8_t slave_receive_byte_and_nack (uint8_t * data) {
     // Receive byte and return NACK.
-    TWCR = (1 << TWINT) | (1 << TWEN);
+    TWCR = _BV(TWINT) | _BV(TWEN);
     // Wait for activity.
-    do {} while ((TWCR & (1 << TWINT)) == 0);
+    do {} while ((TWCR & _BV(TWINT)) == 0);
     wdt_reset ();
 
     // Check TWI status code for SLAVE_RX_ACK.
@@ -138,7 +138,7 @@ uint8_t slave_receive_byte_and_nack (uint8_t * data) {
     case TWI_SLAVE_RX_NACK_RETURNED:
         // Get byte, end communication and return non-zero for success.
         *data = TWDR;
-        TWCR = (1 << TWINT) | (1 << TWEN);
+        TWCR = _BV(TWINT) | _BV(TWEN);
         return 1;
 
     default:
@@ -188,7 +188,7 @@ void update_page (uint16_t pageAddress) {
 
 void process_page_update (void) {
     // Check the SPM is ready, abort if not.
-    if ((SPMCSR & (1 << SELFPROGEN)) != 0) {
+    if ((SPMCSR & _BV(SELFPROGEN)) != 0) {
         abort_twi ();
 
     } else {
@@ -294,10 +294,10 @@ void process_slave_receive (void) {
 /***********************************************************************/
 void read_and_process_packet (void) {
     // Enable ACK and clear pending interrupts.
-    TWCR = (1 << TWINT) | (1 << TWEA) | (1 << TWEN);
+    TWCR = _BV(TWINT) | _BV(TWEA) | _BV(TWEN);
 
     // Wait for activity.
-    do { } while ((TWCR & (1 << TWINT)) == 0);
+    do { } while ((TWCR & _BV(TWINT)) == 0);
 
     wdt_reset ();
 
