@@ -233,7 +233,6 @@ void cleanup_and_run_application (void) {
 void process_page_erase (void) {
     uint16_t addr = 0;
     uint8_t i;
-
     for (i = 0; i < PAGE_SIZE; ++i) {
         pageBuffer[i] = 0xFF;
     }
@@ -343,11 +342,8 @@ void host_boot_delay () {
 /***********************************************************************/
 // Main Starts from here
 int main (void) {
-
-
     if (MCUSR & _BV (PORF)) {	// Only in case of Power On Reset
         MCUSR = 0;
-
         host_boot_delay ();
     }
 
@@ -356,8 +352,7 @@ int main (void) {
         wdt_enable(WDT_TIMEOUT_8s);
 
         while (1) {
-            // Process the TWI Commands
-            read_and_process_packet ();
+            read_and_process_packet (); // Process the TWI Commands
         }
     } else {
         cleanup_and_run_application ();
