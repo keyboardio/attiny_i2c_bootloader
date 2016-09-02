@@ -168,7 +168,7 @@ void update_page (uint16_t pageAddress) {
         uint16_t tempWord = ((pageBuffer[i+1] << 8) | pageBuffer[i]);
         boot_page_fill_safe (pageAddress + i, tempWord); // Fill the temporary buffer with the given data
     }
-    // Write page from temporary buffer to the given location in flasm memory
+    // Write page from temporary buffer to the given location in flash memory
     boot_page_write_safe (pageAddress);
 
     wdt_reset (); // Reset the watchdog timer
