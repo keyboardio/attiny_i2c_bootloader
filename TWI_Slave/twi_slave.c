@@ -159,7 +159,9 @@ void update_page (uint16_t pageAddress) {
     }
 
     // Ignore any attempt to update boot section.
-    if (pageAddress < BOOT_PAGE_ADDRESS) {
+    if (pageAddress >= BOOT_PAGE_ADDRESS) {
+        return;
+    }
         boot_page_erase_safe (pageAddress);
 
         for (uint8_t i = 0; i < PAGE_SIZE; i += 2) {
@@ -170,7 +172,7 @@ void update_page (uint16_t pageAddress) {
         boot_page_write_safe (pageAddress);
 
         wdt_reset (); // Reset the watchdog timer
-    }
+    
 }
 
 
