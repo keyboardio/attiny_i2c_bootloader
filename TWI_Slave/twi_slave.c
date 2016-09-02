@@ -268,7 +268,9 @@ void ProcessPageErase (void) {
 void ProcessSlaveReceive (void) {
     uint8_t commandCode;
 
-    if (SlaveReceiveByteAndACK (&commandCode) != 0) {
+    if (! SlaveReceiveByteAndACK (&commandCode) ) {
+        return;
+    }
         // Process command byte.
         switch (commandCode) {
         case TWI_CMD_PAGEUPDATE:
@@ -290,7 +292,6 @@ void ProcessSlaveReceive (void) {
         default:
             AbortTWI ();
         }
-    }
 }
 /***********************************************************************/
 
