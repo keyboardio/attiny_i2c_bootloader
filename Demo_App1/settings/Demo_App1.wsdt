@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+
+<Workspace>
+  <ConfigDictionary>
+    
+  <CurrentConfigs><Project>Demo_App1/Release</Project></CurrentConfigs></ConfigDictionary>
+  <Desktop>
+    <Static>
+      <Workspace>
+        <ColumnWidths>
+          
+          
+          
+          
+        <Column0>245</Column0><Column1>27</Column1><Column2>27</Column2><Column3>1307476</Column3></ColumnWidths>
+      </Workspace>
+    <Build><ColumnWidth0>20</ColumnWidth0><ColumnWidth1>915</ColumnWidth1><ColumnWidth2>244</ColumnWidth2><ColumnWidth3>61</ColumnWidth3></Build><TerminalIO/></Static>
+    <Windows>
+      
+    <Wnd0>
+        <Tabs>
+          <Tab>
+            <Identity>TabID-21574-17152</Identity>
+            <TabName>Workspace</TabName>
+            <Factory>Workspace</Factory>
+            <Session>
+              
+            <NodeDict><ExpandedNode>Demo_App1</ExpandedNode><ExpandedNode>Demo_App1/Demo_App1.c</ExpandedNode><ExpandedNode>Demo_App1/Output</ExpandedNode><ExpandedNode>Demo_App1/Output/Demo_App1.hex</ExpandedNode></NodeDict></Session>
+          </Tab>
+        </Tabs>
+        
+      <SelectedTab>0</SelectedTab></Wnd0><Wnd1><Tabs><Tab><Identity>TabID-31236-18608</Identity><TabName>Build</TabName><Factory>Build</Factory><Session/></Tab></Tabs><SelectedTab>0</SelectedTab></Wnd1></Windows>
+    <Editor>
+      
+      
+      
+      
+    <Pane><Tab><Factory>TextEditor</Factory><Filename>$WS_DIR$\Demo_App1.c</Filename><XPos>0</XPos><YPos>3</YPos><SelStart>2741</SelStart><SelEnd>2741</SelEnd></Tab><ActiveTab>0</ActiveTab><Tab><Factory>TextEditor</Factory><Filename>C:\Program Files\IAR Systems\Embedded Workbench 5.4\avr\inc\iotiny88.h</Filename><XPos>0</XPos><YPos>219</YPos><SelStart>0</SelStart><SelEnd>0</SelEnd></Tab><Tab><Factory>TextEditor</Factory><Filename>C:\Program Files\IAR Systems\Embedded Workbench 5.4\avr\inc\iomacro.h</Filename><XPos>0</XPos><YPos>186</YPos><SelStart>0</SelStart><SelEnd>0</SelEnd></Tab><Tab><Factory>TextEditor</Factory><Filename>C:\Program Files\IAR Systems\Embedded Workbench 5.4\avr\inc\bitdefinitions\iotiny88.inc</Filename><XPos>0</XPos><YPos>369</YPos><SelStart>3922</SelStart><SelEnd>3926</SelEnd></Tab><Tab><Factory>TextEditor</Factory><Filename>$WS_DIR$\Release\Exe\Demo_App1.hex</Filename><XPos>0</XPos><YPos>0</YPos><SelStart>348</SelStart><SelEnd>348</SelEnd></Tab></Pane><ActivePane>0</ActivePane><Sizes><Pane><X>1000000</X><Y>1000000</Y></Pane></Sizes><SplitMode>1</SplitMode></Editor>
+    <Positions>
+      
+      
+      
+      
+      
+    <Top><Row0><Sizes><Toolbar-00aca2c0><key>iaridepm.enu1</key></Toolbar-00aca2c0></Sizes></Row0></Top><Left><Row0><Sizes><Wnd0><Rect><Top>-2</Top><Left>-2</Left><Bottom>577</Bottom><Right>319</Right><x>-2</x><y>-2</y><xscreen>269</xscreen><yscreen>286</yscreen><sizeHorzCX>210156</sizeHorzCX><sizeHorzCY>414493</sizeHorzCY><sizeVertCX>250781</sizeVertCX><sizeVertCY>839130</sizeVertCY></Rect></Wnd0></Sizes></Row0></Left><Right><Row0><Sizes/></Row0></Right><Bottom><Row0><Sizes><Wnd1><Rect><Top>-2</Top><Left>-2</Left><Bottom>69</Bottom><Right>1282</Right><x>-2</x><y>-2</y><xscreen>1284</xscreen><yscreen>71</yscreen><sizeHorzCX>1003125</sizeHorzCX><sizeHorzCY>102899</sizeHorzCY><sizeVertCX>210156</sizeVertCX><sizeVertCY>414493</sizeVertCY></Rect></Wnd1></Sizes></Row0></Bottom><Float><Sizes/></Float></Positions>
+  </Desktop>
+</Workspace>
+
+

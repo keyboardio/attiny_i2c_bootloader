@@ -1,0 +1,899 @@
+################################################################################
+#                                                                              #
+#      IAR Universal Linker V4.61L/W32                                         #
+#                                                                              #
+#           Link time     =  16/Aug/2011  11:18:10                             #
+#           Target CPU    =  A90                                               #
+#           List file     =  "E:\F Drive\Project\Bootloader project\Code\Commo #
+#                            n for All Devices\TWI_Slave\Release\List\TWI_Slav #
+#                            e.map"                                            #
+#           Output file 1 =  "E:\F Drive\Project\Bootloader project\Code\Commo #
+#                            n for All Devices\TWI_Slave\Release\Exe\TWI_Slave #
+#                            .d90"                                             #
+#                            Format: intel-extended, variant: -y(CODE)         #
+#           Output file 2 =  "E:\F Drive\Project\Bootloader project\Code\Commo #
+#                            n for All Devices\TWI_Slave\Release\Exe\TWI_Slave #
+#                            _data.hex"                                        #
+#                            Format: intel-extended, variant: -y(DATA)         #
+#           Output file 3 =  "E:\F Drive\Project\Bootloader project\Code\Commo #
+#                            n for All Devices\TWI_Slave\Release\Exe\TWI_Slave #
+#                            _eeprom.hex"                                      #
+#                            Format: intel-extended, variant: -y(XDATA)        #
+#           Output file 4 =  "E:\F Drive\Project\Bootloader project\Code\Commo #
+#                            n for All Devices\TWI_Slave\Release\Exe\TWI_Slave #
+#                            .a90"                                             #
+#                            Format: intel-extended                            #
+#           Command line  =  -y(CODE)                                          #
+#                            "-Ointel-extended,(DATA)=E:\F Drive\Project\Bootl #
+#                            oader project\Code\Common for All Devices\TWI_Sla #
+#                            ve\Release\Exe\TWI_Slave_data.hex"                #
+#                            "-Ointel-extended,(XDATA)=E:\F Drive\Project\Boot #
+#                            loader project\Code\Common for All Devices\TWI_Sl #
+#                            ave\Release\Exe\TWI_Slave_eeprom.hex"             #
+#                            "E:\F Drive\Project\Bootloader project\Code\Commo #
+#                            n for All Devices\TWI_Slave\Release\Obj\TWI_Slave #
+#                            .r90"                                             #
+#                            "E:\F Drive\Project\Bootloader project\Code\Commo #
+#                            n for All Devices\TWI_Slave\Release\Obj\USI_TWI_S #
+#                            lave.r90"                                         #
+#                            -o                                                #
+#                            "E:\F Drive\Project\Bootloader project\Code\Commo #
+#                            n for All Devices\TWI_Slave\Release\Exe\TWI_Slave #
+#                            .d90"                                             #
+#                            -Fintel-extended -l                               #
+#                            "E:\F Drive\Project\Bootloader project\Code\Commo #
+#                            n for All Devices\TWI_Slave\Release\List\TWI_Slav #
+#                            e.map"                                            #
+#                            -xmsn                                             #
+#                            "-IC:\Program Files\IAR Systems\Embedded Workbenc #
+#                            h 5.4\avr\LIB\"                                   #
+#                            -f                                                #
+#                            "E:\F Drive\Project\Bootloader project\Code\Commo #
+#                            n for All Devices\TWI_Slave\template\TWI_Slave_t8 #
+#                            8.xcl"                                            #
+#                            (-D_..X_INTVEC_SIZE=28 -D_..X_FLASH_TEND=FF       #
+#                            -D_..X_FLASH_NEND=1FFF -D_..X_FLASH_END=1FFF      #
+#                            -D_..X_SRAM_BASE=100 -D_..X_SRAM_TEND=100         #
+#                            -D_..X_SRAM_END=2FF -D_..X_EEPROM_END=40          #
+#                            -D_..X_CSTACK_SIZE=40 -D_..X_RSTACK_SIZE=10       #
+#                            -D_..X_HEAP_SIZE=10 -D_..X_NEAR_HEAP_SIZE=10      #
+#                            -ca90 -Z(CODE)INTVEC=0-(_..X_INTVEC_SIZE-1)       #
+#                            -H1895 -h(CODE)0-_..X_INTVEC_SIZE                 #
+#                            -D_..X_BOOT_START=1C00                            #
+#                            -Z(CODE)NEAR_F,SWITCH,INITTAB,DIFUNCT=_..X_BOOT_S #
+#                            TART-_..X_FLASH_END                               #
+#                            -Z(CODE)CODE=_..X_BOOT_START-_..X_FLASH_END       #
+#                            -Z(CODE)TINY_ID,NEAR_ID=_..X_BOOT_START-_..X_FLAS #
+#                            H_END                                             #
+#                            -Z(CODE)CHECKSUM#_..X_FLASH_END                   #
+#                            -Z(DATA)TINY_I,TINY_Z,TINY_N=_..X_SRAM_BASE-_..X_ #
+#                            SRAM_TEND                                         #
+#                            -Z(DATA)NEAR_I,NEAR_Z,NEAR_N=_..X_SRAM_BASE-_..X_ #
+#                            SRAM_END                                          #
+#                            -Z(DATA)RSTACK+_..X_RSTACK_SIZE=_..X_SRAM_BASE-_. #
+#                            .X_SRAM_END                                       #
+#                            -Z(DATA)CSTACK+_..X_CSTACK_SIZE=_..X_SRAM_BASE-_. #
+#                            .X_SRAM_END                                       #
+#                            -Z(DATA)HEAP+_..X_HEAP_SIZE=_..X_SRAM_BASE-_..X_S #
+#                            RAM_END                                           #
+#                            -Z(DATA)IOSTREAM_N#_..X_SRAM_BASE-_..X_SRAM_END   #
+#                            -Z(DATA)NEAR_HEAP+_..X_NEAR_HEAP_SIZE=_..X_SRAM_B #
+#                            ASE-_..X_SRAM_END                                 #
+#                            -Z(XDATA)EEPROM_I,EEPROM_N=0-_..X_EEPROM_END      #
+#                            -e_PrintfSmall=_Printf                            #
+#                            -e_small_write=_formatted_write                   #
+#                            -e_small_write_P=_formatted_write_P               #
+#                            -e_ScanfSmall=_Scanf                              #
+#                            -e_medium_read=_formatted_read                    #
+#                            -e_medium_read_P=_formatted_read_P -w29)          #
+#                            "-Ointel-extended=E:\F Drive\Project\Bootloader p #
+#                            roject\Code\Common for All Devices\TWI_Slave\Rele #
+#                            ase\Exe\TWI_Slave.a90"                            #
+#                            -s __program_start                                #
+#                            "C:\Program Files\IAR Systems\Embedded Workbench  #
+#                            5.4\avr\LIB\CLIB\cl1s-ec_nomul.r90"               #
+#                                                                              #
+#                           Copyright (C) 1987-2009 IAR Systems AB.            #
+################################################################################
+
+
+
+
+
+                ****************************************
+                *                                      *
+                *           CROSS REFERENCE            *
+                *                                      *
+                ****************************************
+
+       Program entry at : CODE      00000000  Relocatable, from module : ?RESET
+
+
+
+
+                ****************************************
+                *                                      *
+                *            RUNTIME MODEL             *
+                *                                      *
+                ****************************************
+
+  __64bit_doubles = disabled
+  __cpu           = 1
+  __cpu_name      = ATtiny88
+  __enhanced_core = enabled
+  __has_elpm      = false
+  __memory_model  = 2
+  __rt_version    = 3
+  __tiny_avr      = false
+
+
+
+                ****************************************
+                *                                      *
+                *              MODULE MAP              *
+                *                                      *
+                ****************************************
+
+
+  DEFINED ABSOLUTE ENTRIES
+  PROGRAM MODULE, NAME : ?ABS_ENTRY_MOD
+
+Absolute parts
+           ENTRY                   ADDRESS         REF BY
+           =====                   =======         ======
+           _..X_BOOT_START         00001C00 
+           _..X_NEAR_HEAP_SIZE     00000010 
+           _..X_HEAP_SIZE          00000010 
+           _..X_RSTACK_SIZE        00000010 
+           _..X_CSTACK_SIZE        00000040 
+           _..X_EEPROM_END         00000040 
+           _..X_SRAM_END           000002FF 
+           _..X_SRAM_TEND          00000100 
+           _..X_SRAM_BASE          00000100 
+           _..X_FLASH_END          00001FFF 
+           _..X_FLASH_NEND         00001FFF 
+           _..X_FLASH_TEND         000000FF 
+           _..X_INTVEC_SIZE        00000028 
+    *************************************************************************
+
+  FILE NAME : E:\F Drive\Project\Bootloader project\Code\Common for All Devices\TWI_Slave\Release\Obj\TWI_Slave.r90
+  PROGRAM MODULE, NAME : TWI_Slave
+
+  SEGMENTS IN THE MODULE
+  ======================
+ABSOLUTE
+  Relative segment, address: DATA 000000BC - 000000BC (0x1 bytes), align: 0
+  Segment part 1. ROOT.       Intra module refs:   InitTWI
+                                                   ProcessPageUpdate
+                                                   ProcessSlaveReceive
+                                                   ProcessSlaveTransmit
+                                                   ReadAndProcessPacket
+                                                   Segment part 34
+                                                   SlaveReceiveByteAndACK
+                                                   SlaveReceiveByteAndNACK
+           ENTRY                   ADDRESS         REF BY
+           =====                   =======         ======
+           _A_TWCR                 000000BC 
+    -------------------------------------------------------------------------
+ABSOLUTE
+  Relative segment, address: DATA 000000BB - 000000BB (0x1 bytes), align: 0
+  Segment part 2. ROOT.       Intra module refs:   ProcessSlaveTransmit
+                                                   Segment part 40
+                                                   SlaveReceiveByteAndACK
+                                                   SlaveReceiveByteAndNACK
+           ENTRY                   ADDRESS         REF BY
+           =====                   =======         ======
+           _A_TWDR                 000000BB 
+    -------------------------------------------------------------------------
+ABSOLUTE
+  Relative segment, address: DATA 000000BA - 000000BA (0x1 bytes), align: 0
+  Segment part 3. ROOT.       Intra module refs:   InitTWI
+           ENTRY                   ADDRESS         REF BY
+           =====                   =======         ======
+           _A_TWAR                 000000BA 
+    -------------------------------------------------------------------------
+ABSOLUTE
+  Relative segment, address: DATA 000000B9 - 000000B9 (0x1 bytes), align: 0
+  Segment part 4. ROOT.       Intra module refs:   ProcessSlaveTransmit
+                                                   ReadAndProcessPacket
+                                                   SlaveReceiveByteAndACK
+                                                   SlaveReceiveByteAndNACK
+           ENTRY                   ADDRESS         REF BY
+           =====                   =======         ======
+           _A_TWSR                 000000B9 
+    -------------------------------------------------------------------------
+ABSOLUTE
+  Relative segment, address: DATA 00000088 - 00000089 (0x2 bytes), align: 0
+  Segment part 5. ROOT.       Intra module refs:   Start_Timer
+           ENTRY                   ADDRESS         REF BY
+           =====                   =======         ======
+           _A_OCR1A                00000088 
+    -------------------------------------------------------------------------
+ABSOLUTE
+  Relative segment, address: DATA 00000084 - 00000085 (0x2 bytes), align: 0
+  Segment part 6. ROOT.       Intra module refs:   Start_Timer
+           ENTRY                   ADDRESS         REF BY
+           =====                   =======         ======
+           _A_TCNT1                00000084 
+    -------------------------------------------------------------------------
+ABSOLUTE
+  Relative segment, address: DATA 00000081 - 00000081 (0x1 bytes), align: 0
+  Segment part 7. ROOT.       Intra module refs:   Host_Boot_Delay
+                                                   Start_Timer
+           ENTRY                   ADDRESS         REF BY
+           =====                   =======         ======
+           _A_TCCR1B               00000081 
+    -------------------------------------------------------------------------
+ABSOLUTE
+  Relative segment, address: DATA 00000057 - 00000057 (0x1 bytes), align: 0
+  Segment part 8. ROOT.       Intra module refs:   Erase_One_Page
+                                                   GetStatusCode
+                                                   ProcessPageUpdate
+                                                   UpdatePage
+           ENTRY                   ADDRESS         REF BY
+           =====                   =======         ======
+           _A_SPMCSR               00000057 
+    -------------------------------------------------------------------------
+ABSOLUTE
+  Relative segment, address: DATA 00000054 - 00000054 (0x1 bytes), align: 0
+  Segment part 9. ROOT.       Intra module refs:   main
+           ENTRY                   ADDRESS         REF BY
+           =====                   =======         ======
+           _A_MCUSR                00000054 
+    -------------------------------------------------------------------------
+ABSOLUTE
+  Relative segment, address: DATA 00000041 - 00000041 (0x1 bytes), align: 0
+  Segment part 10. ROOT.      Intra module refs:   Read_EEPROM_byte
+           ENTRY                   ADDRESS         REF BY
+           =====                   =======         ======
+           _A_EEAR                 00000041 
+    -------------------------------------------------------------------------
+ABSOLUTE
+  Relative segment, address: DATA 00000040 - 00000040 (0x1 bytes), align: 0
+  Segment part 11. ROOT.      Intra module refs:   Read_EEPROM_byte
+           ENTRY                   ADDRESS         REF BY
+           =====                   =======         ======
+           _A_EEDR                 00000040 
+    -------------------------------------------------------------------------
+ABSOLUTE
+  Relative segment, address: DATA 0000003F - 0000003F (0x1 bytes), align: 0
+  Segment part 12. ROOT.      Intra module refs:   Read_EEPROM_byte
+           ENTRY                   ADDRESS         REF BY
+           =====                   =======         ======
+           _A_EECR                 0000003F 
+    -------------------------------------------------------------------------
+ABSOLUTE
+  Relative segment, address: DATA 00000036 - 00000036 (0x1 bytes), align: 0
+  Segment part 13. ROOT.      Intra module refs:   Host_Boot_Delay
+                                                   Start_Timer
+           ENTRY                   ADDRESS         REF BY
+           =====                   =======         ======
+           _A_TIFR1                00000036 
+    -------------------------------------------------------------------------
+ABSOLUTE
+  Relative segment, address: DATA 00000028 - 00000028 (0x1 bytes), align: 0
+  Segment part 14. ROOT.      Intra module refs:   InitTWI
+           ENTRY                   ADDRESS         REF BY
+           =====                   =======         ======
+           _A_PORTC                00000028 
+    -------------------------------------------------------------------------
+ABSOLUTE
+  Relative segment, address: DATA 00000027 - 00000027 (0x1 bytes), align: 0
+  Segment part 15. ROOT.      Intra module refs:   InitTWI
+           ENTRY                   ADDRESS         REF BY
+           =====                   =======         ======
+           _A_DDRC                 00000027 
+    -------------------------------------------------------------------------
+ABSOLUTE
+  Relative segment, address: DATA 00000025 - 00000025 (0x1 bytes), align: 0
+  Segment part 16. ROOT.      Intra module refs:   IsBootPinLow
+                                                   main
+           ENTRY                   ADDRESS         REF BY
+           =====                   =======         ======
+           _A_PORTB                00000025 
+    -------------------------------------------------------------------------
+ABSOLUTE
+  Relative segment, address: DATA 00000024 - 00000024 (0x1 bytes), align: 0
+  Segment part 17. ROOT.      Intra module refs:   IsBootPinLow
+                                                   main
+           ENTRY                   ADDRESS         REF BY
+           =====                   =======         ======
+           _A_DDRB                 00000024 
+    -------------------------------------------------------------------------
+ABSOLUTE
+  Relative segment, address: DATA 00000023 - 00000023 (0x1 bytes), align: 0
+  Segment part 18. ROOT.      Intra module refs:   IsBootPinLow
+           ENTRY                   ADDRESS         REF BY
+           =====                   =======         ======
+           _A_PINB                 00000023 
+    -------------------------------------------------------------------------
+NEAR_N
+  Relative segment, address: DATA 00000105 - 00000144 (0x40 bytes), align: 0
+  Segment part 24.            Intra module refs:   ProcessPageErase
+                                                   ProcessPageUpdate
+                                                   UpdatePage
+           ENTRY                   ADDRESS         REF BY
+           =====                   =======         ======
+           pageBuffer              00000105 
+    -------------------------------------------------------------------------
+NEAR_Z
+  Relative segment, address: DATA 00000100 - 00000101 (0x2 bytes), align: 0
+  Segment part 25.            Intra module refs:   Init_WatchDogTimer
+                                                   ProcessSlaveReceive
+                                                   ReadAndProcessPacket
+                                                   Segment part 62
+           ENTRY                   ADDRESS         REF BY
+           =====                   =======         ======
+           gtimeout                00000101 
+           state                   00000100 
+    -------------------------------------------------------------------------
+NEAR_Z
+  Relative segment, address: DATA 00000102 - 00000103 (0x2 bytes), align: 0
+  Segment part 27.            Intra module refs:   Host_Boot_Delay
+           ENTRY                   ADDRESS         REF BY
+           =====                   =======         ======
+           time_lapse_sec          00000102 
+    -------------------------------------------------------------------------
+NEAR_Z
+  Relative segment, address: DATA 00000104 - 00000104 (0x1 bytes), align: 0
+  Segment part 28.            Intra module refs:   GetStatusCode
+           ENTRY                   ADDRESS         REF BY
+           =====                   =======         ======
+           statusCode              00000104 
+    -------------------------------------------------------------------------
+CODE
+  Relative segment, address: CODE 00001C06 - 00001C1B (0x16 bytes), align: 1
+  Segment part 29.            Intra module refs:   main
+           ENTRY                   ADDRESS         REF BY
+           =====                   =======         ======
+           InitTWI                 00001C06 
+               RSTACK = 00000000 ( 00000002 )
+    -------------------------------------------------------------------------
+CODE
+  Relative segment, address: CODE 00001C1C - 00001C33 (0x18 bytes), align: 1
+  Segment part 30.            Intra module refs:   main
+           ENTRY                   ADDRESS         REF BY
+           =====                   =======         ======
+           IsBootPinLow            00001C1C 
+               RSTACK = 00000000 ( 00000002 )
+    -------------------------------------------------------------------------
+CODE
+  Relative segment, address: CODE 00001C34 - 00001C49 (0x16 bytes), align: 1
+  Segment part 31.            Intra module refs:   ReadAndProcessPacket
+           ENTRY                   ADDRESS         REF BY
+           =====                   =======         ======
+           GetStatusCode           00001C34 
+               RSTACK = 00000000 ( 00000002 )
+    -------------------------------------------------------------------------
+CODE
+  Relative segment, address: CODE 00001C4A - 00001C4B (0x2 bytes), align: 1
+  Segment part 33.            Intra module refs:   ProcessPageUpdate
+                                                   ProcessSlaveReceive
+                                                   ReadAndProcessPacket
+                                                   Segment part 38
+    -------------------------------------------------------------------------
+CODE
+  Relative segment, address: CODE 00001C4C - 00001C51 (0x6 bytes), align: 1
+  Segment part 34.            Intra module refs:   InitTWI
+                                                   ProcessSlaveTransmit
+                                                   ReadAndProcessPacket
+                                                   Segment part 33
+                                                   SlaveReceiveByteAndNACK
+    -------------------------------------------------------------------------
+CODE
+  Relative segment, address: CODE 00001C52 - 00001C73 (0x22 bytes), align: 1
+  Segment part 35.            Intra module refs:   ReadAndProcessPacket
+           ENTRY                   ADDRESS         REF BY
+           =====                   =======         ======
+           ProcessSlaveTransmit    00001C52 
+               RSTACK = 00000000 ( 00000002 )
+    -------------------------------------------------------------------------
+CODE
+  Relative segment, address: CODE 00001C74 - 00001C91 (0x1e bytes), align: 1
+  Segment part 36.            Intra module refs:   Segment part 55
+           ENTRY                   ADDRESS         REF BY
+           =====                   =======         ======
+           SlaveReceiveByteAndACK
+                                   00001C74 
+               RSTACK = 00000000 ( 00000002 )
+    -------------------------------------------------------------------------
+CODE
+  Relative segment, address: CODE 00001C92 - 00001C95 (0x4 bytes), align: 1
+  Segment part 37.            Intra module refs:   SlaveReceiveByteAndACK
+                                                   SlaveReceiveByteAndNACK
+    -------------------------------------------------------------------------
+CODE
+  Relative segment, address: CODE 00001C96 - 00001C9B (0x6 bytes), align: 1
+  Segment part 38.            Intra module refs:   SlaveReceiveByteAndACK
+                                                   SlaveReceiveByteAndNACK
+    -------------------------------------------------------------------------
+CODE
+  Relative segment, address: CODE 00001C9C - 00001CBD (0x22 bytes), align: 1
+  Segment part 39.            Intra module refs:   ProcessPageUpdate
+                                                   Segment part 56
+           ENTRY                   ADDRESS         REF BY
+           =====                   =======         ======
+           SlaveReceiveByteAndNACK
+                                   00001C9C 
+               RSTACK = 00000000 ( 00000002 )
+    -------------------------------------------------------------------------
+CODE
+  Relative segment, address: CODE 00001CBE - 00001CC7 (0xa bytes), align: 1
+  Segment part 40.            Intra module refs:   SlaveReceiveByteAndACK
+                                                   SlaveReceiveByteAndNACK
+    -------------------------------------------------------------------------
+CODE
+  Relative segment, address: CODE 00001CC8 - 00001CDF (0x18 bytes), align: 1
+  Segment part 41.            Intra module refs:   ProcessPageErase
+                                                   UpdatePage
+           ENTRY                   ADDRESS         REF BY
+           =====                   =======         ======
+           Erase_One_Page          00001CC8 
+               RSTACK = 00000000 ( 00000002 )
+    -------------------------------------------------------------------------
+CODE
+  Relative segment, address: CODE 00001CE0 - 00001D3F (0x60 bytes), align: 1
+  Segment part 42.            Intra module refs:   ProcessPageErase
+                                                   ProcessPageUpdate
+           ENTRY                   ADDRESS         REF BY
+           =====                   =======         ======
+           UpdatePage              00001CE0 
+               calls direct
+               CSTACK = 00000000 ( 00000004 )
+               RSTACK = 00000000 ( 00000002 )
+    -------------------------------------------------------------------------
+CODE
+  Relative segment, address: CODE 00001D40 - 00001D43 (0x4 bytes), align: 1
+  Segment part 43.            Intra module refs:   Host_Boot_Delay
+                                                   UpdatePage
+    -------------------------------------------------------------------------
+CODE
+  Relative segment, address: CODE 00001D44 - 00001D4D (0xa bytes), align: 1
+  Segment part 44.            Intra module refs:   Erase_One_Page
+                                                   UpdatePage
+    -------------------------------------------------------------------------
+CODE
+  Relative segment, address: CODE 00001D4E - 00001D8D (0x40 bytes), align: 1
+  Segment part 45.            Intra module refs:   ProcessSlaveReceive
+           ENTRY                   ADDRESS         REF BY
+           =====                   =======         ======
+           ProcessPageUpdate       00001D4E 
+               calls direct
+               CSTACK = 00000000 ( 00000005 )
+               RSTACK = 00000000 ( 00000002 )
+    -------------------------------------------------------------------------
+CODE
+  Relative segment, address: CODE 00001D8E - 00001D91 (0x4 bytes), align: 1
+  Segment part 46.            Intra module refs:   ProcessPageErase
+                                                   ProcessPageUpdate
+    -------------------------------------------------------------------------
+CODE
+  Relative segment, address: CODE 00001D92 - 00001DAD (0x1c bytes), align: 1
+  Segment part 47.            Intra module refs:   Segment part 49
+           ENTRY                   ADDRESS         REF BY
+           =====                   =======         ======
+           Disable_WatchDogTimer   00001D92 
+               RSTACK = 00000000 ( 00000002 )
+    -------------------------------------------------------------------------
+CODE
+  Relative segment, address: CODE 00001DAE - 00001DB5 (0x8 bytes), align: 1
+  Segment part 49.            Intra module refs:   main
+    -------------------------------------------------------------------------
+CODE
+  Relative segment, address: CODE 00001DB6 - 00001DE9 (0x34 bytes), align: 1
+  Segment part 50.            Intra module refs:   ProcessSlaveReceive
+           ENTRY                   ADDRESS         REF BY
+           =====                   =======         ======
+           ProcessPageErase        00001DB6 
+               calls direct
+               CSTACK = 00000000 ( 00000003 )
+               RSTACK = 00000000 ( 00000002 )
+    -------------------------------------------------------------------------
+CODE
+  Relative segment, address: CODE 00001DEA - 00001E05 (0x1c bytes), align: 1
+  Segment part 51.            Intra module refs:   Segment part 62
+           ENTRY                   ADDRESS         REF BY
+           =====                   =======         ======
+           Init_WatchDogTimer      00001DEA 
+               RSTACK = 00000000 ( 00000002 )
+    -------------------------------------------------------------------------
+CODE
+  Relative segment, address: CODE 00001E06 - 00001E51 (0x4c bytes), align: 1
+  Segment part 52.            Intra module refs:   ReadAndProcessPacket
+           ENTRY                   ADDRESS         REF BY
+           =====                   =======         ======
+           ProcessSlaveReceive     00001E06 
+               calls direct
+               CSTACK = 00000000 ( 00000001 )
+               RSTACK = 00000000 ( 00000002 )
+    -------------------------------------------------------------------------
+CODE
+  Relative segment, address: CODE 00001E52 - 00001E55 (0x4 bytes), align: 1
+  Segment part 53.            Intra module refs:   ProcessSlaveReceive
+                                                   ReadAndProcessPacket
+    -------------------------------------------------------------------------
+CODE
+  Relative segment, address: CODE 00001E56 - 00001E57 (0x2 bytes), align: 1
+  Segment part 54.            Intra module refs:   ProcessPageUpdate
+                                                   ProcessSlaveReceive
+    -------------------------------------------------------------------------
+CODE
+  Relative segment, address: CODE 00001E58 - 00001E5D (0x6 bytes), align: 1
+  Segment part 55.            Intra module refs:   ProcessPageUpdate
+                                                   Segment part 54
+    -------------------------------------------------------------------------
+CODE
+  Relative segment, address: CODE 00001E5E - 00001E61 (0x4 bytes), align: 1
+  Segment part 56.            Intra module refs:   ProcessSlaveReceive
+    -------------------------------------------------------------------------
+CODE
+  Relative segment, address: CODE 00001E62 - 00001E73 (0x12 bytes), align: 1
+  Segment part 57.            Intra module refs:   ReadAndProcessPacket
+           ENTRY                   ADDRESS         REF BY
+           =====                   =======         ======
+           Read_EEPROM_byte        00001E62 
+               RSTACK = 00000000 ( 00000002 )
+    -------------------------------------------------------------------------
+CODE
+  Relative segment, address: CODE 00001E74 - 00001ECD (0x5a bytes), align: 1
+  Segment part 58.            Intra module refs:   main
+           ENTRY                   ADDRESS         REF BY
+           =====                   =======         ======
+           ReadAndProcessPacket    00001E74 
+               calls direct
+               CSTACK = 00000000 ( 00000001 )
+               RSTACK = 00000000 ( 00000002 )
+    -------------------------------------------------------------------------
+CODE
+  Relative segment, address: CODE 00001ECE - 00001EEF (0x22 bytes), align: 1
+  Segment part 59.            Intra module refs:   Host_Boot_Delay
+           ENTRY                   ADDRESS         REF BY
+           =====                   =======         ======
+           Start_Timer             00001ECE 
+               RSTACK = 00000000 ( 00000002 )
+    -------------------------------------------------------------------------
+CODE
+  Relative segment, address: CODE 00001EF0 - 00001F1F (0x30 bytes), align: 1
+  Segment part 60.            Intra module refs:   main
+           ENTRY                   ADDRESS         REF BY
+           =====                   =======         ======
+           Host_Boot_Delay         00001EF0 
+               calls direct
+               CSTACK = 00000000 ( 00000004 )
+               RSTACK = 00000000 ( 00000002 )
+    -------------------------------------------------------------------------
+CODE
+  Relative segment, address: CODE 00001F20 - 00001F4F (0x30 bytes), align: 1
+  Segment part 61.
+           ENTRY                   ADDRESS         REF BY
+           =====                   =======         ======
+           main                    00001F20        ?cstartup_call_main (?C_STARTUP)
+               calls direct and indirect
+               RSTACK = 00000000 ( 00000002 )
+    -------------------------------------------------------------------------
+CODE
+  Relative segment, address: CODE 00001F50 - 00001F55 (0x6 bytes), align: 1
+  Segment part 62.            Intra module refs:   ProcessSlaveReceive
+                                                   main
+    -------------------------------------------------------------------------
+ABSOLUTE
+  Relative segment, address: DATA 0000001F, align: 0
+  Segment part 19. ROOT.
+           ENTRY                   ADDRESS         REF BY
+           =====                   =======         ======
+           __?EECR                 0000001F 
+    -------------------------------------------------------------------------
+ABSOLUTE
+  Relative segment, address: DATA 00000020, align: 0
+  Segment part 20. ROOT.
+           ENTRY                   ADDRESS         REF BY
+           =====                   =======         ======
+           __?EEDR                 00000020 
+    -------------------------------------------------------------------------
+ABSOLUTE
+  Relative segment, address: DATA 00000021, align: 0
+  Segment part 21. ROOT.
+           ENTRY                   ADDRESS         REF BY
+           =====                   =======         ======
+           __?EEARL                00000021 
+    -------------------------------------------------------------------------
+INITTAB
+  Relative segment, address: CODE 00001C00 - 00001C05 (0x6 bytes), align: 0
+  Segment part 26.            Intra module refs:   Segment part 25
+                                                   statusCode
+                                                   time_lapse_sec
+           ENTRY                   ADDRESS         REF BY
+           =====                   =======         ======
+           ?<Segment init: NEAR_Z>
+                                   00001C00 
+
+    *************************************************************************
+
+  FILE NAME : E:\F Drive\Project\Bootloader project\Code\Common for All Devices\TWI_Slave\Release\Obj\USI_TWI_Slave.r90
+    *************************************************************************
+
+  FILE NAME : C:\Program Files\IAR Systems\Embedded Workbench 5.4\avr\LIB\CLIB\cl1s-ec_nomul.r90
+  LIBRARY MODULE, NAME : ?__exit
+
+  SEGMENTS IN THE MODULE
+  ======================
+CODE
+  Relative segment, address: CODE 00001F56 - 00001F5B (0x6 bytes), align: 1
+  Segment part 0.
+           ENTRY                   ADDRESS         REF BY
+           =====                   =======         ======
+           __exit                  00001F58 
+           ?C_EXIT                 00001F58 
+           ?C_FUNCALL              00001F56 
+           _exit                   00001F56        ?cstartup_call_main (?C_STARTUP)
+           exit                    00001F56        ?cstartup_call_main (?C_STARTUP)
+
+    -------------------------------------------------------------------------
+  LIBRARY MODULE, NAME : ?RESET
+
+  SEGMENTS IN THE MODULE
+  ======================
+INTVEC
+  Common segment, address: CODE 00000000 - 00000001 (0x2 bytes), align: 1
+  Segment part 0. ROOT.
+           ENTRY                   ADDRESS         REF BY
+           =====                   =======         ======
+           __program_start         00000000        Absolute parts (?ABS_ENTRY_MOD)
+           ?RESET                  00000000        Segment part 2 (?C_STARTUP)
+
+    -------------------------------------------------------------------------
+  LIBRARY MODULE, NAME : ?C_STARTUP
+
+  SEGMENTS IN THE MODULE
+  ======================
+CODE
+  Relative segment, address: CODE 00001F5C, align: 1
+  Segment part 2.
+           ENTRY                   ADDRESS         REF BY
+           =====                   =======         ======
+           ?C_STARTUP              00001F5C        Segment part 0 (?RESET)
+           __RESTART               00001F5C 
+    -------------------------------------------------------------------------
+CODE
+  Relative segment, address: CODE 00001F5C - 00001F67 (0xc bytes), align: 1
+  Segment part 5.             Intra module refs:   Segment part 2
+    -------------------------------------------------------------------------
+CODE
+  Relative segment, address: CODE 00001F68 - 00001F69 (0x2 bytes), align: 1
+  Segment part 7.             Intra module refs:   Segment part 5
+           ENTRY                   ADDRESS         REF BY
+           =====                   =======         ======
+           ?call_low_level_init    00001F68 
+    -------------------------------------------------------------------------
+CODE
+  Relative segment, address: CODE 00001F6A - 00001F6F (0x6 bytes), align: 1
+  Segment part 8.
+           ENTRY                   ADDRESS         REF BY
+           =====                   =======         ======
+           ?need_segment_init      00001F6A        ?<Segment init: NEAR_Z> (TWI_Slave)
+    -------------------------------------------------------------------------
+CODE
+  Relative segment, address: CODE 00001F70 - 00001F75 (0x6 bytes), align: 1
+  Segment part 9.             Intra module refs:   ?call_low_level_init
+           ENTRY                   ADDRESS         REF BY
+           =====                   =======         ======
+           ?cstartup_call_main     00001F70 
+
+    -------------------------------------------------------------------------
+  LIBRARY MODULE, NAME : ?PROLOGUE_L09
+
+  SEGMENTS IN THE MODULE
+  ======================
+CODE
+  Relative segment, address: CODE 00001F76 - 00001F77 (0x2 bytes), align: 1
+  Segment part 12.
+           ENTRY                   ADDRESS         REF BY
+           =====                   =======         ======
+           ?PROLOGUE4_L09          00001F76        Host_Boot_Delay (TWI_Slave)
+                                                   UpdatePage (TWI_Slave)
+    -------------------------------------------------------------------------
+CODE
+  Relative segment, address: CODE 00001F78 - 00001F79 (0x2 bytes), align: 1
+  Segment part 13.            Intra module refs:   ?PROLOGUE4_L09
+           ENTRY                   ADDRESS         REF BY
+           =====                   =======         ======
+           ?PROLOGUE3_L09          00001F78        ProcessPageErase (TWI_Slave)
+                                                   ProcessPageUpdate (TWI_Slave)
+    -------------------------------------------------------------------------
+CODE
+  Relative segment, address: CODE 00001F7A - 00001F7B (0x2 bytes), align: 1
+  Segment part 14.            Intra module refs:   ?PROLOGUE3_L09
+           ENTRY                   ADDRESS         REF BY
+           =====                   =======         ======
+           ?PROLOGUE2_L09          00001F7A 
+    -------------------------------------------------------------------------
+CODE
+  Relative segment, address: CODE 00001F7C - 00001F7D (0x2 bytes), align: 1
+  Segment part 15.            Intra module refs:   ?PROLOGUE2_L09
+           ENTRY                   ADDRESS         REF BY
+           =====                   =======         ======
+           ?PROLOGUE1_L09          00001F7C 
+    -------------------------------------------------------------------------
+CODE
+  Relative segment, address: CODE 00001F7E - 00001F7F (0x2 bytes), align: 1
+  Segment part 16.            Intra module refs:   ?PROLOGUE1_L09
+
+    -------------------------------------------------------------------------
+  LIBRARY MODULE, NAME : ?EPILOGUE_B_L09
+
+  SEGMENTS IN THE MODULE
+  ======================
+CODE
+  Relative segment, address: CODE 00001F80 - 00001F81 (0x2 bytes), align: 1
+  Segment part 12.
+           ENTRY                   ADDRESS         REF BY
+           =====                   =======         ======
+           ?EPILOGUE_B4_L09        00001F80        Segment part 43 (TWI_Slave)
+    -------------------------------------------------------------------------
+CODE
+  Relative segment, address: CODE 00001F82 - 00001F83 (0x2 bytes), align: 1
+  Segment part 13.            Intra module refs:   ?EPILOGUE_B4_L09
+           ENTRY                   ADDRESS         REF BY
+           =====                   =======         ======
+           ?EPILOGUE_B3_L09        00001F82        Segment part 46 (TWI_Slave)
+    -------------------------------------------------------------------------
+CODE
+  Relative segment, address: CODE 00001F84 - 00001F85 (0x2 bytes), align: 1
+  Segment part 14.            Intra module refs:   ?EPILOGUE_B3_L09
+           ENTRY                   ADDRESS         REF BY
+           =====                   =======         ======
+           ?EPILOGUE_B2_L09        00001F84 
+    -------------------------------------------------------------------------
+CODE
+  Relative segment, address: CODE 00001F86 - 00001F87 (0x2 bytes), align: 1
+  Segment part 15.            Intra module refs:   ?EPILOGUE_B2_L09
+           ENTRY                   ADDRESS         REF BY
+           =====                   =======         ======
+           ?EPILOGUE_B1_L09        00001F86 
+    -------------------------------------------------------------------------
+CODE
+  Relative segment, address: CODE 00001F88 - 00001F91 (0xa bytes), align: 1
+  Segment part 16.            Intra module refs:   ?EPILOGUE_B1_L09
+           ENTRY                   ADDRESS         REF BY
+           =====                   =======         ======
+           ?EPILOGUE_B0_L09        00001F88 
+
+    -------------------------------------------------------------------------
+  LIBRARY MODULE, NAME : ?low_level_init
+
+  SEGMENTS IN THE MODULE
+  ======================
+CODE
+  Relative segment, address: CODE 00001F92 - 00001F95 (0x4 bytes), align: 1
+  Segment part 3.
+           ENTRY                   ADDRESS         REF BY
+           =====                   =======         ======
+           __low_level_init        00001F92        ?call_low_level_init (?C_STARTUP)
+               RSTACK = 00000000 ( 00000002 )
+
+    -------------------------------------------------------------------------
+  LIBRARY MODULE, NAME : ?segment_init
+
+  SEGMENTS IN THE MODULE
+  ======================
+CODE
+  Relative segment, address: CODE 00001F96 - 00001F9D (0x8 bytes), align: 1
+  Segment part 3.             Intra module refs:   __segment_init
+           LOCAL                   ADDRESS         
+           =====                   =======         
+           __memclr                00001F96 
+               RSTACK = 00000000 ( 00000002 )
+    -------------------------------------------------------------------------
+CODE
+  Relative segment, address: CODE 00001F9E - 00001FA5 (0x8 bytes), align: 1
+  Segment part 4.             Intra module refs:   __segment_init
+           LOCAL                   ADDRESS         
+           =====                   =======         
+           __flashcpy              00001F9E 
+               RSTACK = 00000000 ( 00000002 )
+    -------------------------------------------------------------------------
+CODE
+  Relative segment, address: CODE 00001FA6 - 00001FB1 (0xc bytes), align: 1
+  Segment part 5.             Intra module refs:   __flashcpy
+                                                   __memclr
+    -------------------------------------------------------------------------
+CODE
+  Relative segment, address: CODE 00001FB2 - 00001FE5 (0x34 bytes), align: 1
+  Segment part 6.
+           ENTRY                   ADDRESS         REF BY
+           =====                   =======         ======
+           __segment_init          00001FB2        ?need_segment_init (?C_STARTUP)
+               calls direct
+               RSTACK = 00000000 ( 00000002 )
+
+    *************************************************************************
+
+  DEFINED ABSOLUTE ENTRIES
+  PROGRAM MODULE, NAME : ?FILLER_BYTES
+
+  SEGMENTS IN THE MODULE
+  ======================
+INTVEC
+  Common segment, address: CODE 00000000 - 00000001 (0x2 bytes), align: 0
+  Segment part 1.
+    -------------------------------------------------------------------------
+?FILL1
+  Relative segment, address: CODE 00000002 - 00000028 (0x27 bytes), align: 0
+  Segment part 0.
+
+
+
+
+                ****************************************
+                *                                      *
+                *            MODULE SUMMARY            *
+                *                                      *
+                ****************************************
+
+Module               CODE      DATA
+------               ----      ----
+                    (Rel)  (Rel)  (Abs)
+?C_STARTUP             26
+?EPILOGUE_B_L09        18
+?FILLER_BYTES          39
+  + common              2
+?PROLOGUE_L09          10
+?RESET
+  + common              2
+?__exit                 6
+?low_level_init         4
+?segment_init          80
+TWI_Slave             854     69     20
+N/A (command line)            80
+N/A (alignment)
+----------          -----    ---     --
+Total:              1 037    149     20
+  + common              2
+
+
+                ****************************************
+                *                                      *
+                *      SEGMENTS IN ADDRESS ORDER       *
+                *                                      *
+                ****************************************
+
+
+SEGMENT              SPACE    START ADDRESS   END ADDRESS     SIZE  TYPE  ALIGN
+=======              =====    =============   ===========     ====  ====  =====
+INTVEC               CODE          00000000 - 00000001           2   com    1
+?FILL1               CODE          00000002 - 00000028          27   rel    0
+NEAR_F               CODE               00001C00                     dse    0
+SWITCH               CODE               00001C00                     dse    0
+INITTAB              CODE          00001C00 - 00001C05           6   rel    0
+CODE                 CODE          00001C06 - 00001FE5         3E0   rel    1
+ABSOLUTE             DATA               0000001F                     rel    0
+                     DATA               00000020                   
+                     DATA               00000021                   
+                     DATA          00000023 - 00000025           3 
+                     DATA          00000027 - 00000028           2 
+                     DATA          00000036 - 00000036           1 
+                     DATA          0000003F - 00000041           3 
+                     DATA          00000054 - 00000054           1 
+                     DATA          00000057 - 00000057           1 
+                     DATA          00000081 - 00000081           1 
+                     DATA          00000084 - 00000085           2 
+                     DATA          00000088 - 00000089           2 
+                     DATA          000000B9 - 000000BC           4 
+NEAR_I               DATA               00000100                     dse    0
+NEAR_Z               DATA          00000100 - 00000104           5   rel    0
+NEAR_N               DATA          00000105 - 00000144          40   rel    0
+RSTACK               DATA          00000145 - 00000154          10   dse    0
+CSTACK               DATA          00000155 - 00000194          40   dse    0
+
+                ****************************************
+                *                                      *
+                *        END OF CROSS REFERENCE        *
+                *                                      *
+                ****************************************
+
+ 1 000 bytes of CODE memory (+             39 range fill )
+   149 bytes of DATA memory (+ 20 absolute )
+
+Errors: none
+Warnings: none
+

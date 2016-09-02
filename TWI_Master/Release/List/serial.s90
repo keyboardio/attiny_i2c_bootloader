@@ -1,0 +1,167 @@
+///////////////////////////////////////////////////////////////////////////////
+//                                                                            /
+// IAR C/C++ Compiler V5.50.0.50277/W32 for Atmel AVR   16/Aug/2011  11:15:40 /
+// Copyright (C) 1996-2010 IAR Systems AB.                                    /
+//                                                                            /
+//    Source file  =  E:\F Drive\Project\Bootloader project\Code\Common for   /
+//                    All Devices\TWI_Master\serial.c                         /
+//    Command line =  "E:\F Drive\Project\Bootloader project\Code\Common for  /
+//                    All Devices\TWI_Master\serial.c" --cpu=m2560 -ms -o     /
+//                    "E:\F Drive\Project\Bootloader project\Code\Common for  /
+//                    All Devices\TWI_Master\Release\Obj\" -D __ATMEGA2560__  /
+//                    --preprocess "E:\F Drive\Project\Bootloader             /
+//                    project\Code\Common for All                             /
+//                    Devices\TWI_Master\Release\List\" -lCN "E:\F            /
+//                    Drive\Project\Bootloader project\Code\Common for All    /
+//                    Devices\TWI_Master\Release\List\" -lB "E:\F             /
+//                    Drive\Project\Bootloader project\Code\Common for All    /
+//                    Devices\TWI_Master\Release\List\" -y                    /
+//                    --initializers_in_flash -z9 -DENABLE_BIT_DEFINITIONS    /
+//                    -e -I "C:\Program Files\IAR Systems\Embedded Workbench  /
+//                    5.4\avr\INC\" -I "C:\Program Files\IAR                  /
+//                    Systems\Embedded Workbench 5.4\avr\INC\CLIB\"           /
+//                    --eeprom_size 4096                                      /
+//    List file    =  E:\F Drive\Project\Bootloader project\Code\Common for   /
+//                    All Devices\TWI_Master\Release\List\serial.s90          /
+//                                                                            /
+//                                                                            /
+///////////////////////////////////////////////////////////////////////////////
+
+        NAME serial
+
+        RSEG CSTACK:DATA:NOROOT(0)
+        RSEG RSTACK:DATA:NOROOT(0)
+
+        PUBWEAK _A_UBRR0
+        PUBWEAK _A_UCSR0A
+        PUBWEAK _A_UCSR0B
+        PUBWEAK _A_UDR0
+        PUBWEAK __?EEARH
+        PUBWEAK __?EEARL
+        PUBWEAK __?EECR
+        PUBWEAK __?EEDR
+        PUBLIC initbootuart
+        PUBLIC recchar
+        PUBLIC sendchar
+
+// E:\F Drive\Project\Bootloader project\Code\Common for All Devices\TWI_Master\serial.c
+//    1 /*****************************************************************************
+//    2 *
+//    3 * Atmel Corporation
+//    4 *
+//    5 * File              : serial.c
+//    6 * Compiler          : IAR C 3.10C Kickstart
+//    7 * Revision          : $Revision: 2.0 $
+//    8 * Date              : $Date: Tuesday, November 29, $
+//    9 * Updated by        : $Author: raapeland $
+//   10 *
+//   11 * Support mail      : avr@atmel.com
+//   12 *
+//   13 * Target platform   : All AVRs with bootloader support
+//   14 *
+//   15 * AppNote           : AVR109 - Self-programming
+//   16 *
+//   17 * Description       : UART communication routines
+//   18 ****************************************************************************/
+//   19 #include "defines.h"
+
+        ASEGN ABSOLUTE:DATA:NOROOT,0c6H
+// <__C115> volatile __io _A_UDR0
+_A_UDR0:
+        DS8 1
+
+        ASEGN ABSOLUTE:DATA:NOROOT,0c4H
+// <__C119> volatile __io _A_UBRR0
+_A_UBRR0:
+        DS8 2
+
+        ASEGN ABSOLUTE:DATA:NOROOT,0c1H
+// <__C126> volatile __io _A_UCSR0B
+_A_UCSR0B:
+        DS8 1
+
+        ASEGN ABSOLUTE:DATA:NOROOT,0c0H
+// <__C129> volatile __io _A_UCSR0A
+_A_UCSR0A:
+        DS8 1
+//   20 
+//   21 
+
+        RSEG FARCODE:CODE:NOROOT(1)
+//   22 void initbootuart()
+initbootuart:
+//   23 {
+//   24   BAUD_RATE_LOW_REG = BRREG_VALUE;
+        LDI     R16, 1
+        STS     _A_UBRR0, R16
+//   25   UART_CONTROL_REG = (1 << ENABLE_RECEIVER_BIT) |
+//   26                      (1 << ENABLE_TRANSMITTER_BIT); // enable receive and transmit 
+        LDI     R16, 24
+        STS     _A_UCSR0B, R16
+//   27 }
+        RET
+        REQUIRE _A_UBRR0
+        REQUIRE _A_UCSR0B
+//   28 
+//   29 
+
+        RSEG FARCODE:CODE:NOROOT(1)
+//   30 void sendchar(char c)
+sendchar:
+//   31 {
+//   32   UART_DATA_REG = c;                                   // prepare transmission
+        STS     _A_UDR0, R16
+//   33   while (!(UART_STATUS_REG & (1 << TRANSMIT_COMPLETE_BIT)));// wait until byte sendt
+??sendchar_0:
+        LDS     R16, _A_UCSR0A
+        SBRS    R16, 6
+        RJMP    ??sendchar_0
+//   34   UART_STATUS_REG |= (1 << TRANSMIT_COMPLETE_BIT);          // delete TXCflag
+        LDS     R16, 192
+        ORI     R16, 0x40
+        STS     192, R16
+//   35 }
+        RET
+        REQUIRE _A_UDR0
+        REQUIRE _A_UCSR0A
+//   36 
+//   37 
+
+        RSEG FARCODE:CODE:NOROOT(1)
+//   38 char recchar(void)
+recchar:
+??recchar_0:
+//   39 {
+//   40   while(!(UART_STATUS_REG & (1 << RECEIVE_COMPLETE_BIT)));  // wait for data
+        LDS     R16, _A_UCSR0A
+        SBRS    R16, 7
+        RJMP    ??recchar_0
+//   41   return UART_DATA_REG;
+        LDS     R16, _A_UDR0
+        RET
+        REQUIRE _A_UDR0
+        REQUIRE _A_UCSR0A
+//   42 }
+
+        ASEGN ABSOLUTE:DATA:NOROOT,01fH
+__?EECR:
+
+        ASEGN ABSOLUTE:DATA:NOROOT,020H
+__?EEDR:
+
+        ASEGN ABSOLUTE:DATA:NOROOT,021H
+__?EEARL:
+
+        ASEGN ABSOLUTE:DATA:NOROOT,022H
+__?EEARH:
+
+        END
+// 
+//  5 bytes in segment ABSOLUTE
+// 52 bytes in segment FARCODE
+// 
+// 52 bytes of CODE memory
+//  0 bytes of DATA memory (+ 5 bytes shared)
+//
+//Errors: none
+//Warnings: none

@@ -1,0 +1,1823 @@
+///////////////////////////////////////////////////////////////////////////////
+//                                                                            /
+// IAR C/C++ Compiler V5.50.0.50277/W32 for Atmel AVR   07/Aug/2011  18:42:29 /
+// Copyright (C) 1996-2010 IAR Systems AB.                                    /
+//                                                                            /
+//    Source file  =  E:\F Drive\Project\Bootloader project\Code\Common for   /
+//                    All Devices\TWI_Slave\TWI_Slave.c                       /
+//    Command line =  "E:\F Drive\Project\Bootloader project\Code\Common for  /
+//                    All Devices\TWI_Slave\TWI_Slave.c" --cpu=tiny88 -ms -o  /
+//                    "E:\F Drive\Project\Bootloader project\Code\Common for  /
+//                    All Devices\TWI_Slave\Debug\Obj\" -D __ATTINY88__ -lB   /
+//                    "E:\F Drive\Project\Bootloader project\Code\Common for  /
+//                    All Devices\TWI_Slave\Debug\List\"                      /
+//                    --initializers_in_flash -z2 --no_cse --no_inline        /
+//                    --no_code_motion --no_cross_call --no_clustering        /
+//                    --no_tbaa --debug -DENABLE_BIT_DEFINITIONS -e -I        /
+//                    "C:\Program Files\IAR Systems\Embedded Workbench        /
+//                    5.4\avr\INC\" -I "C:\Program Files\IAR                  /
+//                    Systems\Embedded Workbench 5.4\avr\INC\CLIB\"           /
+//                    --eeprom_size 64                                        /
+//    List file    =  E:\F Drive\Project\Bootloader project\Code\Common for   /
+//                    All Devices\TWI_Slave\Debug\List\TWI_Slave.s90          /
+//                                                                            /
+//                                                                            /
+///////////////////////////////////////////////////////////////////////////////
+
+        NAME TWI_Slave
+
+        RSEG CSTACK:DATA:NOROOT(0)
+        RSEG RSTACK:DATA:NOROOT(0)
+
+        EXTERN ?EPILOGUE_B2_L09
+        EXTERN ?EPILOGUE_B4_L09
+        EXTERN ?EPILOGUE_B6_L09
+        EXTERN ?PROLOGUE2_L09
+        EXTERN ?PROLOGUE4_L09
+        EXTERN ?PROLOGUE6_L09
+        EXTERN ?Register_R4_is_cg_reg
+        EXTERN ?Register_R5_is_cg_reg
+        EXTERN ?need_segment_init
+
+        PUBWEAK `?<Segment init: NEAR_Z>`
+        PUBLIC AbortTWI
+        PUBLIC CleanupAndRunApplication
+        PUBLIC Disable_WatchDogTimer
+        PUBLIC Erase_One_Page
+        PUBLIC GetStatusCode
+        PUBLIC Host_Boot_Delay
+        PUBLIC InitTWI
+        PUBLIC Init_WatchDogTimer
+        PUBLIC IsBootPinLow
+        PUBLIC ProcessPageErase
+        PUBLIC ProcessPageUpdate
+        PUBLIC ProcessSlaveReceive
+        PUBLIC ProcessSlaveTransmit
+        PUBLIC ReadAndProcessPacket
+        PUBLIC Read_EEPROM_byte
+        PUBLIC SlaveReceiveByteAndACK
+        PUBLIC SlaveReceiveByteAndNACK
+        PUBLIC Start_Timer
+        PUBLIC UpdatePage
+        PUBWEAK _A_DDRB
+        PUBWEAK _A_DDRC
+        PUBWEAK _A_EEAR
+        PUBWEAK _A_EECR
+        PUBWEAK _A_EEDR
+        PUBWEAK _A_MCUSR
+        PUBWEAK _A_OCR1A
+        PUBWEAK _A_PINB
+        PUBWEAK _A_PORTB
+        PUBWEAK _A_PORTC
+        PUBWEAK _A_SPMCSR
+        PUBWEAK _A_TCCR1B
+        PUBWEAK _A_TCNT1
+        PUBWEAK _A_TIFR1
+        PUBWEAK _A_TWAR
+        PUBWEAK _A_TWCR
+        PUBWEAK _A_TWDR
+        PUBWEAK _A_TWSR
+        PUBWEAK __?EEARL
+        PUBWEAK __?EECR
+        PUBWEAK __?EEDR
+        PUBLIC gtimeout
+        PUBLIC main
+        PUBLIC pageBuffer
+        PUBLIC state
+        PUBLIC statusCode
+        PUBLIC time_lapse_sec
+
+// E:\F Drive\Project\Bootloader project\Code\Common for All Devices\TWI_Slave\TWI_Slave.c
+//    1 #include <ioavr.h>
+
+        ASEGN ABSOLUTE:DATA:NOROOT,0bcH
+// <__C9> volatile __io _A_TWCR
+_A_TWCR:
+        DS8 1
+
+        ASEGN ABSOLUTE:DATA:NOROOT,0bbH
+// <__C11> volatile __io _A_TWDR
+_A_TWDR:
+        DS8 1
+
+        ASEGN ABSOLUTE:DATA:NOROOT,0baH
+// <__C14> volatile __io _A_TWAR
+_A_TWAR:
+        DS8 1
+
+        ASEGN ABSOLUTE:DATA:NOROOT,0b9H
+// <__C17> volatile __io _A_TWSR
+_A_TWSR:
+        DS8 1
+
+        ASEGN ABSOLUTE:DATA:NOROOT,088H
+// <__C27> volatile __io _A_OCR1A
+_A_OCR1A:
+        DS8 2
+
+        ASEGN ABSOLUTE:DATA:NOROOT,084H
+// <__C35> volatile __io _A_TCNT1
+_A_TCNT1:
+        DS8 2
+
+        ASEGN ABSOLUTE:DATA:NOROOT,081H
+// <__C41> volatile __io _A_TCCR1B
+_A_TCCR1B:
+        DS8 1
+
+        ASEGN ABSOLUTE:DATA:NOROOT,057H
+// <__C110> volatile __io _A_SPMCSR
+_A_SPMCSR:
+        DS8 1
+
+        ASEGN ABSOLUTE:DATA:NOROOT,054H
+// <__C116> volatile __io _A_MCUSR
+_A_MCUSR:
+        DS8 1
+
+        ASEGN ABSOLUTE:DATA:NOROOT,041H
+// <__C150> volatile __io _A_EEAR
+_A_EEAR:
+        DS8 1
+
+        ASEGN ABSOLUTE:DATA:NOROOT,040H
+// <__C152> volatile __io _A_EEDR
+_A_EEDR:
+        DS8 1
+
+        ASEGN ABSOLUTE:DATA:NOROOT,03fH
+// <__C155> volatile __io _A_EECR
+_A_EECR:
+        DS8 1
+
+        ASEGN ABSOLUTE:DATA:NOROOT,036H
+// <__C169> volatile __io _A_TIFR1
+_A_TIFR1:
+        DS8 1
+
+        ASEGN ABSOLUTE:DATA:NOROOT,028H
+// <__C196> volatile __io _A_PORTC
+_A_PORTC:
+        DS8 1
+
+        ASEGN ABSOLUTE:DATA:NOROOT,027H
+// <__C199> volatile __io _A_DDRC
+_A_DDRC:
+        DS8 1
+
+        ASEGN ABSOLUTE:DATA:NOROOT,025H
+// <__C205> volatile __io _A_PORTB
+_A_PORTB:
+        DS8 1
+
+        ASEGN ABSOLUTE:DATA:NOROOT,024H
+// <__C208> volatile __io _A_DDRB
+_A_DDRB:
+        DS8 1
+
+        ASEGN ABSOLUTE:DATA:NOROOT,023H
+// <__C211> volatile __io _A_PINB
+_A_PINB:
+        DS8 1
+//    2 #include "stdint.h"
+//    3 #include <inavr.h>
+//    4 
+//    5 // Select the communcation interfacing type: TWI or USI
+//    6 #if defined(__ATTINY25__)   | defined(__ATTINY25V__) | \ 
+//    7     defined(__ATTINY45__)   | defined(__ATTINY45V__) | \ 
+//    8     defined(__ATTINY85__)   | defined(__ATTINY85V__) | \ 
+//    9     defined(__ATTINY24__)   | defined(__ATTINY24A__) | \ 
+//   10     defined(__ATTINY44__)   | defined(__ATTINY44A__) | \ 
+//   11     defined(__ATTINY84__)   | defined(__ATTINY84A__) | \ 
+//   12     defined(__ATTINY2313__) | defined(__ATTINY2313A__) | \ 
+//   13     defined(__ATTINY4313__) | defined(__ATTINY4313A__) | \ 
+//   14     defined(__ATTINY261__)  | defined(__ATTINY261A__) | \ 
+//   15     defined(__ATTINY461__)  | defined(__ATTINY461A__) | \ 
+//   16     defined(__ATTINY861__)  | defined(__ATTINY861A__) | \ 
+//   17     defined(__ATTINY43U__)  | \ 
+//   18     defined(__ATTINY87__)   | \ 
+//   19     defined(__ATTINY167__)
+//   20     #define __USI__  // set the communication type as USI
+//   21 #endif 
+//   22 
+//   23 
+//   24 #if defined(__ATTINY48__) | defined(__ATTINY88__) | \ 
+//   25     defined(__ATMEGA48A__) | defined(__ATMEGA48PA__) | \ 
+//   26     defined(__ATMEGA48__)
+//   27     #define __TWI__
+//   28 #endif      
+//   29 
+//   30 /***************************************************************/
+//   31 
+//   32 #ifdef __USI__
+//   33     #include "USI_TWI_Slave.c"
+//   34     #include "USI_TWI_Slave.h"
+//   35 #endif
+//   36 
+//   37 // Page size selection for the controller with 2K flash
+//   38 #if defined(__ATTINY25__)   | defined(__ATTINY25V__) | \ 
+//   39     defined(__ATTINY24__)   | defined(__ATTINY24A__) | \ 
+//   40     defined(__ATTINY2313__) | defined(__ATTINY2313A__) | \ 
+//   41     defined(__ATTINY261__)  | defined(__ATTINY261A__)
+//   42 
+//   43     // The flash memory page size for these devices
+//   44     #define PAGE_SIZE 32 
+//   45 
+//   46     // Page 32, the start of bootloader section
+//   47     #define BOOT_PAGE_ADDRESS 0X0400  
+//   48 
+//   49     // 2KB of flash divided by pages of size 32 bytes
+//   50     #define TOTAL_NO_OF_PAGES  64    
+//   51     
+//   52     // The number of pages being used for bootloader code
+//   53     #define BOOTLOADER_PAGES          	(TOTAL_NO_OF_PAGES - BOOT_PAGE_ADDRESS/PAGE_SIZE)	
+//   54  
+//   55     // For bounds check during page write/erase operation to protect the bootloader code from being corrupted
+//   56     #define LAST_PAGE_NO_TO_BE_ERASED 	(TOTAL_NO_OF_PAGES - BOOTLOADER_PAGES)	
+//   57 #endif
+//   58 
+//   59 // Page size selection for the controller with 4K flash
+//   60 
+//   61 #if defined(__ATTINY45__)   | defined(__ATTINY45V__) | \ 
+//   62     defined(__ATTINY44__)   | defined(__ATTINY44A__) | \ 
+//   63     defined(__ATTINY4313__) | defined(__ATTINY4313A__) | \ 
+//   64     defined(__ATTINY461__)  | defined(__ATTINY461A__) | \ 
+//   65     defined(__ATTINY43U__)  | \ 
+//   66     defined(__ATTINY48__)   | \ 
+//   67     defined(__ATMEGA48__) | \ 
+//   68     defined(__ATMEGA48A__) | defined(__ATMEGA48PA__)
+//   69           
+//   70     // The flash memory page size for these devices
+//   71     #define PAGE_SIZE 64      
+//   72     
+//   73     // Page 48, the start of bootloader section
+//   74     #define BOOT_PAGE_ADDRESS 0X0C00   
+//   75     
+//   76     // 4KB of flash divided by pages of size 64 bytes
+//   77     #define TOTAL_NO_OF_PAGES  64    
+//   78 
+//   79     // The number of pages being used for bootloader code
+//   80     #define BOOTLOADER_PAGES          	(TOTAL_NO_OF_PAGES - BOOT_PAGE_ADDRESS/PAGE_SIZE)	
+//   81 
+//   82   // For bounds check during page write/erase operation to protect the bootloader code from being corrupted
+//   83    #define LAST_PAGE_NO_TO_BE_ERASED 	(TOTAL_NO_OF_PAGES - BOOTLOADER_PAGES)	
+//   84 #endif
+//   85 
+//   86 
+//   87 // Page size selection for the controller with 8K flash
+//   88 #if defined(__ATTINY85__)   | defined(__ATTINY85V__) | \ 
+//   89     defined(__ATTINY84__)   | defined(__ATTINY84A__) | \ 
+//   90     defined(__ATTINY861__)  | defined(__ATTINY861A__) | \ 
+//   91     defined(__ATTINY87__)   | \ 
+//   92     defined(__ATTINY88__)
+//   93       
+//   94     // The flash memory page size for these devices
+//   95     #define PAGE_SIZE 64      
+//   96 
+//   97     // Page 112, the start of bootloader section
+//   98     #define BOOT_PAGE_ADDRESS 0X1C00   
+//   99   
+//  100     // 8KB of flash divided by pages of size 64 bytes
+//  101     #define TOTAL_NO_OF_PAGES  128    
+//  102     
+//  103     // The number of pages being used for bootloader code
+//  104     #define BOOTLOADER_PAGES          	(TOTAL_NO_OF_PAGES - BOOT_PAGE_ADDRESS/PAGE_SIZE)	
+//  105 
+//  106     // For bounds check during page write/erase operation to protect the bootloader code from being corrupted
+//  107     #define LAST_PAGE_NO_TO_BE_ERASED 	(TOTAL_NO_OF_PAGES - BOOTLOADER_PAGES)	
+//  108 #endif
+//  109 
+//  110 // Page size selection for the controller with 16K flash   
+//  111 #if defined(__ATTINY167__) 
+//  112 
+//  113     // The flash memory page size for Atiny167
+//  114     #define PAGE_SIZE 128     
+//  115 
+//  116     // Page 120, the start of bootloader section
+//  117     #define BOOT_PAGE_ADDRESS 0X3C00  
+//  118 
+//  119     // 16KB of flash divided by pages of size 128 bytes
+//  120     #define TOTAL_NO_OF_PAGES  128   
+//  121 
+//  122     // The number of pages being used for bootloader code
+//  123     #define BOOTLOADER_PAGES          	(TOTAL_NO_OF_PAGES - BOOT_PAGE_ADDRESS/PAGE_SIZE)	
+//  124 
+//  125     // For bounds check during page write/erase operation to protect the bootloader code from being corrupted
+//  126     #define LAST_PAGE_NO_TO_BE_ERASED 	(TOTAL_NO_OF_PAGES - BOOTLOADER_PAGES)	
+//  127 
+//  128 #endif   
+//  129 
+//  130 //configuring LAST_INTVECT_ADDRESS as per device selected
+//  131 /*****************************************************************************/
+//  132 #ifdef __TWI__
+//  133   #if  defined(__ATMEGA48__) | \ 
+//  134        defined(__ATMEGA48A__) | defined(__ATMEGA48PA__)
+//  135        #define LAST_INTVECT_ADDRESS 		SPM_READY_vect  // The start of the application code
+//  136   #endif
+//  137 
+//  138   /*****************************************************************************/
+//  139   #if defined(__ATTINY48__) | defined(__ATTINY88__)
+//  140      #define LAST_INTVECT_ADDRESS 		TWI_vect// The start of the application code
+//  141   #endif
+//  142   /*****************************************************************************/
+//  143 #endif
+//  144 
+//  145 
+//  146 
+//  147 #ifdef __USI__
+//  148  /*****************************************************************************/
+//  149     #if defined(__ATTINY167__) 
+//  150        #define LAST_INTVECT_ADDRESS 	USI_START_vect// The start of the application code
+//  151     #endif
+//  152 
+//  153     #if defined(__ATTINY85__) 
+//  154        #define LAST_INTVECT_ADDRESS 	USI_OVF_vect// The start of the application code
+//  155     #endif
+//  156  /*****************************************************************************/
+//  157 
+//  158  /*****************************************************************************/
+//  159  /*****************************************************************************/
+//  160  /*****************************************************************************/
+//  161  /*****************************************************************************/
+//  162  /*****************************************************************************/
+//  163  /*****************************************************************************/
+//  164 #endif
+//  165 
+//  166 #define BOOT_SETTLE_DELAY         	100	// Debounce delay for the boot pin in MCU cycles
+//  167 #define SLAVE_ADDRESS             	0xb0	// The address identifier of this slave device on the TWI (I2C) bus
+//  168 #define INTVECT_PAGE_ADDRESS      	0x000	// The location of the start of the interrupt vector table address
+//  169 
+//  170 
+//  171  /*****************************************************************************/
+//  172  /*****************************************************************************/
+//  173 // Select the correct Bit name of to SELFPROGRAMming
+//  174 #if defined(__ATTINY48__) | defined(__ATTINY48A__) | \ 
+//  175     defined(__ATTINY88__) | defined(__ATTINY88A__) | \ 
+//  176     defined(__ATMEGA48__) | \ 
+//  177     defined(__ATMEGA48A__) | defined(__ATMEGA48PA__)
+//  178       
+//  179     #define SELFPROGEN     SELFPRGEN
+//  180 
+//  181 #endif
+//  182  /*****************************************************************************/
+//  183  /*****************************************************************************/
+//  184 #if defined(__ATTINY25__)   | defined(__ATTINY25V__) | \ 
+//  185     defined(__ATTINY45__)   | defined(__ATTINY45V__) | \ 
+//  186     defined(__ATTINY85__)   | defined(__ATTINY85V__) | \ 
+//  187     defined(__ATTINY87__)   | defined(__ATTINY167__)
+//  188     
+//  189      #define SELFPROGEN SPMEN
+//  190 
+//  191 #endif
+//  192  /*****************************************************************************/
+//  193  /*****************************************************************************/
+//  194 
+//  195 
+//  196 #define WDT_TIMEOUT_8s      		( _BV( WDP3 ) | _BV( WDP0 ) )	        // Watchdog timeout for inactivity in the boot section
+//  197 #define WDT_TIMEOUT_16ms    		0	// Watchdog timeout for system reset (cleanup) before jump to application
+//  198 #define WDT_TIMEOUT_min     		WDT_TIMEOUT_16ms	                // The minimum watchdog reset time interval for jump to application
+//  199 
+//  200 /*****************************************************************************/
+//  201 /*****************************************************************************/
+//  202 #ifdef __TWI__
+//  203 #define TWI_SLAW_RECEIVED         	0x60	// Status slave address and write command received
+//  204 #define TWI_SLAR_RECEIVED         	0xa8	// Status slave address and read command received
+//  205 #define TWI_SLAVETX_NACK_RECEIVED 	0xc0	// Status slave transmit and no acknowledgement or last byte
+//  206 #define TWI_SLAVERX_ACK_RETURNED  	0x80	// Status slave receive and acknowledgement returned
+//  207 #define TWI_SLAVERX_NACK_RETURNED 	0x88	// Status slave receive and no acknowledgement or last byte
+//  208 
+//  209 #endif
+//  210 
+//  211 /*****************************************************************************/
+//  212 /*****************************************************************************/
+//  213 #define TWI_CMD_PAGEUPDATE        	0x01	// TWI Command to program a flash page
+//  214 #define TWI_CMD_EXECUTEAPP        	0x02	// TWI Command to jump to the application program
+//  215 #define TWI_CMD_AVERSION          	0x03	// TWI Command to read the application revision identifier
+//  216 #define TWI_CMD_BVERSION          	0x04	// TWI Command to get the bootloader revision identifier
+//  217 #define TWI_CMD_ERASEFLASH        	0x05	// TWI Command to erase the entire application section of flash memory
+//  218 #define TWI_CMD_GETERRCONDN             0x07    // TWI Command to get Error condition
+//  219 
+//  220 /*****************************************************************************/
+//  221 /*****************************************************************************/
+//  222 
+//  223 #define STATUSMASK_SPMBUSY 		0x01	// The mask bit for SPM busy status code
+//  224 #define STATUSMASK_BLSCERR              0x02    // The mask bit for attempt to override bootloader section
+//  225 #define STATUSMASK_TWIABORT             0x04    // The mask bit for indicating TWI abort fn called
+//  226 #define STATUSMASK_SLTR_BUSY            0x08    // The mask bit for slave transmit
+//  227 #define STATUSMASK_SLRBAA_BUSY          0x10    // The mask bit for slave receive and ack
+//  228 #define STATUSMASK_SLRBAN_BUSY          0x20    // The mask bit for slave receive and Nack
+//  229 #define STATUSMASK_EEPROM_BUSY          0x40    // The mask bit for EEPROM busy
+//  230 #define STATUSMASK_BOOTLOADER           0x80    // The mask bit for bootloader operations
+//  231 /*****************************************************************************/
+//  232 /*****************************************************************************/
+//  233 
+//  234 #define EEMEM_ADDR_AVERSION 		0x05	// The address in EEPROM where application revision identifier will be stored
+//  235 #define BVERSION 			0x96	// This bootloader revision identifier
+//  236 
+//  237 #ifndef _BV
+//  238 #define _BV( __BIT_POSITION__ ) ( 1 << __BIT_POSITION__ )
+//  239 #endif
+//  240 
+//  241 #ifdef _BV
+//  242 #warning _BV now stands defined
+//  243 #endif
+//  244 
+//  245 //raju
+
+        RSEG NEAR_Z:DATA:NOROOT(0)
+        REQUIRE `?<Segment init: NEAR_Z>`
+//  246 uint8_t state = 0;
+state:
+        DS8 1
+
+        RSEG NEAR_N:DATA:NOROOT(0)
+//  247 __no_init uint8_t pageBuffer[PAGE_SIZE];
+pageBuffer:
+        DS8 64
+
+        RSEG NEAR_Z:DATA:NOROOT(0)
+        REQUIRE `?<Segment init: NEAR_Z>`
+//  248 uint8_t time_lapse_sec = 0; 
+time_lapse_sec:
+        DS8 1
+
+        RSEG NEAR_Z:DATA:NOROOT(0)
+        REQUIRE `?<Segment init: NEAR_Z>`
+//  249 uint8_t volatile gtimeout;
+gtimeout:
+        DS8 1
+
+        RSEG NEAR_Z:DATA:NOROOT(0)
+        REQUIRE `?<Segment init: NEAR_Z>`
+//  250 uint8_t statusCode = 0;
+statusCode:
+        DS8 1
+//  251 
+//  252 /***********************************************************************/
+//  253 
+//  254 /***********************************************************************/
+//  255 #ifdef __TWI__
+
+        RSEG CODE:CODE:NOROOT(1)
+//  256 void InitTWI (void)
+InitTWI:
+//  257 {
+//  258   DDRC &= ~((1 << PORTC5) | (1 << PORTC4));
+        IN      R16, 0x07
+        ANDI    R16, 0xCF
+        OUT     0x07, R16
+//  259   PORTC &= ~((1 << PORTC5) | (1 << PORTC4));
+        IN      R16, 0x08
+        ANDI    R16, 0xCF
+        OUT     0x08, R16
+//  260   TWAR = SLAVE_ADDRESS;
+        LDI     R16, 176
+        STS     _A_TWAR, R16
+//  261   TWCR = (1 << TWEN);		
+        LDI     R16, 4
+        STS     _A_TWCR, R16
+//  262   // Enable, but don't enable ACK until we are ready to receive packets.
+//  263 }
+        RET
+        REQUIRE _A_TWCR
+        REQUIRE _A_TWAR
+        REQUIRE _A_PORTC
+        REQUIRE _A_DDRC
+//  264 #endif
+//  265 /***********************************************************************/
+//  266 
+//  267 
+//  268 
+//  269 /***********************************************************************/
+//  270 //! Return non-zero if "Enter Bootloader" pin is held low externally.
+
+        RSEG CODE:CODE:NOROOT(1)
+//  271 uint8_t IsBootPinLow (void)
+IsBootPinLow:
+//  272 {
+//  273   // Make sure "Enter Bootloader" pin is input with internal pull-up.
+//  274 #if defined(__ATTINY24__)   | defined(__ATTINY24A__) | \ 
+//  275     defined(__ATTINY44__)   | defined(__ATTINY44A__) | \ 
+//  276     defined(__ATTINY84__)   | defined(__ATTINY84A__) | \ 
+//  277     defined(__ATTINY2313__) | defined(__ATTINY2313A__) | \ 
+//  278     defined(__ATTINY4313__) | defined(__ATTINY4313A__) | \ 
+//  279     defined(__ATTINY43U__)  | \ 
+//  280     defined(__ATTINY87__) | defined(__ATTINY167__) | \ 
+//  281     defined(__ATTINY48__)   | defined(__ATTINY88__) | \ 
+//  282     defined(__ATMEGA48__) | \ 
+//  283     defined(__ATMEGA48A__) | defined(__ATMEGA48PA__)
+//  284     
+//  285      DDRB &= ~(1 << PORTB0);  //making port pin as input
+        CBI     0x04, 0x00
+//  286     PORTB |= (1 << PORTB0);   
+        SBI     0x05, 0x00
+//  287     // Let it settle.
+//  288   __delay_cycles (BOOT_SETTLE_DELAY);
+        LDI     R16, 33
+        DEC     R16
+        BRNE    $-2
+        NOP
+//  289   // Return non-zero if pin is low.
+//  290   return ((PINB & (1 << PORTB0)) == 0);
+        LDI     R16, 0
+        SBIC    0x03, 0x00
+        INC     R16
+??IsBootPinLow_0:
+        LDI     R17, 1
+        EOR     R16, R17
+        RET
+        REQUIRE _A_PORTB
+        REQUIRE _A_DDRB
+        REQUIRE _A_PINB
+//  291 #endif
+//  292   
+//  293 #if defined(__ATTINY261__)  | defined(__ATTINY261A__) | \ 
+//  294     defined(__ATTINY461__)  | defined(__ATTINY461A__) | \ 
+//  295     defined(__ATTINY861__)  | defined(__ATTINY861A__) | \ 
+//  296     defined(__ATTINY25__)   | defined(__ATTINY25V__) | \ 
+//  297     defined(__ATTINY45__)   | defined(__ATTINY45V__) | \ 
+//  298     defined(__ATTINY85__)   | defined(__ATTINY85V__)    
+//  299     
+//  300     DDRB &= ~(1 << PORTB4);   //making port pin as input
+//  301     PORTB |= (1 << PORTB4); 
+//  302     // Let it settle.
+//  303   __delay_cycles (BOOT_SETTLE_DELAY);
+//  304   // Return non-zero if pin is low.
+//  305   return ((PINB & (1 << PORTB4)) == 0);
+//  306 #endif
+//  307 }
+//  308 /***********************************************************************/
+//  309 
+//  310 
+//  311 
+//  312 /***********************************************************************/
+
+        RSEG CODE:CODE:NOROOT(1)
+//  313 uint8_t GetStatusCode (void)
+GetStatusCode:
+//  314 {
+//  315   // Check if SPM operation is complete  
+//  316   if ((SPMCSR & (1 << SELFPROGEN)) != 0)
+        IN      R16, 0x37
+        MOV     R17, R16
+        SBRS    R17, 0
+        RJMP    ??GetStatusCode_0
+//  317     statusCode |= STATUSMASK_SPMBUSY;
+        LDI     R30, LOW(statusCode)
+        LDI     R31, (statusCode) >> 8
+        LD      R16, Z
+        ORI     R16, 0x01
+        ST      Z, R16
+//  318  
+//  319   return statusCode;
+??GetStatusCode_0:
+        LDS     R16, statusCode
+        RET
+        REQUIRE _A_SPMCSR
+//  320 }
+//  321 /***********************************************************************/
+//  322 
+//  323 
+//  324 /***********************************************************************/
+//  325 #ifdef __TWI__
+
+        RSEG CODE:CODE:NOROOT(1)
+//  326 void AbortTWI (void)
+AbortTWI:
+//  327 {
+//  328   // Recover from error condition by releasing bus lines.
+//  329   TWCR = (1 << TWINT) | (1 << TWSTO) | (1 << TWEN);
+        LDI     R16, 148
+        STS     _A_TWCR, R16
+//  330 }
+        RET
+        REQUIRE _A_TWCR
+//  331 #endif
+//  332 /***********************************************************************/
+//  333 
+//  334 
+//  335 /***********************************************************************/
+//  336 #ifdef __TWI__
+
+        RSEG CODE:CODE:NOROOT(1)
+//  337 void ProcessSlaveTransmit (uint8_t data)
+ProcessSlaveTransmit:
+//  338 {
+        ST      -Y, R24
+        MOV     R24, R16
+//  339   // Prepare data for transmission.
+//  340   TWDR = data;
+        STS     _A_TWDR, R24
+//  341   TWCR = (1 << TWINT) | (1 << TWEN);	// Send byte, NACK expected from master.
+        LDI     R16, 132
+        STS     _A_TWCR, R16
+//  342   // Wait for activity.
+//  343   do{} while ((TWCR & (1 << TWINT)) == 0);
+??ProcessSlaveTransmit_0:
+        LDS     R16, _A_TWCR
+        MOV     R17, R16
+        SBRS    R17, 7
+        RJMP    ??ProcessSlaveTransmit_0
+//  344   __watchdog_reset ();
+        WDR
+//  345   // Check TWI status code for SLAVETX_NACK.
+//  346   switch (TWSR)
+        LDS     R16, _A_TWSR
+        CPI     R16, 192
+        BRNE    ??ProcessSlaveTransmit_1
+//  347   {
+//  348     case TWI_SLAVETX_NACK_RECEIVED:
+//  349       // End communication.
+//  350       TWCR = (1 << TWINT) | (1 << TWEN);
+        LDI     R16, 132
+        STS     _A_TWCR, R16
+        RJMP    ??ProcessSlaveTransmit_2
+//  351       break;
+//  352 
+//  353     default:
+//  354       AbortTWI ();
+??ProcessSlaveTransmit_1:
+        RCALL   AbortTWI
+//  355   }
+//  356 }
+??ProcessSlaveTransmit_2:
+        LD      R24, Y+
+        RET
+        REQUIRE _A_TWCR
+        REQUIRE _A_TWDR
+        REQUIRE _A_TWSR
+//  357 #endif
+//  358 /***********************************************************************/
+//  359 
+//  360 
+//  361 /***********************************************************************/
+//  362 #ifdef __TWI__
+
+        RSEG CODE:CODE:NOROOT(1)
+//  363 uint8_t SlaveReceiveByteAndACK (uint8_t * data)
+SlaveReceiveByteAndACK:
+//  364 {
+        RCALL   ?PROLOGUE4_L09
+        MOVW    R27:R26, R17:R16
+//  365    // Receive byte and return ACK.
+//  366   TWCR = (1 << TWINT) | (1 << TWEA) | (1 << TWEN);
+        LDI     R16, 196
+        STS     _A_TWCR, R16
+//  367   // Wait for activity.
+//  368   do{} while ((TWCR & (1 << TWINT)) == 0);
+??SlaveReceiveByteAndACK_0:
+        LDS     R16, _A_TWCR
+        MOV     R17, R16
+        SBRS    R17, 7
+        RJMP    ??SlaveReceiveByteAndACK_0
+//  369   __watchdog_reset ();
+        WDR
+//  370   // Check TWI status code for SLAVERX_ACK.
+//  371   switch (TWSR)
+        LDS     R16, _A_TWSR
+        CPI     R16, 128
+        BRNE    ??SlaveReceiveByteAndACK_1
+//  372   {
+//  373     case TWI_SLAVERX_ACK_RETURNED:
+//  374       // Get byte and return non-zero for success.
+//  375       *data = TWDR;	  
+        LDS     R16, _A_TWDR
+        ST      X, R16
+//  376       return 1;
+        LDI     R16, 1
+        RJMP    ??SlaveReceiveByteAndACK_2
+//  377 
+//  378     default:	
+//  379       AbortTWI ();
+??SlaveReceiveByteAndACK_1:
+        RCALL   AbortTWI
+//  380       return 0;
+        LDI     R16, 0
+??SlaveReceiveByteAndACK_2:
+        LDI     R30, 4
+        RJMP    ?EPILOGUE_B4_L09
+        REQUIRE _A_TWCR
+        REQUIRE _A_TWDR
+        REQUIRE _A_TWSR
+//  381   }
+//  382 }
+//  383 #endif
+//  384 /***********************************************************************/
+//  385 
+//  386 
+//  387 /***********************************************************************/
+//  388 #ifdef __TWI__
+
+        RSEG CODE:CODE:NOROOT(1)
+//  389 uint8_t SlaveReceiveByteAndNACK (uint8_t * data)
+SlaveReceiveByteAndNACK:
+//  390 {
+        RCALL   ?PROLOGUE4_L09
+        MOVW    R27:R26, R17:R16
+//  391   // Receive byte and return NACK.
+//  392   TWCR = (1 << TWINT) | (1 << TWEN);
+        LDI     R16, 132
+        STS     _A_TWCR, R16
+//  393   // Wait for activity.
+//  394   do{} while ((TWCR & (1 << TWINT)) == 0);
+??SlaveReceiveByteAndNACK_0:
+        LDS     R16, _A_TWCR
+        MOV     R17, R16
+        SBRS    R17, 7
+        RJMP    ??SlaveReceiveByteAndNACK_0
+//  395   __watchdog_reset ();
+        WDR
+//  396   
+//  397   // Check TWI status code for SLAVERX_ACK.
+//  398   switch (TWSR)
+        LDS     R16, _A_TWSR
+        CPI     R16, 136
+        BRNE    ??SlaveReceiveByteAndNACK_1
+//  399   {
+//  400     case TWI_SLAVERX_NACK_RETURNED:
+//  401       // Get byte, end communication and return non-zero for success.
+//  402       *data = TWDR;
+        LDS     R16, _A_TWDR
+        ST      X, R16
+//  403       TWCR = (1 << TWINT) | (1 << TWEN);
+        LDI     R16, 132
+        STS     _A_TWCR, R16
+//  404       return 1;
+        LDI     R16, 1
+        RJMP    ??SlaveReceiveByteAndNACK_2
+//  405 
+//  406     default:
+//  407 	// Reset the SLRBAN busy LED
+//  408       AbortTWI ();
+??SlaveReceiveByteAndNACK_1:
+        RCALL   AbortTWI
+//  409       return 0;
+        LDI     R16, 0
+??SlaveReceiveByteAndNACK_2:
+        LDI     R30, 4
+        RJMP    ?EPILOGUE_B4_L09
+        REQUIRE _A_TWCR
+        REQUIRE _A_TWDR
+        REQUIRE _A_TWSR
+//  410   }
+//  411 }
+//  412 #endif
+//  413 /***********************************************************************/
+//  414 
+//  415 
+//  416 /***********************************************************************/
+//  417 /*  Absolute Unconditional Page Erase  Check bounds elsewhere    */
+
+        RSEG CODE:CODE:NOROOT(1)
+//  418 void Erase_One_Page (uint16_t addr)
+Erase_One_Page:
+//  419 {
+//  420   // Erase page at the given address
+//  421   _SPM_ERASE (addr);
+        LDI     R18, 3
+        MOVW    R31:R30, R17:R16
+        OUT     0x37, R18
+        SPM
+//  422 
+//  423   do{} while ((SPMCSR & (1 << SELFPROGEN)) != 0);
+??Erase_One_Page_0:
+        IN      R18, 0x37
+        MOV     R19, R18
+        SBRC    R19, 0
+        RJMP    ??Erase_One_Page_0
+//  424   __DataToR0ByteToSPMCR_SPM (0, ((1 << 4) | (1 << SELFPROGEN)));
+        LDI     R19, 17
+        LDI     R18, 0
+        MOV     R0, R18
+        OUT     0x37, R19
+        SPM
+//  425   do{} while ((SPMCSR & (1 << SELFPROGEN)) != 0);
+??Erase_One_Page_1:
+        IN      R18, 0x37
+        MOV     R19, R18
+        SBRC    R19, 0
+        RJMP    ??Erase_One_Page_1
+//  426 
+//  427   
+//  428 }
+        RET
+        REQUIRE _A_SPMCSR
+//  429 /***********************************************************************/
+//  430 
+//  431 
+//  432 
+//  433 /***********************************************************************/
+
+        RSEG CODE:CODE:NOROOT(1)
+//  434 void UpdatePage (uint16_t pageAddress)
+UpdatePage:
+//  435 {
+        RCALL   ?PROLOGUE6_L09
+        REQUIRE ?Register_R4_is_cg_reg
+        REQUIRE ?Register_R5_is_cg_reg
+        MOVW    R27:R26, R17:R16
+//  436   // Mask out in-page address bits.
+//  437   pageAddress &= ~(PAGE_SIZE - 1);
+        ANDI    R26, 0xC0
+        ANDI    R27, 0xFF
+//  438   // Protect RESET vector if this is page 0.
+//  439   if (pageAddress == INTVECT_PAGE_ADDRESS)
+        MOV     R16, R26
+        OR      R16, R27
+        BRNE    ??UpdatePage_0
+//  440   {
+//  441     // Load existing RESET vector contents into buffer.
+//  442     pageBuffer[0] =
+//  443     __load_program_memory ((void __flash *) (INTVECT_PAGE_ADDRESS + 0));
+        LDI     R30, 0
+        LDI     R31, 0
+        LPM     R0, Z
+        STS     pageBuffer, R0
+//  444     pageBuffer[1] =
+//  445     __load_program_memory ((void __flash *) (INTVECT_PAGE_ADDRESS + 1));
+        LDI     R30, LOW(1)
+        LDI     R31, (1) >> 8
+        LPM     R0, Z
+        STS     (pageBuffer + 1), R0
+//  446   }
+//  447 
+//  448   // Ignore any attempt to update boot section.
+//  449   if (pageAddress < BOOT_PAGE_ADDRESS)
+??UpdatePage_0:
+        CPI     R26, 0
+        LDI     R16, 28
+        CPC     R27, R16
+        BRCC    ??UpdatePage_1
+//  450   {
+//  451     Erase_One_Page (pageAddress);
+        MOVW    R17:R16, R27:R26
+        RCALL   Erase_One_Page
+//  452 
+//  453     // Load temporary page buffer.
+//  454     uint8_t *bufferPtr = pageBuffer;
+        LDI     R16, LOW(pageBuffer)
+        LDI     R17, (pageBuffer) >> 8
+        MOVW    R5:R4, R17:R16
+//  455     uint16_t tempAddress = pageAddress;
+        MOVW    R25:R24, R27:R26
+//  456     for (uint8_t i = 0; i < PAGE_SIZE; i += 2)
+        LDI     R16, 0
+??UpdatePage_2:
+        CPI     R16, 64
+        BRCC    ??UpdatePage_3
+//  457     {
+//  458       uint16_t tempWord = ((bufferPtr[1] << 8) | bufferPtr[0]);
+        MOVW    R31:R30, R5:R4
+        LDD     R23, Z+1
+        LDI     R22, 0
+        MOVW    R31:R30, R5:R4
+        LD      R18, Z
+        LDI     R19, 0
+        OR      R22, R18
+        OR      R23, R19
+        MOVW    R21:R20, R23:R22
+//  459       _SPM_FILLTEMP (tempAddress, tempWord); // Fill the temporary buffer with the given data
+        LDI     R17, 1
+        MOVW    R31:R30, R25:R24
+        MOVW    R1:R0, R21:R20
+        OUT     0x37, R17
+        SPM
+//  460       tempAddress += 2;
+        ADIW    R25:R24, 2
+//  461       bufferPtr += 2;
+        LDI     R17, 2
+        ADD     R4, R17
+        LDI     R17, 0
+        ADC     R5, R17
+//  462     }
+        SUBI    R16, 254
+        RJMP    ??UpdatePage_2
+//  463     // Write page from temporary buffer to the given location in flasm memory
+//  464     _SPM_PAGEWRITE (pageAddress);
+??UpdatePage_3:
+        LDI     R16, 5
+        MOVW    R31:R30, R27:R26
+        OUT     0x37, R16
+        SPM
+//  465 
+//  466 
+//  467     
+//  468     do{} while ((SPMCSR & (1 << SELFPROGEN)) != 0); // Wait for the SPM operation to complete
+??UpdatePage_4:
+        IN      R16, 0x37
+        MOV     R17, R16
+        SBRC    R17, 0
+        RJMP    ??UpdatePage_4
+//  469     __DataToR0ByteToSPMCR_SPM (0, ((1 << 4) | (1 << SELFPROGEN))); // Clear Temporary Buffer
+        LDI     R17, 17
+        LDI     R16, 0
+        MOV     R0, R16
+        OUT     0x37, R17
+        SPM
+//  470     do{} while ((SPMCSR & (1 << SELFPROGEN)) != 0); // Wait for the SPM operation to complete
+??UpdatePage_5:
+        IN      R16, 0x37
+        MOV     R17, R16
+        SBRC    R17, 0
+        RJMP    ??UpdatePage_5
+//  471 
+//  472     
+//  473     __watchdog_reset (); // Reset the watchdog timer
+        WDR
+//  474   }
+//  475 }
+??UpdatePage_1:
+        LDI     R30, 6
+        RJMP    ?EPILOGUE_B6_L09
+        REQUIRE _A_SPMCSR
+//  476 
+//  477 
+//  478 /***********************************************************************/
+//  479 
+//  480 /***********************************************************************/
+
+        RSEG CODE:CODE:NOROOT(1)
+//  481 void ProcessPageUpdate (void)
+ProcessPageUpdate:
+//  482 {
+        RCALL   ?PROLOGUE4_L09
+        SBIW    R29:R28, 2
+//  483   // Check the SPM is ready, abort if not.
+//  484   if ((SPMCSR & (1 << SELFPROGEN)) != 0)
+        IN      R16, 0x37
+        MOV     R17, R16
+        SBRS    R17, 0
+        RJMP    ??ProcessPageUpdate_0
+//  485   {
+//  486     #ifdef __TWI__
+//  487       AbortTWI ();
+        RCALL   AbortTWI
+        RJMP    ??ProcessPageUpdate_1
+//  488     #endif
+//  489   }
+//  490   else
+//  491   {
+//  492     uint8_t error = 0;
+??ProcessPageUpdate_0:
+        LDI     R27, 0
+//  493     uint8_t pageAddressLo;
+//  494     uint8_t pageAddressHi;
+//  495     uint8_t *bufferPtr = pageBuffer;
+        LDI     R16, LOW(pageBuffer)
+        LDI     R17, (pageBuffer) >> 8
+        MOVW    R25:R24, R17:R16
+//  496     // Receive two-byte page address.
+//  497     error = SlaveReceiveByteAndACK (&pageAddressLo) == 0;
+        MOVW    R17:R16, R29:R28
+        SUBI    R16, 255
+        SBCI    R17, 255
+        RCALL   SlaveReceiveByteAndACK
+        TST     R16
+        BRNE    ??ProcessPageUpdate_2
+        LDI     R16, 1
+        RJMP    ??ProcessPageUpdate_3
+??ProcessPageUpdate_2:
+        LDI     R16, 0
+??ProcessPageUpdate_3:
+        MOV     R27, R16
+//  498     if (!error)
+        TST     R27
+        BRNE    ??ProcessPageUpdate_4
+//  499     {
+//  500       error = SlaveReceiveByteAndACK (&pageAddressHi) == 0;
+        MOVW    R17:R16, R29:R28
+        RCALL   SlaveReceiveByteAndACK
+        TST     R16
+        BRNE    ??ProcessPageUpdate_5
+        LDI     R16, 1
+        RJMP    ??ProcessPageUpdate_6
+??ProcessPageUpdate_5:
+        LDI     R16, 0
+??ProcessPageUpdate_6:
+        MOV     R27, R16
+//  501     }
+//  502     // Receive page data.
+//  503      if (!error)
+??ProcessPageUpdate_4:
+        TST     R27
+        BRNE    ??ProcessPageUpdate_7
+//  504     {
+//  505       for (uint8_t i = 0; i < (PAGE_SIZE - 1); ++i)
+        LDI     R26, 0
+??ProcessPageUpdate_8:
+        CPI     R26, 63
+        BRCC    ??ProcessPageUpdate_7
+//  506       {
+//  507 	if (SlaveReceiveByteAndACK (bufferPtr) != 0)
+        MOVW    R17:R16, R25:R24
+        RCALL   SlaveReceiveByteAndACK
+        TST     R16
+        BREQ    ??ProcessPageUpdate_9
+//  508 	{
+//  509           ++bufferPtr;
+        ADIW    R25:R24, 1
+//  510 	}
+        INC     R26
+        RJMP    ??ProcessPageUpdate_8
+//  511 	else
+//  512 	{
+//  513 	  error = 1;
+??ProcessPageUpdate_9:
+        LDI     R27, 1
+//  514 	  break;
+//  515 	}
+//  516       }
+//  517     }
+//  518 
+//  519     if (!error)
+??ProcessPageUpdate_7:
+        TST     R27
+        BRNE    ??ProcessPageUpdate_10
+//  520     {
+//  521       error = SlaveReceiveByteAndNACK (bufferPtr) == 0;
+        MOVW    R17:R16, R25:R24
+        RCALL   SlaveReceiveByteAndNACK
+        TST     R16
+        BRNE    ??ProcessPageUpdate_11
+        LDI     R16, 1
+        RJMP    ??ProcessPageUpdate_12
+??ProcessPageUpdate_11:
+        LDI     R16, 0
+??ProcessPageUpdate_12:
+        MOV     R27, R16
+//  522     }
+//  523 
+//  524     // Now program if everything went well.
+//  525     if (!error)
+??ProcessPageUpdate_10:
+        TST     R27
+        BRNE    ??ProcessPageUpdate_1
+//  526     {
+//  527       UpdatePage ((pageAddressHi << 8) | pageAddressLo);
+        LD      R17, Y
+        LDI     R16, 0
+        LDD     R18, Y+1
+        LDI     R19, 0
+        OR      R16, R18
+        OR      R17, R19
+        RCALL   UpdatePage
+//  528     }
+//  529   }
+//  530 }
+??ProcessPageUpdate_1:
+        ADIW    R29:R28, 2
+        LDI     R30, 4
+        RJMP    ?EPILOGUE_B4_L09
+        REQUIRE _A_SPMCSR
+//  531 
+//  532 
+//  533 /***********************************************************************/
+//  534 
+//  535 /***********************************************************************/
+
+        RSEG CODE:CODE:NOROOT(1)
+//  536 void Disable_WatchDogTimer (void)
+Disable_WatchDogTimer:
+//  537 {
+//  538 /*  
+//  539      Timed sequence
+//  540      Interrupts are already disabled else additional code may go in to avoid
+//  541      the servicing of interrupt in between the timed sequence
+//  542 */
+//  543   asm (" push r24         \n"	
+//  544        " push r0          \n" 
+//  545        " eor r0, r0       \n"	/*  r0 = 0 */
+//  546        " ldi r24, 0x18    \n"   /* WDE and WDCE bits set    */
+//  547        " wdr              \n"   /* Reset the watchdog timer */
+//  548        " sts 0x0060, r24  \n"	/* WDCE, WDE set in WDTCSR  */
+//  549        " sts 0x0054, r0   \n"	/* WDRF in MCUSR = 0        */
+//  550        " sts 0x0060, r0   \n"	/* WDE in WDTCSR = 0        */
+//  551        " pop r0           \n" 
+//  552        " pop r24            ");
+        push r24         
+        push r0          
+        eor r0, r0       
+        ldi r24, 0x18    
+        wdr              
+        sts 0x0060, r24  
+        sts 0x0054, r0   
+        sts 0x0060, r0   
+        pop r0           
+        pop r24            
+//  553 }
+        RET
+//  554 
+//  555 /***********************************************************************/
+//  556 
+//  557 /***********************************************************************/
+//  558 
+
+        RSEG CODE:CODE:NOROOT(1)
+//  559 void CleanupAndRunApplication (void)
+CleanupAndRunApplication:
+//  560 {
+        RCALL   ?PROLOGUE2_L09
+//  561   Disable_WatchDogTimer(); // After Reset the WDT state does not change
+        RCALL   Disable_WatchDogTimer
+//  562   void (*FuncPtr) (void) = (void (*)(void)) ((LAST_INTVECT_ADDRESS + 2) / 2);	// Set up function pointer to address after last interrupt vector. 
+        LDI     R16, LOW(20)
+        LDI     R17, (20) >> 8
+        MOVW    R25:R24, R17:R16
+//  563   FuncPtr ();
+        MOVW    R31:R30, R25:R24
+        ICALL
+//  564 }
+        LDI     R30, 2
+        RJMP    ?EPILOGUE_B2_L09
+//  565 
+//  566 /***********************************************************************/
+//  567 
+//  568 /***********************************************************************/
+//  569 
+
+        RSEG CODE:CODE:NOROOT(1)
+//  570 void ProcessPageErase (void)
+ProcessPageErase:
+//  571 {
+        RCALL   ?PROLOGUE4_L09
+//  572   uint16_t addr = 0;
+        LDI     R24, 0
+        LDI     R25, 0
+//  573   uint8_t i;
+//  574 
+//  575   for (i = 0; i < PAGE_SIZE; ++i)
+        LDI     R26, 0
+??ProcessPageErase_0:
+        CPI     R26, 64
+        BRCC    ??ProcessPageErase_1
+//  576   {
+//  577     pageBuffer[i] = 0xFF;
+        LDI     R16, 255
+        LDI     R27, 0
+        MOVW    R31:R30, R27:R26
+        SUBI    R30, LOW((-(pageBuffer) & 0xFFFF))
+        SBCI    R31, (-(pageBuffer) & 0xFFFF) >> 8
+        ST      Z, R16
+//  578   }
+        INC     R26
+        RJMP    ??ProcessPageErase_0
+//  579 
+//  580   UpdatePage (addr);		// To restore reset vector
+??ProcessPageErase_1:
+        MOVW    R17:R16, R25:R24
+        RCALL   UpdatePage
+//  581   addr += PAGE_SIZE;
+        SUBI    R24, 192
+        SBCI    R25, 255
+//  582 
+//  583   for (i = 0; i < (LAST_PAGE_NO_TO_BE_ERASED - 1); i++, addr += PAGE_SIZE)
+        LDI     R26, 0
+??ProcessPageErase_2:
+        CPI     R26, 111
+        BRCC    ??ProcessPageErase_3
+//  584   {
+//  585     addr &= ~(PAGE_SIZE - 1);
+        ANDI    R24, 0xC0
+        ANDI    R25, 0xFF
+//  586     
+//  587     if (addr < BOOT_PAGE_ADDRESS)
+        CPI     R24, 0
+        LDI     R16, 28
+        CPC     R25, R16
+        BRCC    ??ProcessPageErase_4
+//  588 	Erase_One_Page (addr); // Erase each page one by one until the bootloader section
+        MOVW    R17:R16, R25:R24
+        RCALL   Erase_One_Page
+//  589   }
+??ProcessPageErase_4:
+        INC     R26
+        SUBI    R24, 192
+        SBCI    R25, 255
+        RJMP    ??ProcessPageErase_2
+//  590 }
+??ProcessPageErase_3:
+        LDI     R30, 4
+        RJMP    ?EPILOGUE_B4_L09
+//  591 
+//  592 /***********************************************************************/
+//  593 
+//  594 /***********************************************************************/
+//  595 
+
+        RSEG CODE:CODE:NOROOT(1)
+//  596 void Init_WatchDogTimer (void)
+Init_WatchDogTimer:
+//  597 {
+//  598 /*
+//  599 	Timed sequence to initialize watchdog timer
+//  600 	for the given mode set in gtimeout variable
+//  601 	Cross calls during maximum optimization can
+//  602 	cause more than 4 cycles delay between change
+//  603 	enable for WDT and setting values
+//  604 */
+//  605   asm ("push r0           \n" 
+//  606        "push r24          \n" 
+//  607        "lds r0, gtimeout  \n"   /* load the given settings    */
+//  608        "ldi r24, 0x18     \n"	/* WDE, WCE                   */
+//  609        "or r0, r24        \n"   /* set WDE and WCE            */
+//  610        "wdr               \n"   /* reset the watchdog timer   */
+//  611        "sts 0x0060, r24   \n"   /* change enable              */
+//  612        "sts 0x0060, r0    \n"   /* make the change            */ 
+//  613        "pop r24           \n" 
+//  614        "pop r0            \n");
+        push r0           
+        push r24          
+        lds r0, gtimeout  
+        ldi r24, 0x18     
+        or r0, r24        
+        wdr               
+        sts 0x0060, r24   
+        sts 0x0060, r0    
+        pop r24           
+        pop r0            
+//  615 }
+        RET
+//  616 /*
+//  617 // LO = 4C, HI = DE
+//  618 const uint16_t index_calc[16] = {
+//  619   0, 52225, 55297, 5120, 61441, 15360, 10240, 58369,
+//  620   40961, 27648, 30720 , 46081, 20480, 39937, 34817, 17408 };
+//  621 #define MODULO_TWO_SUM( arg1, arg2, arg3)   ( arg1 ^ arg2 ^ arg3 )
+//  622 void ProcessCRCCheck(void)
+//  623 {
+//  624   //
+//  625   //CRC_LO <<= ((1 << 2) -1);
+//  626   //CRC_HI += 0x5a;
+//  627   //
+//  628   uint16_t crc_sum=0;
+//  629   uint16_t j=0;
+//  630   unsigned char const __flash * i = ( unsigned char const __flash * ) 2; // Leave out the reset vector for CRC
+//  631   uint8_t data;
+//  632   while (i < (unsigned char const __flash *) BOOT_PAGE_ADDRESS )
+//  633   {
+//  634     data = __load_program_memory(i);
+//  635     j=index_calc[crc_sum & 0xF];
+//  636     crc_sum = (crc_sum >> 4) & 0x0FFF;
+//  637     crc_sum = MODULO_TWO_SUM(crc_sum, j, index_calc[data & 0xF]);
+//  638     
+//  639     j= index_calc[crc_sum & 0xF];
+//  640     crc_sum = (crc_sum >> 4) & 0x0FFF;
+//  641     crc_sum = MODULO_TWO_SUM( crc_sum, j, index_calc[(data >> 4) & 0xF]);
+//  642           
+//  643     i++;
+//  644   }
+//  645   
+//  646     CRC_HI = 0x00FF & (crc_sum >> 8);
+//  647     CRC_LO = crc_sum & 0x00FF;  
+//  648 }
+//  649 */
+//  650 
+//  651 
+//  652 /***********************************************************************/
+//  653 
+//  654 /***********************************************************************/
+
+        RSEG CODE:CODE:NOROOT(1)
+//  655 void ProcessSlaveReceive (void)
+ProcessSlaveReceive:
+//  656 {
+        SBIW    R29:R28, 1
+//  657   uint8_t commandCode;
+//  658   if (SlaveReceiveByteAndACK (&commandCode) != 0)
+        MOVW    R17:R16, R29:R28
+        RCALL   SlaveReceiveByteAndACK
+        TST     R16
+        BREQ    ??ProcessSlaveReceive_0
+//  659   {
+//  660     // Process command byte.
+//  661     switch (commandCode)
+        LD      R16, Y
+        SUBI    R16, 1
+        BREQ    ??ProcessSlaveReceive_1
+        DEC     R16
+        BREQ    ??ProcessSlaveReceive_2
+        DEC     R16
+        BREQ    ??ProcessSlaveReceive_3
+        DEC     R16
+        BREQ    ??ProcessSlaveReceive_4
+        DEC     R16
+        BREQ    ??ProcessSlaveReceive_5
+        SUBI    R16, 2
+        BREQ    ??ProcessSlaveReceive_6
+        RJMP    ??ProcessSlaveReceive_7
+//  662     {
+//  663 	case TWI_CMD_PAGEUPDATE:
+//  664 	  ProcessPageUpdate ();
+??ProcessSlaveReceive_1:
+        RCALL   ProcessPageUpdate
+        RJMP    ??ProcessSlaveReceive_0
+//  665 	break;
+//  666 
+//  667 	case TWI_CMD_EXECUTEAPP:
+//  668 	  // Read dummy byte and NACK, just to be nice to our TWI master.
+//  669 	  SlaveReceiveByteAndNACK (&commandCode);
+??ProcessSlaveReceive_2:
+        MOVW    R17:R16, R29:R28
+        RCALL   SlaveReceiveByteAndNACK
+//  670           gtimeout = WDT_TIMEOUT_min; // Set WDT min for cleanup using reset
+        LDI     R16, 0
+        STS     gtimeout, R16
+//  671           Init_WatchDogTimer();     // Apply the changes
+        RCALL   Init_WatchDogTimer
+//  672         while(1); // Wait for WDT reset
+??ProcessSlaveReceive_8:
+        RJMP    ??ProcessSlaveReceive_8
+//  673           
+//  674 	case TWI_CMD_AVERSION:
+//  675 	  SlaveReceiveByteAndNACK (&commandCode);
+??ProcessSlaveReceive_3:
+        MOVW    R17:R16, R29:R28
+        RCALL   SlaveReceiveByteAndNACK
+//  676 	  state = 2;
+        LDI     R16, 2
+        STS     state, R16
+        RJMP    ??ProcessSlaveReceive_0
+//  677 	break;
+//  678 
+//  679 	case TWI_CMD_BVERSION:
+//  680 	  SlaveReceiveByteAndNACK (&commandCode);
+??ProcessSlaveReceive_4:
+        MOVW    R17:R16, R29:R28
+        RCALL   SlaveReceiveByteAndNACK
+//  681 	  state = 1;
+        LDI     R16, 1
+        STS     state, R16
+        RJMP    ??ProcessSlaveReceive_0
+//  682 	break;
+//  683         /*
+//  684         case TWI_CMD_CRCCHECK:
+//  685           SlaveReceiveByteAndNACK (&commandCode);
+//  686           ProcessCRCCheck();
+//  687           state = 3;
+//  688         break;
+//  689 */
+//  690 	case TWI_CMD_ERASEFLASH:
+//  691 	  SlaveReceiveByteAndNACK (&commandCode);
+??ProcessSlaveReceive_5:
+        MOVW    R17:R16, R29:R28
+        RCALL   SlaveReceiveByteAndNACK
+//  692 	  ProcessPageErase ();
+        RCALL   ProcessPageErase
+        RJMP    ??ProcessSlaveReceive_0
+//  693 	break;
+//  694         
+//  695         case TWI_CMD_GETERRCONDN: // except TWI failure because that is the medium
+//  696           SlaveReceiveByteAndNACK (&commandCode);
+??ProcessSlaveReceive_6:
+        MOVW    R17:R16, R29:R28
+        RCALL   SlaveReceiveByteAndNACK
+//  697           state = 4;
+        LDI     R16, 4
+        STS     state, R16
+        RJMP    ??ProcessSlaveReceive_0
+//  698         break;
+//  699 
+//  700 	default:
+//  701 	  AbortTWI ();
+??ProcessSlaveReceive_7:
+        RCALL   AbortTWI
+//  702     }
+//  703   }
+//  704 }
+??ProcessSlaveReceive_0:
+        ADIW    R29:R28, 1
+        RET
+//  705 /***********************************************************************/
+//  706 
+//  707 /***********************************************************************/
+
+        RSEG CODE:CODE:NOROOT(1)
+//  708 void Read_EEPROM_byte (uint8_t addr, unsigned char *cValue)
+Read_EEPROM_byte:
+??Read_EEPROM_byte_0:
+//  709 {
+//  710 #ifdef __TWI__
+//  711   while (EECR & (1 << EEPE));	// Wait until EEWE becomes zero
+        SBIC    0x1F, 0x01
+        RJMP    ??Read_EEPROM_byte_0
+//  712   EEAR = addr;			// load eeprom adress
+        OUT     0x21, R16
+//  713   EECR = (1 << EERE);		// read enable
+        LDI     R17, 1
+        OUT     0x1F, R17
+//  714   *cValue = EEDR;		// return eeprom data
+        IN      R17, 0x20
+        MOVW    R31:R30, R19:R18
+        ST      Z, R17
+//  715 #endif
+//  716   
+//  717 #ifdef __USI__
+//  718   while (EECR & (1 << EEWE));	// Wait until EEWE becomes zero
+//  719   EEAR = addr;			// load eeprom adress
+//  720   EECR = (1 << EERE);		// read enable
+//  721   *cValue = EEDR;		// return eeprom data
+//  722 #endif
+//  723 }
+        RET
+        REQUIRE _A_EEAR
+        REQUIRE _A_EEDR
+        REQUIRE _A_EECR
+//  724 
+//  725 /***********************************************************************/
+//  726 
+//  727 /***********************************************************************/
+
+        RSEG CODE:CODE:NOROOT(1)
+//  728 void ReadAndProcessPacket (void)
+ReadAndProcessPacket:
+//  729 {
+        SBIW    R29:R28, 1
+//  730   unsigned char temp;
+//  731   
+//  732 #ifdef __TWI__
+//  733   // Enable ACK and clear pending interrupts.
+//  734   TWCR = (1 << TWINT) | (1 << TWEA) | (1 << TWEN);
+        LDI     R16, 196
+        STS     _A_TWCR, R16
+//  735   
+//  736   // Wait for activity.
+//  737   do{
+//  738   
+//  739   } while ((TWCR & (1 << TWINT)) == 0);
+??ReadAndProcessPacket_0:
+        LDS     R16, _A_TWCR
+        MOV     R17, R16
+        SBRS    R17, 7
+        RJMP    ??ReadAndProcessPacket_0
+//  740 
+//  741   __watchdog_reset ();
+        WDR
+//  742 
+//  743   // Check TWI status code for SLA+W or SLA+R.
+//  744   switch (TWSR)
+        LDS     R16, _A_TWSR
+        SUBI    R16, 168
+        BREQ    ??ReadAndProcessPacket_1
+        SUBI    R16, 184
+        BRNE    ??ReadAndProcessPacket_2
+//  745   {
+//  746     case TWI_SLAW_RECEIVED:
+//  747       ProcessSlaveReceive ();
+        RCALL   ProcessSlaveReceive
+        RJMP    ??ReadAndProcessPacket_3
+//  748     break;
+//  749 
+//  750     case TWI_SLAR_RECEIVED:
+//  751       if (state == 0)
+??ReadAndProcessPacket_1:
+        LDS     R16, state
+        TST     R16
+        BRNE    ??ReadAndProcessPacket_4
+//  752 	ProcessSlaveTransmit (GetStatusCode () & STATUSMASK_SPMBUSY);
+        RCALL   GetStatusCode
+        MOV     R17, R16
+        ANDI    R17, 0x01
+        MOV     R16, R17
+        RCALL   ProcessSlaveTransmit
+        RJMP    ??ReadAndProcessPacket_3
+//  753       else if (state == 1)
+??ReadAndProcessPacket_4:
+        LDS     R16, state
+        CPI     R16, 1
+        BRNE    ??ReadAndProcessPacket_5
+//  754       {
+//  755 	state = 0;
+        LDI     R16, 0
+        STS     state, R16
+//  756 	ProcessSlaveTransmit (BVERSION);
+        LDI     R16, 150
+        RCALL   ProcessSlaveTransmit
+        RJMP    ??ReadAndProcessPacket_3
+//  757       }
+//  758       else if (state == 2)
+??ReadAndProcessPacket_5:
+        LDS     R16, state
+        CPI     R16, 2
+        BRNE    ??ReadAndProcessPacket_3
+//  759       {
+//  760 	state = 0;
+        LDI     R16, 0
+        STS     state, R16
+//  761 	Read_EEPROM_byte (EEMEM_ADDR_AVERSION, &temp);
+        MOVW    R19:R18, R29:R28
+        LDI     R16, 5
+        RCALL   Read_EEPROM_byte
+//  762 	ProcessSlaveTransmit (temp);
+        LD      R16, Y
+        RCALL   ProcessSlaveTransmit
+        RJMP    ??ReadAndProcessPacket_3
+//  763       }
+//  764      break;
+//  765 
+//  766     default:
+//  767       AbortTWI ();
+??ReadAndProcessPacket_2:
+        RCALL   AbortTWI
+//  768   }
+//  769 #endif
+//  770   
+//  771 #ifdef __USI__
+//  772   
+//  773   // write code related to USI raju
+//  774   
+//  775   // Wait for activity.
+//  776    do{} while (!USI_TWI_Data_In_Receive_Buffer() );
+//  777   
+//  778   __watchdog_reset ();
+//  779 /* RAJU
+//  780   // Check TWI status code for SLA+W or SLA+R.
+//  781   switch (TWSR)
+//  782   {
+//  783     case TWI_SLAW_RECEIVED:
+//  784       ProcessSlaveReceive ();
+//  785     break;
+//  786 
+//  787     case TWI_SLAR_RECEIVED:
+//  788       if (state == 0)
+//  789 	ProcessSlaveTransmit (GetStatusCode () & STATUSMASK_SPMBUSY);
+//  790       else if (state == 1)
+//  791       {
+//  792 	state = 0;
+//  793 	ProcessSlaveTransmit (BVERSION);
+//  794       }
+//  795       else if (state == 2)
+//  796       {
+//  797 	state = 0;
+//  798 	Read_EEPROM_byte (EEMEM_ADDR_AVERSION, &temp);
+//  799 	ProcessSlaveTransmit (temp);
+//  800       }
+//  801      break;
+//  802 
+//  803     default:
+//  804       AbortTWI ();
+//  805   }
+//  806   
+//  807   rAJU*/
+//  808   
+//  809 #endif
+//  810 
+//  811 }
+??ReadAndProcessPacket_3:
+        ADIW    R29:R28, 1
+        RET
+        REQUIRE _A_TWCR
+        REQUIRE _A_TWSR
+//  812 
+//  813 /***********************************************************************/
+//  814 
+//  815 /***********************************************************************/
+
+        RSEG CODE:CODE:NOROOT(1)
+//  816 void Start_Timer (void)
+Start_Timer:
+//  817 {
+//  818     #ifdef __TWI__
+//  819       TIFR1   = TIFR1;  // Clear flags
+        IN      R16, 0x16
+        OUT     0x16, R16
+//  820       TCNT1H  = 0;
+        LDI     R16, 0
+        STS     133, R16
+//  821       TCNT1L  = 0;
+        LDI     R16, 0
+        STS     _A_TCNT1, R16
+//  822       OCR1A   = 7813;   // 7812.5 (one sec at 8 MHz clock operation)
+        LDI     R16, 133
+        LDI     R17, 30
+        STS     (_A_OCR1A + 1), R17
+        STS     _A_OCR1A, R16
+//  823       TCCR1B  = _BV (CS12) + _BV (CS10) + _BV (WGM12);	// mode4: CTC,
+        LDI     R16, 13
+        STS     _A_TCCR1B, R16
+//  824                                                   // Prescaller:1024
+//  825     #endif
+//  826       
+//  827      #ifdef __USI__
+//  828       TIFR   = TIFR;  // Clear flags // raju check later
+//  829      // TCNT1H  = 0;
+//  830       TCNT1  = 0;
+//  831       //OCR1A   = 7813;   // 7812.5 (one sec at 8 MHz clock operation)//raju
+//  832       OCR1A   = 255;   // 7812.5 (one sec at 8 MHz clock operation) //raju
+//  833       TCCR0A  = _BV (WGM01);	// mode4: CTC
+//  834       TCCR0B  = _BV (CS02) + _BV (CS00);	// prescaller: 1024
+//  835     #endif
+//  836 
+//  837 }
+        RET
+        REQUIRE _A_OCR1A
+        REQUIRE _A_TCNT1
+        REQUIRE _A_TCCR1B
+        REQUIRE _A_TIFR1
+//  838 
+//  839 // 10 s delay code for allowing ARM9 linux to boot  
+//  840 #ifdef __TWI__
+//  841 #define HOST_BOOT_DELAY_SEC 10
+//  842 #endif
+//  843 
+//  844 #ifdef __USI__
+//  845 #define HOST_BOOT_DELAY_SEC 300
+//  846 #endif
+//  847 
+//  848 /***********************************************************************/
+//  849 
+//  850 /***********************************************************************/
+
+        RSEG CODE:CODE:NOROOT(1)
+//  851 void Host_Boot_Delay ()
+Host_Boot_Delay:
+//  852 {
+//  853 //  time_lapse_sec = 0;
+//  854 
+//  855   Start_Timer ();
+        RCALL   Start_Timer
+//  856 #ifdef __TWI__
+//  857   do{
+//  858     if (TIFR1 & _BV (OCF1A))
+??Host_Boot_Delay_0:
+        SBIS    0x16, 0x01
+        RJMP    ??Host_Boot_Delay_1
+//  859     {
+//  860       time_lapse_sec++;
+        LDS     R16, time_lapse_sec
+        INC     R16
+        STS     time_lapse_sec, R16
+//  861       TIFR1 = TIFR1;
+        IN      R16, 0x16
+        OUT     0x16, R16
+//  862     }
+//  863   }
+//  864   while (time_lapse_sec < HOST_BOOT_DELAY_SEC);
+??Host_Boot_Delay_1:
+        LDS     R16, time_lapse_sec
+        CPI     R16, 10
+        BRCS    ??Host_Boot_Delay_0
+//  865   TCCR1B = 0;			
+        LDI     R16, 0
+        STS     _A_TCCR1B, R16
+//  866   // stop the timer NOW
+//  867 #endif
+//  868   
+//  869   //raju check this one later
+//  870  #ifdef __USI__
+//  871   do{
+//  872     if (TIFR & _BV (OCF1A))
+//  873     {
+//  874       time_lapse_sec++;
+//  875       TIFR = TIFR;
+//  876     }
+//  877   }
+//  878   while (time_lapse_sec < HOST_BOOT_DELAY_SEC);
+//  879   TCCR0B = 0;	
+//  880   TCCR0A =0;
+//  881   // stop the timer NOW 
+//  882 #endif  
+//  883 }
+        RET
+        REQUIRE _A_TCCR1B
+        REQUIRE _A_TIFR1
+//  884 
+//  885 /***********************************************************************/
+//  886 
+//  887 /***********************************************************************/
+//  888 // Main Starts from here
+
+        RSEG CODE:CODE:NOROOT(1)
+//  889 void main (void)
+main:
+//  890 {
+//  891   if (MCUSR & _BV (PORF))	// Only in case of Power On Reset
+        IN      R16, 0x34
+        MOV     R17, R16
+        SBRS    R17, 0
+        RJMP    ??main_0
+//  892   {
+//  893     MCUSR = 0;
+        LDI     R16, 0
+        OUT     0x34, R16
+//  894 
+//  895 
+//  896 // Select the LED0 and LED1 interfacing port pins
+//  897 #if defined(__ATTINY25__)   | defined(__ATTINY25V__) | \ 
+//  898     defined(__ATTINY45__)   | defined(__ATTINY45V__) | \ 
+//  899     defined(__ATTINY85__)   | defined(__ATTINY85V__) | \ 
+//  900     defined(__ATTINY2313__) | defined(__ATTINY2313A__) | \ 
+//  901     defined(__ATTINY4313__) | defined(__ATTINY4313A__) | \ 
+//  902     defined(__ATTINY261__)  | defined(__ATTINY261A__) | \ 
+//  903     defined(__ATTINY461__)  | defined(__ATTINY461A__) | \ 
+//  904     defined(__ATTINY861__)  | defined(__ATTINY861A__) | \ 
+//  905     defined(__ATTINY43U__)  | \ 
+//  906     defined(__ATTINY87__)   | \ 
+//  907     defined(__ATTINY167__) | \ 
+//  908     defined(__ATTINY48__) | defined(__ATTINY88__) | \ 
+//  909     defined(__ATMEGA48__) | \ 
+//  910     defined(__ATMEGA48A__) | defined(__ATMEGA48PA__)
+//  911       
+//  912     DDRB |= (_BV (1) + _BV (3));	// otp LED iterface
+        IN      R16, 0x04
+        ORI     R16, 0x0A
+        OUT     0x04, R16
+//  913     PORTB &= ~(_BV (1) + _BV (3));     // OFF the LEDs
+        IN      R16, 0x05
+        ANDI    R16, 0xF5
+        OUT     0x05, R16
+//  914     Host_Boot_Delay ();
+        RCALL   Host_Boot_Delay
+//  915     PORTB |= (_BV (1) + _BV (3));     // ON the LEDs
+        IN      R16, 0x05
+        ORI     R16, 0x0A
+        OUT     0x05, R16
+//  916       
+//  917 #endif
+//  918     
+//  919     
+//  920 #if defined(__ATTINY24__)   | defined(__ATTINY24A__) | \ 
+//  921     defined(__ATTINY44__)   | defined(__ATTINY44A__) | \ 
+//  922     defined(__ATTINY84__)   | defined(__ATTINY84A__)
+//  923       
+//  924     DDRB |= (_BV (1) + _BV (2));	// otp LED iterface
+//  925     PORTB &= ~(_BV (1) + _BV (2));     // ON the LEDs
+//  926     Host_Boot_Delay ();
+//  927     PORTB |= (_BV (1) + _BV (2));     // OFF the LEDs
+//  928 
+//  929 #endif          
+//  930   }
+//  931   
+//  932   if (IsBootPinLow ())
+??main_0:
+        RCALL   IsBootPinLow
+        TST     R16
+        BREQ    ??main_1
+//  933   {     
+//  934       #ifdef __TWI__
+//  935           InitTWI();
+        RCALL   InitTWI
+//  936       #endif
+//  937     
+//  938           
+//  939       #ifdef __USI__
+//  940            USI_TWI_Slave_Initialise( SLAVE_ADDRESS );
+//  941            __enable_interrupt();
+//  942       #endif
+//  943 
+//  944     
+//  945     
+//  946     gtimeout = WDT_TIMEOUT_8s;
+        LDI     R16, 33
+        STS     gtimeout, R16
+//  947     Init_WatchDogTimer ();
+        RCALL   Init_WatchDogTimer
+//  948     
+//  949     while (1)
+//  950     {
+//  951       ReadAndProcessPacket ();
+??main_2:
+        RCALL   ReadAndProcessPacket
+        RJMP    ??main_2
+//  952     }
+//  953   }
+//  954   else
+//  955   {
+//  956     CleanupAndRunApplication ();
+??main_1:
+        RCALL   CleanupAndRunApplication
+//  957   }
+//  958 }
+        RET
+        REQUIRE _A_MCUSR
+        REQUIRE _A_PORTB
+        REQUIRE _A_DDRB
+
+        ASEGN ABSOLUTE:DATA:NOROOT,01fH
+__?EECR:
+
+        ASEGN ABSOLUTE:DATA:NOROOT,020H
+__?EEDR:
+
+        ASEGN ABSOLUTE:DATA:NOROOT,021H
+__?EEARL:
+
+        RSEG INITTAB:CODE:NOROOT(0)
+`?<Segment init: NEAR_Z>`:
+        DC16    SFE(NEAR_Z) - SFB(NEAR_Z)
+        DC16    SFB(NEAR_Z)
+        DC16    0
+        REQUIRE ?need_segment_init
+
+        END
+// 
+//    20 bytes in segment ABSOLUTE
+// 1 048 bytes in segment CODE
+//     6 bytes in segment INITTAB
+//    64 bytes in segment NEAR_N
+//     4 bytes in segment NEAR_Z
+// 
+// 1 048 bytes of CODE memory (+  6 bytes shared)
+//    68 bytes of DATA memory (+ 20 bytes shared)
+//
+//Errors: none
+//Warnings: 1

@@ -1,0 +1,220 @@
+///////////////////////////////////////////////////////////////////////////////
+//                                                                            /
+// IAR C/C++ Compiler V5.50.0.50277/W32 for Atmel AVR   07/Aug/2011  18:42:29 /
+// Copyright (C) 1996-2010 IAR Systems AB.                                    /
+//                                                                            /
+//    Source file  =  E:\F Drive\Project\Bootloader project\Code\Common for   /
+//                    All Devices\TWI_Slave\USI_TWI_Slave.c                   /
+//    Command line =  "E:\F Drive\Project\Bootloader project\Code\Common for  /
+//                    All Devices\TWI_Slave\USI_TWI_Slave.c" --cpu=tiny88     /
+//                    -ms -o "E:\F Drive\Project\Bootloader                   /
+//                    project\Code\Common for All                             /
+//                    Devices\TWI_Slave\Debug\Obj\" -D __ATTINY88__ -lB       /
+//                    "E:\F Drive\Project\Bootloader project\Code\Common for  /
+//                    All Devices\TWI_Slave\Debug\List\"                      /
+//                    --initializers_in_flash -z2 --no_cse --no_inline        /
+//                    --no_code_motion --no_cross_call --no_clustering        /
+//                    --no_tbaa --debug -DENABLE_BIT_DEFINITIONS -e -I        /
+//                    "C:\Program Files\IAR Systems\Embedded Workbench        /
+//                    5.4\avr\INC\" -I "C:\Program Files\IAR                  /
+//                    Systems\Embedded Workbench 5.4\avr\INC\CLIB\"           /
+//                    --eeprom_size 64                                        /
+//    List file    =  E:\F Drive\Project\Bootloader project\Code\Common for   /
+//                    All Devices\TWI_Slave\Debug\List\USI_TWI_Slave.s90      /
+//                                                                            /
+//                                                                            /
+///////////////////////////////////////////////////////////////////////////////
+
+        NAME USI_TWI_Slave
+
+        RSEG CSTACK:DATA:NOROOT(0)
+        RSEG RSTACK:DATA:NOROOT(0)
+
+        PUBWEAK __?EEARL
+        PUBWEAK __?EECR
+        PUBWEAK __?EEDR
+
+
+        ASEGN ABSOLUTE:DATA:NOROOT,01fH
+__?EECR:
+
+        ASEGN ABSOLUTE:DATA:NOROOT,020H
+__?EEDR:
+
+        ASEGN ABSOLUTE:DATA:NOROOT,021H
+__?EEARL:
+
+        END
+// E:\F Drive\Project\Bootloader project\Code\Common for All Devices\TWI_Slave\USI_TWI_Slave.c
+//    1 
+//    2 #ifdef __USI__
+//    3 
+//    4 #include "USI_TWI_Slave.h"
+//    5 
+//    6 
+//    7 static unsigned char TWI_slaveAddress;
+//    8 static volatile unsigned char USI_TWI_Overflow_State;
+//    9 
+//   10 
+//   11 /* Local variables
+//   12  */
+//   13 static uint8_t TWI_RxBuf[TWI_RX_BUFFER_SIZE];
+//   14 static volatile uint8_t TWI_RxHead;
+//   15 static volatile uint8_t TWI_RxTail;
+//   16 
+//   17 static uint8_t TWI_TxBuf[TWI_TX_BUFFER_SIZE];
+//   18 static volatile uint8_t TWI_TxHead;
+//   19 static volatile uint8_t TWI_TxTail;
+//   20 
+//   21 static unsigned char TWI_slaveAddress;
+//   22 
+//   23 
+//   24  void Flush_TWI_Buffers(void)
+//   25  {
+//   26      TWI_RxTail = 0;
+//   27      TWI_RxHead = 0;
+//   28      TWI_TxTail = 0;
+//   29      TWI_TxHead = 0;
+//   30 }
+//   31 
+//   32 //********** USI_TWI functions **********//
+//   33 
+//   34  void USI_TWI_Slave_Initialise( unsigned char TWI_ownAddress )
+//   35 {
+//   36   Flush_TWI_Buffers();
+//   37  
+//   38   TWI_slaveAddress = TWI_ownAddress;
+//   39 
+//   40   PORT_USI |=  (1<<PORT_USI_SCL);                                 // Set SCL high
+//   41   PORT_USI |=  (1<<PORT_USI_SDA);                                 // Set SDA high
+//   42   DDR_USI  |=  (1<<PORT_USI_SCL);                                 // Set SCL as output
+//   43   DDR_USI  &= ~(1<<PORT_USI_SDA);                                 // Set SDA as input
+//   44   USICR    =  (1<<USISIE)|(0<<USIOIE)|                            // Enable Start Condition Interrupt. Disable Overflow Interrupt.
+//   45                (1<<USIWM1)|(0<<USIWM0)|                            // Set USI in Two-wire mode. No USI Counter overflow prior
+//   46                                                                  // to first Start Condition (potentail failure)
+//   47                (1<<USICS1)|(0<<USICS0)|(0<<USICLK)|                // Shift Register Clock Source = External, positive edge
+//   48               (0<<USITC);
+//   49    USISR    = 0xF0;                                                // Clear all flags and reset overflow counter
+//   50  }
+//   51  
+//   52  
+//   53 
+//   54 unsigned char USI_TWI_Data_In_Receive_Buffer( void )
+//   55 {
+//   56      unsigned char tmpRxTail;                            // Temporary variable to store volatile
+//   57      tmpRxTail = TWI_RxTail;                             // Not necessary, but prevents warnings
+//   58     return ( TWI_RxHead != tmpRxTail );                 // Return 0 (FALSE) if the receive buffer is empty.
+//   59 }
+//   60 
+//   61 
+//   62 #pragma vector=USI_START_VECTOR
+//   63 __interrupt void USI_Start_Condition_ISR(void)
+//   64 {
+//   65     unsigned char tmpUSISR;                                         // Temporary variable to store volatile
+//   66     tmpUSISR = USISR;                                               // Not necessary, but prevents warnings
+//   67 // Set default starting conditions for new TWI package
+//   68     USI_TWI_Overflow_State = USI_SLAVE_CHECK_ADDRESS;
+//   69     DDR_USI  &= ~(1<<PORT_USI_SDA);                                 // Set SDA as input
+//   70     while ( (PIN_USI & (1<<PORT_USI_SCL)) & !(tmpUSISR & (1<<USIPF)) );   // Wait for SCL to go low to ensure the "Start Condition" has completed.
+//   71                                                                        // If a Stop condition arises then leave the interrupt to prevent waiting forever.
+//   72     USICR   =   (1<<USISIE)|(1<<USIOIE)|                            // Enable Overflow and Start Condition Interrupt. (Keep StartCondInt to detect RESTART)
+//   73                 (1<<USIWM1)|(1<<USIWM0)|                            // Set USI in Two-wire mode.
+//   74                 (1<<USICS1)|(0<<USICS0)|(0<<USICLK)|                // Shift Register Clock Source = External, positive edge
+//   75                 (0<<USITC);
+//   76     
+//   77     USISR  =    (1<<USI_START_COND_INT)|(1<<USIOIF)|(1<<USIPF)|(1<<USIDC)|      // Clear flags
+//   78                 (0x0<<USICNT0);                                     // Set USI to sample 8 bits i.e. count 16 external pin toggles.
+//   79 }
+//   80 
+//   81 
+//   82 
+//   83 
+//   84 
+//   85 #pragma vector=USI_OVERFLOW_VECTOR
+//   86 __interrupt void USI_Counter_Overflow_ISR(void)
+//   87 {
+//   88    unsigned char tmpTxTail;     // Temporary variables to store volatiles
+//   89    unsigned char tmpUSIDR;
+//   90  
+//   91 
+//   92   switch (USI_TWI_Overflow_State)
+//   93   {
+//   94     // ---------- Address mode ----------
+//   95     // Check address and send ACK (and next USI_SLAVE_SEND_DATA) if OK, else reset USI.
+//   96     case USI_SLAVE_CHECK_ADDRESS:
+//   97       if ((USIDR == 0) || (( USIDR>>1 ) == TWI_slaveAddress))
+//   98       {
+//   99          if ( USIDR & 0x01 )
+//  100            USI_TWI_Overflow_State = USI_SLAVE_SEND_DATA;
+//  101          else
+//  102            USI_TWI_Overflow_State = USI_SLAVE_REQUEST_DATA;
+//  103            SET_USI_TO_SEND_ACK();
+//  104        }
+//  105        else
+//  106        {
+//  107          SET_USI_TO_TWI_START_CONDITION_MODE();
+//  108        }
+//  109        break;
+//  110  
+//  111      // ----- Master write data mode ------
+//  112      // Check reply and goto USI_SLAVE_SEND_DATA if OK, else reset USI.
+//  113      case USI_SLAVE_CHECK_REPLY_FROM_SEND_DATA:
+//  114       if ( USIDR ) // If NACK, the master does not want more data.
+//  115        {
+//  116          SET_USI_TO_TWI_START_CONDITION_MODE();
+//  117          return;
+//  118        }
+//  119        // From here we just drop straight into USI_SLAVE_SEND_DATA if the master sent an ACK
+//  120  
+//  121      // Copy data from buffer to USIDR and set USI to shift byte. Next USI_SLAVE_REQUEST_REPLY_FROM_SEND_DATA
+//  122      case USI_SLAVE_SEND_DATA:
+//  123  
+//  124       // Get data from Buffer
+//  125        tmpTxTail = TWI_TxTail;           // Not necessary, but prevents warnings
+//  126        if ( TWI_TxHead != tmpTxTail )
+//  127        {
+//  128          TWI_TxTail = ( TWI_TxTail + 1 ) & TWI_TX_BUFFER_MASK;
+//  129          USIDR = TWI_TxBuf[TWI_TxTail];
+//  130        }
+//  131        else // If the buffer is empty then:
+//  132        { 
+//  133            SET_USI_TO_TWI_START_CONDITION_MODE();
+//  134            return;
+//  135        }
+//  136        USI_TWI_Overflow_State = USI_SLAVE_REQUEST_REPLY_FROM_SEND_DATA;
+//  137        SET_USI_TO_SEND_DATA();
+//  138        break;
+//  139  
+//  140      // Set USI to sample reply from master. Next USI_SLAVE_CHECK_REPLY_FROM_SEND_DATA
+//  141      case USI_SLAVE_REQUEST_REPLY_FROM_SEND_DATA:
+//  142       USI_TWI_Overflow_State = USI_SLAVE_CHECK_REPLY_FROM_SEND_DATA;
+//  143        SET_USI_TO_READ_ACK();
+//  144        break;
+//  145  
+//  146      // ----- Master read data mode ------
+//  147      // Set USI to sample data from master. Next USI_SLAVE_GET_DATA_AND_SEND_ACK.
+//  148      case USI_SLAVE_REQUEST_DATA:
+//  149        USI_TWI_Overflow_State = USI_SLAVE_GET_DATA_AND_SEND_ACK;
+//  150        SET_USI_TO_READ_DATA();
+//  151        break;
+//  152  
+//  153      // Copy data from USIDR and send ACK. Next USI_SLAVE_REQUEST_DATA
+//  154      case USI_SLAVE_GET_DATA_AND_SEND_ACK:
+//  155        // Put data into Buffer
+//  156        tmpUSIDR = USIDR;             // Not necessary, but prevents warnings
+//  157        TWI_RxHead = ( TWI_RxHead + 1 ) & TWI_RX_BUFFER_MASK;
+//  158        TWI_RxBuf[TWI_RxHead] = tmpUSIDR;
+//  159  
+//  160        USI_TWI_Overflow_State = USI_SLAVE_REQUEST_DATA;
+//  161        SET_USI_TO_SEND_ACK();
+//  162        break;
+//  163    }
+//  164 }
+//  165 
+//  166 #endif
+// 
+// 
+// 0 bytes of memory
+//
+//Errors: none
+//Warnings: none

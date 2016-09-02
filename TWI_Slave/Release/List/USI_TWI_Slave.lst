@@ -1,0 +1,587 @@
+###############################################################################
+#                                                                             #
+# IAR C/C++ Compiler V5.50.0.50277/W32 for Atmel AVR    16/Aug/2011  11:18:09 #
+# Copyright (C) 1996-2010 IAR Systems AB.                                     #
+#                                                                             #
+#    Source file  =  E:\F Drive\Project\Bootloader project\Code\Common for    #
+#                    All Devices\TWI_Slave\USI_TWI_Slave.c                    #
+#    Command line =  "E:\F Drive\Project\Bootloader project\Code\Common for   #
+#                    All Devices\TWI_Slave\USI_TWI_Slave.c" --cpu=tiny88 -ms  #
+#                    -o "E:\F Drive\Project\Bootloader project\Code\Common    #
+#                    for All Devices\TWI_Slave\Release\Obj\" -D __ATTINY88__  #
+#                    --preprocess "E:\F Drive\Project\Bootloader              #
+#                    project\Code\Common for All                              #
+#                    Devices\TWI_Slave\Release\List\" -lCN "E:\F              #
+#                    Drive\Project\Bootloader project\Code\Common for All     #
+#                    Devices\TWI_Slave\Release\List\" -lB "E:\F               #
+#                    Drive\Project\Bootloader project\Code\Common for All     #
+#                    Devices\TWI_Slave\Release\List\"                         #
+#                    --initializers_in_flash -z9 -DENABLE_BIT_DEFINITIONS -e  #
+#                    -I "C:\Program Files\IAR Systems\Embedded Workbench      #
+#                    5.4\avr\INC\" -I "C:\Program Files\IAR Systems\Embedded  #
+#                    Workbench 5.4\avr\INC\CLIB\" --eeprom_size 64            #
+#    List file    =  E:\F Drive\Project\Bootloader project\Code\Common for    #
+#                    All Devices\TWI_Slave\Release\List\USI_TWI_Slave.lst     #
+#    Object file  =  E:\F Drive\Project\Bootloader project\Code\Common for    #
+#                    All Devices\TWI_Slave\Release\Obj\USI_TWI_Slave.r90      #
+#                                                                             #
+#                                                                             #
+###############################################################################
+
+E:\F Drive\Project\Bootloader project\Code\Common for All Devices\TWI_Slave\USI_TWI_Slave.c
+      1          
+      2          #ifdef __USI__
+      3          
+      4          #include "USI_TWI_Slave.h"
+      5          #include "Common_Define.h"
+      6          
+      7          /*****************************************************************************/
+      8          // USI_TWI write states.
+      9          #define USI_TWI_WRITE_ADDR_HI_BYTE              (0x00)
+     10          #define USI_TWI_WRITE_ADDR_LO_BYTE              (0x01)
+     11          #define USI_TWI_WRITE_DATA_BYTE                 (0x02)
+     12          
+     13          // USI_TWI overflow states.
+     14          #define USI_TWI_OVERFLOW_STATE_NONE             (0x00)
+     15          #define USI_TWI_OVERFLOW_STATE_ACK_PR_RX        (0x01)
+     16          #define USI_TWI_OVERFLOW_STATE_DATA_RX          (0x02)
+     17          #define USI_TWI_OVERFLOW_STATE_ACK_PR_TX        (0x03)
+     18          #define USI_TWI_OVERFLOW_STATE_PR_ACK_TX        (0x04)
+     19          #define USI_TWI_OVERFLOW_STATE_DATA_TX          (0x05)
+     20          
+     21          // USI_TWI state values.
+     22          static uint8_t USI_TWI_SLAVE_Write_State;
+     23          static uint8_t USI_TWI_SLAVE_Overflow_State;
+     24          static uint8_t Command_Flag;
+     25          
+     26          // TWI flag values.
+     27          static uint8_t USI_TWI_SLAVE_Address_Update;
+     28          
+     29          // Slave Each page address values.
+     30          static uint16_t USI_TWI_SLAVE_PAGE_Address;
+     31          
+     32          /******************************************************************************/
+     33          
+     34          /* Local variables   */
+     35          static uint8_t TWI_RxBuf[TWI_RX_BUFFER_SIZE];
+     36          static volatile uint8_t TWI_RxHead;
+     37          static volatile uint8_t TWI_RxTail;
+     38          
+     39          static uint8_t TWI_TxBuf[TWI_TX_BUFFER_SIZE];
+     40          static volatile uint8_t TWI_TxHead;
+     41          static volatile uint8_t TWI_TxTail;
+     42          
+     43          static unsigned char USI_TWI_SlaveAddress;
+     44          
+     45          //********** USI_TWI functions **********//
+     46          void USI_TWI_SLAVE_Init( uint8_t TWI_OwnAddress )
+     47          {
+     48            
+     49            USI_TWI_SlaveAddress = TWI_OwnAddress;
+     50            
+     51            DDR_USI  &= ~(1<<PORT_USI_SDA);      // Set SDA as input
+     52            PORT_USI &=  ~(1<<PORT_USI_SDA);    // Set SDA high
+     53            
+     54            DDR_USI  |=  (1<<PORT_USI_SCL);      // Set SCL as output
+     55            PORT_USI |=  (1<<PORT_USI_SCL);      // Set SCL high
+     56             
+     57            
+     58            USICR    =  (0<<USISIE)|(0<<USIOIE)|                         // Disable Start Condition Interrupt. Disable Overflow Interrupt.
+     59                         (1<<USIWM1)|(0<<USIWM0)|                        // Set USI in Two-wire mode. No USI Counter overflow prior
+     60                                                                         // to first Start Condition (potentail failure)
+     61                         (1<<USICS1)|(0<<USICS0)|(0<<USICLK)|            // Shift Register Clock Source = External, positive edge
+     62                        (0<<USITC);
+     63             
+     64            // Clear the interrupt flags and reset the counter.   
+     65            USISR = (1<<USISIF) | (1<<USIOIF) | (1<<USIPF) |        // Clear interrupt flags.
+     66                    (1<<USIDC) |(0x0<<USICNT0);                     // USI to sample 8 bits or 16 edge toggles.
+     67            
+     68             // USI TWI Start condition interrupt enable.
+     69              USICR |= (1<<USISIE);
+     70           }
+     71          
+     72           // the below function is added by 
+     73          /*****************************************************************************/ 
+     74          void USI_TWI_SLAVE_Abort()
+     75          {
+     76            USICR    =  (0<<USISIE)|(0<<USIOIE)|                         // Disable Start Condition Interrupt. Disable Overflow Interrupt.
+     77                         (0<<USIWM1)|(0<<USIWM0)|                            // reset USI in Two-wire mode. No USI Counter overflow prior
+     78                                                                           // to first Start Condition (potentail failure)
+     79                         (0<<USICS1)|(0<<USICS0)|(0<<USICLK)|                // Shift Register Clock Source = internal, positive edge
+     80                        (0<<USITC); 
+     81            
+     82            
+     83            // Reset SCL and SDA lines of TWI Communication interface
+     84             DDR_USI  &= ~(1<<PORT_USI_SDA);      
+     85            PORT_USI &=  ~(1<<PORT_USI_SDA);    // Set SDA low
+     86            
+     87            DDR_USI  |=  ~(1<<PORT_USI_SCL);     
+     88            PORT_USI |=  ~(1<<PORT_USI_SCL);      // Set SCL low
+     89            
+     90            // Clear the USI DATA register.
+     91            USIDR = 0x00;
+     92            
+     93            // Clear the interrupt flags and reset the counter.   
+     94            USISR = (1<<USISIF) | (1<<USIOIF) | (1<<USIPF) |        // Clear interrupt flags.
+     95                    (1<<USIDC) |(0x0<<USICNT0);                     // USI to sample 8 bits or 16 edge toggles.
+     96            
+     97          }
+     98           
+     99          
+    100          void USI_TWI_SLAVE_ReadAndProcessPacket ()
+    101          {
+    102             
+    103             // Check for USI TWI start condition.
+    104             if (USISR & (1<<USISIF))
+    105             {
+    106                // Process the USI TWI start condition.
+    107                USI_TWI_SLAVE_Process_Start_Condition();
+    108             }
+    109            
+    110             // Check for USI_TWI_SLAVE overflow condition.
+    111             if (USISR & (1<<USIOIF))
+    112             {
+    113                // Handle the TWI overflow condition.
+    114                USI_TWI_SLAVE_Process_Overflow_Condition();
+    115                
+    116               /*  as this part is already taken care...
+    117                // Should we update the twi address?
+    118                if (USI_TWI_SLAVE_Address_Update)
+    119                {
+    120                    // Mark the bootloader as active.
+    121                    bootloader_active = 1;
+    122                    
+    123                    // Check for the special address to exit the bootloader.
+    124                    if (USI_TWI_SLAVE_PAGE_Address != 0xffff)
+    125                    {
+    126                      // Set the twi address.  This will load the corresponding page from
+    127                      // flash into the programming buffer for reading and writing.
+    128                      // prog_buffer_set_address(USI_TWI_SLAVE_PAGE_Address);
+    129                    }
+    130                    
+    131                    // Reset the flag.
+    132                    USI_TWI_SLAVE_Address_Update = 0;
+    133                }
+    134                
+    135                .....Till here.........*/
+    136                
+    137             }
+    138             
+    139             // Check for TWI stop condition.
+    140             if (USISR & (1<<USIPF))
+    141             {
+    142                 // Clear the stop condition flag.
+    143                  USISR = (1<<USIPF);
+    144                  // Check for the special address to exit the bootloader.
+    145                  if (USI_TWI_SLAVE_PAGE_Address == 0xffff)
+    146                  {
+    147                    // Set the flag to have the bootloader eixt.
+    148                    bootloader_exit = 1;
+    149                  }
+    150                  else
+    151                  {
+    152                    // Update the programming buffer if needed.
+    153                    // kk prog_buffer_update();
+    154                  }
+    155             }
+    156               
+    157          }
+    158          
+    159          
+    160          /******************************************************************************/
+    161          //Description: 
+    162          // Process the USI TWI start condition.  This is called when the TWI master initiates
+    163          // communication with a USI TWI slave by asserting the TWI start condition.
+    164          /******************************************************************************/
+    165          void USI_TWI_SLAVE_Process_Start_Condition(void)
+    166          {    
+    167              // Wait until the "Start Condition" is complete when SCL goes low. If we fail to wait
+    168              // for SCL to go low we may miscount the number of clocks pulses for the data because
+    169              // the transition of SCL could be mistaken as one of the data clock pulses.
+    170              while ((PIN_USI & (1<<PORT_USI_SCL)));
+    171              // Reset the overflow state.
+    172              USI_TWI_SLAVE_Overflow_State = USI_TWI_SLAVE_OVERFLOW_STATE_NONE;
+    173              // Clear the interrupt flags and reset the counter.
+    174              USISR = (1<<USISIF) | (1<<USIOIF) | (1<<USIPF) |    // Clear interrupt flags.
+    175                      (0x00<<USICNT0);                            // USI to sample 8 bits or 16 edge toggles.
+    176              
+    177              // Update the interrupt enable, wire mode and clock settings.
+    178              USICR = (1<<USISIE) | (1<<USIOIE) |                 // Enable Overflow and Start Condition Interrupt.
+    179                      (1<<USIWM1) | (1<<USIWM0) |                 // Maintain USI in two-wire mode with clock stretching.
+    180                      (1<<USICS1) | (0<<USICS0) | (0<<USICLK) |   // Shift Register Clock Source = External, positive edge
+    181                      (0<<USITC);                                 // No toggle of clock pin.
+    182          }
+    183          
+    184          /******************************************************************************/
+    185          
+    186          
+    187           //Buffer the entire page
+    188            static uint8_t *bufferPtr = pageBuffer;
+    189          static uint8_t Value;
+    190          
+    191          
+    192          /*******************************************************************************
+    193          Description: 
+    194          Processes the USI_TWI_SLAVE overflow condition.  
+    195          This is called when the USI TWI 4-bit counterboverflows indicating the 
+    196          TWI master has clocked in/out a databyte or a singleback/nack byte following a 
+    197          databyte transfer.
+    198          
+    199          *******************************************************************************/
+    200          void USI_TWI_SLAVE_Process_Overflow_Condition(void)
+    201          {    
+    202              // Buffer the USI data.
+    203              uint8_t Usi_Data = USIDR;
+    204            
+    205           
+    206            
+    207            // Handle the interrupt based on the overflow state.
+    208            switch (USI_TWI_SLAVE_Overflow_State)
+    209            {
+    210              /***********************************************************************/
+    211              // Handle the first byte transmitted from master -- the slave address.
+    212              case USI_TWI_SLAVE_OVERFLOW_STATE_NONE:
+    213                
+    214                // Are we receiving our address?
+    215                if ((Usi_Data >> 1) == USI_TWI_SlaveAddress)
+    216                {
+    217                  // Yes. Are we to send or receive data?
+    218                  if((Usi_Data & 0x01) == 0x01)
+    219                  {
+    220                      //USI TWI Slave has to transmit the data byte
+    221                      USI_TWI_SLAVE_Overflow_State = USI_TWI_SLAVE_OVERFLOW_STATE_ACK_PR_TX;
+    222                  }
+    223                  else
+    224                  {
+    225                      //USI TWI Slave has to Receive the data byte
+    226                      USI_TWI_SLAVE_Overflow_State = USI_TWI_SLAVE_OVERFLOW_STATE_ACK_PR_RX;
+    227                  }
+    228                 
+    229                  
+    230                  // Reset the write state.
+    231                 //.. added the below statement at Command_flag=1
+    232                  //USI_TWI_SLAVE_Write_State = USI_TWI_SLAVE_WRITE_ADDR_HI_BYTE;
+    233                  
+    234                  // Set SDA for output.
+    235                  PORT_USI |= (1<<PORT_USI_SDA);
+    236                  DDR_USI |= (1<<PORT_USI_SDA);
+    237                  
+    238                  // Load data for ACK.
+    239                  USIDR = 0;
+    240                  
+    241                  // Reload counter for ACK -- two clock transitions.
+    242                  USISR = 0x0E;
+    243                  
+    244                }
+    245                else
+    246                {
+    247                  // No. Reset USI to detect start condition.  Update the interrupt enable, 
+    248                  // wire mode and clock settings.  Note: At this time the wire mode must
+    249                  // not be set to hold the SCL line low when the counter overflows.  
+    250                  // Otherwise, this TWI slave will interfere with other TWI slaves.
+    251                  USICR = (1<<USISIE) | (0<<USIOIE) |                 // Enable Start Condition Interrupt. Disable overflow.
+    252                    (1<<USIWM1) | (0<<USIWM0) |                 // Maintain USI in two-wire mode without clock stretching.
+    253                      (1<<USICS1) | (0<<USICS0) | (0<<USICLK) |   // Shift Register Clock Source = External, positive edge
+    254                        (0<<USITC);                                 // No toggle of clock pin.
+    255                }
+    256                
+    257                break;
+    258                 /***********************************************************************/   
+    259                // Ack sent to master so prepare to receive more data.
+    260            case USI_TWI_SLAVE_OVERFLOW_STATE_ACK_PR_RX:
+    261              
+    262                if(Command_Flag == 0)
+    263                {
+    264                   // Update our state.
+    265                   USI_TWI_SLAVE_Overflow_State = USI_TWI_SLAVE_OVERFLOW_STATE_CMD_RX;
+    266                }
+    267                else if(Command_Flag == 1)
+    268                {
+    269                   // Update our state.
+    270                   USI_TWI_SLAVE_Overflow_State = USI_TWI_SLAVE_OVERFLOW_STATE_DATA_RX;
+    271                   
+    272                     // Reset the write state.
+    273                     USI_TWI_SLAVE_Write_State = USI_TWI_SLAVE_WRITE_ADDR_HI_BYTE;
+    274                }
+    275                else if(Command_Flag == 2)
+    276                {
+    277                  // Update our state.
+    278                   USI_TWI_SLAVE_Overflow_State = USI_TWI_SLAVE_OVERFLOW_STATE_DATA_TX_AVERSION;
+    279                }
+    280                 else if(Command_Flag == 3)
+    281                {
+    282                  // Update our state.
+    283                   USI_TWI_SLAVE_Overflow_State = USI_TWI_SLAVE_OVERFLOW_STATE_DATA_TX_BVERSION;
+    284                }
+    285                 else if(Command_Flag == 4)
+    286                {
+    287                  // Update our state.
+    288                   USI_TWI_SLAVE_Overflow_State = USI_TWI_SLAVE_OVERFLOW_STATE_DATA_TX_GETERRCONDN;
+    289                }
+    290                 
+    291              
+    292               // Set SDA for input
+    293               DDR_USI &= ~(1<<PORT_USI_SDA);
+    294               PORT_USI &= ~(1<<PORT_USI_SDA);
+    295              
+    296               break;
+    297              /**************************************************************************/
+    298              
+    299              
+    300            case USI_TWI_SLAVE_OVERFLOW_STATE_CMD_RX:
+    301                 
+    302               // Update our state
+    303               //USI_TWI_SLAVE_Overflow_State = USI_TWI_SLAVE_OVERFLOW_STATE_ACK_PR_TX;
+    304              USI_TWI_SLAVE_Overflow_State = USI_TWI_SLAVE_OVERFLOW_STATE_NONE;
+    305             
+    306              // USI_TWI_SLAVE_Command_Received = Usi_Data;
+    307                
+    308                // Check the command recieved type.
+    309                if(Usi_Data == TWI_CMD_PAGEUPDATE)
+    310                {
+    311                    // set this flag to receive data
+    312                    Command_Flag =1; 
+    313                }
+    314                else if(Usi_Data == TWI_CMD_EXECUTEAPP)
+    315                {
+    316                    // reset the controller ... 
+    317                  
+    318                    // set this flag to receive data
+    319                    Command_Flag =0; 
+    320                  
+    321                }
+    322                else if(Usi_Data == TWI_CMD_AVERSION)
+    323                {
+    324                    // set this flag to receive data
+    325                    Command_Flag =2; 
+    326                  
+    327                }
+    328                else if(Usi_Data == TWI_CMD_BVERSION)
+    329                {
+    330                    // set this flag to receive data
+    331                    Command_Flag =3; 
+    332                  
+    333                }
+    334                else if(Usi_Data == TWI_CMD_ERASEFLASH)
+    335                {
+    336                    // erase the flash here itself ....... 
+    337                  
+    338                    // set this flag to receive data
+    339                    Command_Flag =0; 
+    340                  
+    341                }
+    342                else if(Usi_Data == TWI_CMD_GETERRCONDN)
+    343                {
+    344                    // set this flag to receive data
+    345                    Command_Flag =4; 
+    346                  
+    347                }
+    348                else
+    349                {
+    350                    // set this flag to receive data
+    351                    Command_Flag =0; 
+    352                  
+    353                    USI_TWI_SLAVE_Abort();
+    354                }
+    355              break;
+    356              
+    357              // Data received from master so prepare to send ACK.
+    358            case USI_TWI_SLAVE_OVERFLOW_STATE_DATA_RX:
+    359              
+    360              // Update our state.
+    361              USI_TWI_SLAVE_Overflow_State = USI_TWI_SLAVE_OVERFLOW_STATE_ACK_PR_RX;
+    362              
+    363              // Always make sure the Command_Flag is 1
+    364              Command_Flag = 1;
+    365              
+    366              // Check the TWI write state to determine what type of byte we received.
+    367              if (USI_TWI_SLAVE_Write_State == USI_TWI_SLAVE_WRITE_ADDR_HI_BYTE)
+    368              {
+    369                // Set the twi address high byte.
+    370                USI_TWI_SLAVE_PAGE_Address = Usi_Data;
+    371                
+    372                // Set the next state.
+    373                USI_TWI_SLAVE_Write_State = USI_TWI_SLAVE_WRITE_ADDR_LO_BYTE;
+    374              }
+    375              else if (USI_TWI_SLAVE_Write_State == USI_TWI_SLAVE_WRITE_ADDR_LO_BYTE)
+    376              {
+    377                // Set the address low byte.
+    378                USI_TWI_SLAVE_PAGE_Address = (USI_TWI_SLAVE_PAGE_Address << 8) | Usi_Data;
+    379                
+    380                // Set the programming address.
+    381                USI_TWI_SLAVE_Address_Update = 1;
+    382                
+    383                // Set the next state.
+    384                USI_TWI_SLAVE_Write_State = USI_TWI_SLAVE_WRITE_DATA_BYTE;
+    385              }
+    386              else
+    387              {
+    388                  // Write the data to the buffer.
+    389                  //USI_TWI_SLAVE_prog_buffer_set_byte(Usi_Data);
+    390                
+    391                  *bufferPtr = Usi_Data;
+    392            
+    393                  // Increment the byte address within the page.
+    394                  //++prog_byte_address;
+    395                
+    396                   ++bufferPtr;
+    397                    ++Value;
+    398                  // Check the byte address for wrapping. //  check later 
+    399                   if (Value >(PAGE_SIZE - 1)) 
+    400                  {
+    401                      UpdatePage (USI_TWI_SLAVE_PAGE_Address);  
+    402                       Value = 0;
+    403                       bufferPtr =0;
+    404                       
+    405                  }
+    406                 
+    407                }
+    408               
+    409              
+    410              // Set SDA for output.
+    411              PORT_USI |= (1<<PORT_USI_SDA);
+    412              DDR_USI |= (1<<PORT_USI_SDA);
+    413              
+    414              // Load data for ACK.
+    415              USIDR = 0;
+    416              
+    417              // Reload counter for ACK -- two clock transitions.
+    418              USISR = 0x0E;
+    419              
+    420              break;
+    421               /***********************************************************************/
+    422              
+    423            case USI_TWI_SLAVE_OVERFLOW_STATE_DATA_TX_AVERSION:
+    424              
+    425               // Update our state.
+    426              USI_TWI_SLAVE_Overflow_State = USI_TWI_SLAVE_OVERFLOW_STATE_PR_ACK_TX;
+    427              
+    428              // Set SDA for input.
+    429              DDR_USI &= ~(1<<PORT_USI_SDA);
+    430              PORT_USI &= ~(1<<PORT_USI_SDA);
+    431              
+    432              // Reload counter for ACK -- two clock transitions.
+    433              USISR = 0x0E;
+    434              
+    435              break;
+    436              
+    437              /***********************************************************************/
+    438               case USI_TWI_SLAVE_OVERFLOW_STATE_DATA_TX_BVERSION:
+    439              
+    440              break;
+    441             /***********************************************************************/ 
+    442               case USI_TWI_SLAVE_OVERFLOW_STATE_DATA_TX_GETERRCONDN:
+    443              
+    444              break;
+    445            /***********************************************************************/  
+    446              // ACK received from master.  Reset USI state if NACK received.
+    447            case USI_TWI_SLAVE_OVERFLOW_STATE_PR_ACK_TX:
+    448              
+    449              // Check the lowest bit for NACK?  If set, the master does not want more data.
+    450              if (Usi_Data & 0x01)
+    451              {
+    452                // Update our state.
+    453                USI_TWI_SLAVE_Overflow_State = USI_TWI_SLAVE_OVERFLOW_STATE_NONE;
+    454                
+    455                // Reset USI to detect start condition. Update the interrupt enable,
+    456                // wire mode and clock settings. Note: At this time the wire mode must
+    457                // not be set to hold the SCL line low when the counter overflows.
+    458                // Otherwise, this TWI slave will interfere with other TWI slaves.
+    459                USICR = (1<<USISIE) | (0<<USIOIE) |                 // Enable Start Condition Interrupt. Disable overflow.
+    460                  (1<<USIWM1) | (0<<USIWM0) |                 // Maintain USI in two-wire mode without clock stretching.
+    461                    (1<<USICS1) | (0<<USICS0) | (0<<USICLK) |   // Shift Register Clock Source = External, positive edge
+    462                      (0<<USITC);                                 // No toggle of clock pin.
+    463                
+    464                
+    465                // Clear the overflow interrupt flag and release the hold on SCL.
+    466                USISR |= (1<<USIOIF);
+    467                
+    468                return;
+    469              }
+    470              
+    471              
+    472              
+    473               /***********************************************************************/   
+    474              // Handle sending a byte of data.
+    475            case USI_TWI_SLAVE_OVERFLOW_STATE_ACK_PR_TX:
+    476              
+    477              // Update our state.
+    478             // USI_TWI_SLAVE_Overflow_State = USI_TWI_SLAVE_OVERFLOW_STATE_DATA_TX;
+    479               USI_TWI_SLAVE_Overflow_State = USI_TWI_SLAVE_OVERFLOW_STATE_DATA_TX_AVERSION;
+    480              
+    481              // Set SDA for output.
+    482              PORT_USI |= (1<<PORT_USI_SDA);
+    483              DDR_USI |= (1<<PORT_USI_SDA);
+    484              
+    485              // Get the data to send.
+    486              // USIDR = prog_buffer_get_byte();
+    487              USIDR = 0X33;
+    488              
+    489              break;
+    490             /***********************************************************************/
+    491              
+    492              // Data sent to to master so prepare to receive ack.
+    493            case USI_TWI_SLAVE_OVERFLOW_STATE_DATA_TX:
+    494              
+    495              // Update our state.
+    496              USI_TWI_SLAVE_Overflow_State = USI_TWI_SLAVE_OVERFLOW_STATE_PR_ACK_TX;
+    497              
+    498              // Set SDA for input.
+    499              DDR_USI &= ~(1<<PORT_USI_SDA);
+    500              PORT_USI &= ~(1<<PORT_USI_SDA);
+    501              
+    502              // Reload counter for ACK -- two clock transitions.
+    503              USISR = 0x0E;
+    504              
+    505              break;
+    506             /***********************************************************************/
+    507            }
+    508            // Clear the overflow interrupt flag and release the hold on SCL.
+    509            USISR |= (1<<USIOIF);
+    510          }
+    511          
+    512          
+    513          
+    514          /******************************************************************************/
+    515          /*
+    516          void prog_buffer_set_byte(uint8_t databyte)
+    517          // Set the byte at the current address.
+    518          {
+    519            
+    520            uint8_t *bufferPtr = pageBuffer;
+    521            
+    522            // Protect the bootloader by protecting the reset vector from being
+    523            // overwritten. The reset vector is the first two byte of the first page.
+    524            if ((prog_page_address != 0) || ((*bufferPtr != 0) && (*bufferPtr != 1)))
+    525            {
+    526              // Set the byte within the programming buffer.
+    527              //prog_buffer[prog_byte_address] = databyte;
+    528              *bufferPtr = databyte;
+    529            }
+    530            
+    531            // Increment the byte address within the page.
+    532            //++prog_byte_address;
+    533             ++bufferPtr;
+    534            
+    535            // Check the byte address for wrapping.
+    536            if (*bufferPtr >(PAGE_SIZE - 1)) 
+    537                *bufferPtr = 0;
+    538            
+    539            // Set the programming update flag.  This indicates the programming
+    540            // buffer should be written to Flash.
+    541            prog_update_flag = 1;
+    542          }
+    543          
+    544          */
+    545          
+    546          
+    547          #endif
+    548          
+
+
+ 
+ 
+ 0 bytes of memory
+
+Errors: none
+Warnings: none

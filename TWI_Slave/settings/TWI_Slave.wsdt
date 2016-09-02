@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+
+<Workspace>
+  <ConfigDictionary>
+    
+  <CurrentConfigs><Project>TWI_Slave/Release</Project></CurrentConfigs></ConfigDictionary>
+  <Desktop>
+    <Static>
+      <Workspace>
+        <ColumnWidths>
+          
+          
+          
+          
+        <Column0>160</Column0><Column1>27</Column1><Column2>27</Column2><Column3>27</Column3></ColumnWidths>
+      </Workspace>
+      <Build>
+        
+        
+        
+        
+      <ColumnWidth0>20</ColumnWidth0><ColumnWidth1>918</ColumnWidth1><ColumnWidth2>245</ColumnWidth2><ColumnWidth3>61</ColumnWidth3></Build>
+    <TerminalIO/><SourceBrowser/></Static>
+    <Windows>
+      
+      
+    <Wnd0>
+        <Tabs>
+          <Tab>
+            <Identity>TabID-3665-16340</Identity>
+            <TabName>Workspace</TabName>
+            <Factory>Workspace</Factory>
+            <Session>
+              
+            <NodeDict><ExpandedNode>TWI_Slave</ExpandedNode><ExpandedNode>TWI_Slave/Output</ExpandedNode><ExpandedNode>TWI_Slave/Output/TWI_Slave.d90</ExpandedNode><ExpandedNode>TWI_Slave/Output/TWI_Slave.hex</ExpandedNode><ExpandedNode>TWI_Slave/Output/TWI_Slave.hex/Output</ExpandedNode><ExpandedNode>TWI_Slave/TWI_Slave.c</ExpandedNode><ExpandedNode>TWI_Slave/TWI_Slave.c/Output</ExpandedNode><ExpandedNode>TWI_Slave/TWI_Slave.c/USI_TWI_Slave.c</ExpandedNode><ExpandedNode>TWI_Slave/USI_TWI_Slave.c</ExpandedNode><ExpandedNode>TWI_Slave/USI_TWI_Slave.c/Output</ExpandedNode></NodeDict></Session>
+          </Tab>
+        <Tab><Identity>TabID-309-12138</Identity><TabName>Source Browser</TabName><Factory>SourceBrowser</Factory><Session><TypeFilter>2147483647</TypeFilter><FileFilter>1</FileFilter></Session></Tab></Tabs>
+        
+      <SelectedTab>0</SelectedTab></Wnd0><Wnd1>
+        <Tabs>
+          <Tab>
+            <Identity>TabID-5003-16520</Identity>
+            <TabName>Build</TabName>
+            <Factory>Build</Factory>
+            <Session/>
+          </Tab>
+        </Tabs>
+        
+      <SelectedTab>0</SelectedTab></Wnd1></Windows>
+    <Editor>
+      
+      
+      
+      
+    <Pane><Tab><Factory>TextEditor</Factory><Filename>$WS_DIR$\TWI_Slave.c</Filename><XPos>0</XPos><YPos>46</YPos><SelStart>2448</SelStart><SelEnd>2448</SelEnd></Tab><Tab><Factory>TextEditor</Factory><Filename>$WS_DIR$\USI_TWI_Slave.c</Filename><XPos>0</XPos><YPos>382</YPos><SelStart>14029</SelStart><SelEnd>14029</SelEnd></Tab><Tab><Factory>TextEditor</Factory><Filename>$WS_DIR$\USI_TWI_Slave.h</Filename><XPos>0</XPos><YPos>18</YPos><SelStart>1465</SelStart><SelEnd>1465</SelEnd></Tab><Tab><Factory>TextEditor</Factory><Filename>$WS_DIR$\Common_Define.h</Filename><XPos>0</XPos><YPos>179</YPos><SelStart>8421</SelStart><SelEnd>8421</SelEnd></Tab><Tab><Factory>TextEditor</Factory><Filename>$WS_DIR$\template\TWI_Slave_t85.xcl</Filename><XPos>0</XPos><YPos>42</YPos><SelStart>2274</SelStart><SelEnd>2274</SelEnd></Tab><Tab><Factory>TextEditor</Factory><Filename>C:\Program Files\IAR Systems\Embedded Workbench 5.4\avr\INC\iotiny85.h</Filename><XPos>0</XPos><YPos>130</YPos><SelStart>5085</SelStart><SelEnd>5085</SelEnd></Tab><ActiveTab>5</ActiveTab></Pane><ActivePane>0</ActivePane><Sizes><Pane><X>1000000</X><Y>1000000</Y></Pane></Sizes><SplitMode>1</SplitMode></Editor>
+    <Positions>
+      
+      
+      
+      
+      
+    <Top><Row0><Sizes><Toolbar-00aca2c0><key>iaridepm.enu1</key></Toolbar-00aca2c0></Sizes></Row0></Top><Left><Row0><Sizes><Wnd0><Rect><Top>-2</Top><Left>-2</Left><Bottom>328</Bottom><Right>251</Right><x>-2</x><y>-2</y><xscreen>268</xscreen><yscreen>239</yscreen><sizeHorzCX>209375</sizeHorzCX><sizeHorzCY>346377</sizeHorzCY><sizeVertCX>197656</sizeVertCX><sizeVertCY>478261</sizeVertCY></Rect></Wnd0></Sizes></Row0></Left><Right><Row0><Sizes/></Row0></Right><Bottom><Row0><Sizes><Wnd1><Rect><Top>-2</Top><Left>-2</Left><Bottom>318</Bottom><Right>1282</Right><x>-2</x><y>-2</y><xscreen>1284</xscreen><yscreen>320</yscreen><sizeHorzCX>1003125</sizeHorzCX><sizeHorzCY>463768</sizeHorzCY><sizeVertCX>209375</sizeVertCX><sizeVertCY>346377</sizeVertCY></Rect></Wnd1></Sizes></Row0></Bottom><Float><Sizes/></Float></Positions>
+  </Desktop>
+</Workspace>
+
+

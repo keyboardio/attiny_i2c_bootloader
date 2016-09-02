@@ -1,0 +1,159 @@
+###############################################################################
+#                                                                             #
+# IAR C/C++ Compiler V5.50.0.50277/W32 for Atmel AVR    16/Aug/2011  11:15:40 #
+# Copyright (C) 1996-2010 IAR Systems AB.                                     #
+#                                                                             #
+#    Source file  =  E:\F Drive\Project\Bootloader project\Code\Common for    #
+#                    All Devices\TWI_Master\serial.c                          #
+#    Command line =  "E:\F Drive\Project\Bootloader project\Code\Common for   #
+#                    All Devices\TWI_Master\serial.c" --cpu=m2560 -ms -o      #
+#                    "E:\F Drive\Project\Bootloader project\Code\Common for   #
+#                    All Devices\TWI_Master\Release\Obj\" -D __ATMEGA2560__   #
+#                    --preprocess "E:\F Drive\Project\Bootloader              #
+#                    project\Code\Common for All                              #
+#                    Devices\TWI_Master\Release\List\" -lCN "E:\F             #
+#                    Drive\Project\Bootloader project\Code\Common for All     #
+#                    Devices\TWI_Master\Release\List\" -lB "E:\F              #
+#                    Drive\Project\Bootloader project\Code\Common for All     #
+#                    Devices\TWI_Master\Release\List\" -y                     #
+#                    --initializers_in_flash -z9 -DENABLE_BIT_DEFINITIONS -e  #
+#                    -I "C:\Program Files\IAR Systems\Embedded Workbench      #
+#                    5.4\avr\INC\" -I "C:\Program Files\IAR Systems\Embedded  #
+#                    Workbench 5.4\avr\INC\CLIB\" --eeprom_size 4096          #
+#    List file    =  E:\F Drive\Project\Bootloader project\Code\Common for    #
+#                    All Devices\TWI_Master\Release\List\serial.lst           #
+#    Object file  =  E:\F Drive\Project\Bootloader project\Code\Common for    #
+#                    All Devices\TWI_Master\Release\Obj\serial.r90            #
+#                                                                             #
+#                                                                             #
+###############################################################################
+
+E:\F Drive\Project\Bootloader project\Code\Common for All Devices\TWI_Master\serial.c
+      1          /*****************************************************************************
+      2          *
+      3          * Atmel Corporation
+      4          *
+      5          * File              : serial.c
+      6          * Compiler          : IAR C 3.10C Kickstart
+      7          * Revision          : $Revision: 2.0 $
+      8          * Date              : $Date: Tuesday, November 29, $
+      9          * Updated by        : $Author: raapeland $
+     10          *
+     11          * Support mail      : avr@atmel.com
+     12          *
+     13          * Target platform   : All AVRs with bootloader support
+     14          *
+     15          * AppNote           : AVR109 - Self-programming
+     16          *
+     17          * Description       : UART communication routines
+     18          ****************************************************************************/
+     19          #include "defines.h"
+
+   \                                 In  segment ABSOLUTE, at 0xc6
+   \   <__C115> volatile __io _A_UDR0
+   \                     _A_UDR0:
+   \   00000000                      DS8 1
+
+   \                                 In  segment ABSOLUTE, at 0xc4
+   \   <__C119> volatile __io _A_UBRR0
+   \                     _A_UBRR0:
+   \   00000000                      DS8 2
+
+   \                                 In  segment ABSOLUTE, at 0xc1
+   \   <__C126> volatile __io _A_UCSR0B
+   \                     _A_UCSR0B:
+   \   00000000                      DS8 1
+
+   \                                 In  segment ABSOLUTE, at 0xc0
+   \   <__C129> volatile __io _A_UCSR0A
+   \                     _A_UCSR0A:
+   \   00000000                      DS8 1
+     20          
+     21          
+
+   \                                 In  segment FARCODE, align 2, keep-with-next
+     22          void initbootuart()
+   \                     initbootuart:
+     23          {
+     24            BAUD_RATE_LOW_REG = BRREG_VALUE;
+   \   00000000   E001               LDI     R16, 1
+   \   00000002   9300....           STS     _A_UBRR0, R16
+     25            UART_CONTROL_REG = (1 << ENABLE_RECEIVER_BIT) |
+     26                               (1 << ENABLE_TRANSMITTER_BIT); // enable receive and transmit 
+   \   00000006   E108               LDI     R16, 24
+   \   00000008   9300....           STS     _A_UCSR0B, R16
+     27          }
+   \   0000000C   9508               RET
+   \   0000000E                      REQUIRE _A_UBRR0
+   \   0000000E                      REQUIRE _A_UCSR0B
+     28          
+     29          
+
+   \                                 In  segment FARCODE, align 2, keep-with-next
+     30          void sendchar(char c)
+   \                     sendchar:
+     31          {
+     32            UART_DATA_REG = c;                                   // prepare transmission
+   \   00000000   9300....           STS     _A_UDR0, R16
+     33            while (!(UART_STATUS_REG & (1 << TRANSMIT_COMPLETE_BIT)));// wait until byte sendt
+   \                     ??sendchar_0:
+   \   00000004   9100....           LDS     R16, _A_UCSR0A
+   \   00000008   FF06               SBRS    R16, 6
+   \   0000000A   CFFC               RJMP    ??sendchar_0
+     34            UART_STATUS_REG |= (1 << TRANSMIT_COMPLETE_BIT);          // delete TXCflag
+   \   0000000C   910000C0           LDS     R16, 192
+   \   00000010   6400               ORI     R16, 0x40
+   \   00000012   930000C0           STS     192, R16
+     35          }
+   \   00000016   9508               RET
+   \   00000018                      REQUIRE _A_UDR0
+   \   00000018                      REQUIRE _A_UCSR0A
+     36          
+     37          
+
+   \                                 In  segment FARCODE, align 2, keep-with-next
+     38          char recchar(void)
+   \                     recchar:
+   \                     ??recchar_0:
+     39          {
+     40            while(!(UART_STATUS_REG & (1 << RECEIVE_COMPLETE_BIT)));  // wait for data
+   \   00000000   9100....           LDS     R16, _A_UCSR0A
+   \   00000004   FF07               SBRS    R16, 7
+   \   00000006   CFFC               RJMP    ??recchar_0
+     41            return UART_DATA_REG;
+   \   00000008   9100....           LDS     R16, _A_UDR0
+   \   0000000C   9508               RET
+   \   0000000E                      REQUIRE _A_UDR0
+   \   0000000E                      REQUIRE _A_UCSR0A
+     42          }
+
+   Maximum stack usage in bytes:
+
+     Function     CSTACK RSTACK
+     --------     ------ ------
+     initbootuart     0      3
+     recchar          0      3
+     sendchar         0      3
+
+
+   Segment part sizes:
+
+     Function/Label Bytes
+     -------------- -----
+     _A_UDR0           1
+     _A_UBRR0          2
+     _A_UCSR0B         1
+     _A_UCSR0A         1
+     initbootuart     14
+     sendchar         24
+     recchar          14
+
+ 
+  5 bytes in segment ABSOLUTE
+ 52 bytes in segment FARCODE
+ 
+ 52 bytes of CODE memory
+  0 bytes of DATA memory (+ 5 bytes shared)
+
+Errors: none
+Warnings: none

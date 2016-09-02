@@ -1,0 +1,1332 @@
+///////////////////////////////////////////////////////////////////////////////
+//                                                                            /
+// IAR C/C++ Compiler V5.50.0.50277/W32 for Atmel AVR   16/Aug/2011  11:15:40 /
+// Copyright (C) 1996-2010 IAR Systems AB.                                    /
+//                                                                            /
+//    Source file  =  E:\F Drive\Project\Bootloader project\Code\Common for   /
+//                    All Devices\TWI_Master\TWI_Master.c                     /
+//    Command line =  "E:\F Drive\Project\Bootloader project\Code\Common for  /
+//                    All Devices\TWI_Master\TWI_Master.c" --cpu=m2560 -ms    /
+//                    -o "E:\F Drive\Project\Bootloader project\Code\Common   /
+//                    for All Devices\TWI_Master\Release\Obj\" -D             /
+//                    __ATMEGA2560__ --preprocess "E:\F                       /
+//                    Drive\Project\Bootloader project\Code\Common for All    /
+//                    Devices\TWI_Master\Release\List\" -lCN "E:\F            /
+//                    Drive\Project\Bootloader project\Code\Common for All    /
+//                    Devices\TWI_Master\Release\List\" -lB "E:\F             /
+//                    Drive\Project\Bootloader project\Code\Common for All    /
+//                    Devices\TWI_Master\Release\List\" -y                    /
+//                    --initializers_in_flash -z9 -DENABLE_BIT_DEFINITIONS    /
+//                    -e -I "C:\Program Files\IAR Systems\Embedded Workbench  /
+//                    5.4\avr\INC\" -I "C:\Program Files\IAR                  /
+//                    Systems\Embedded Workbench 5.4\avr\INC\CLIB\"           /
+//                    --eeprom_size 4096                                      /
+//    List file    =  E:\F Drive\Project\Bootloader project\Code\Common for   /
+//                    All Devices\TWI_Master\Release\List\TWI_Master.s90      /
+//                                                                            /
+//                                                                            /
+///////////////////////////////////////////////////////////////////////////////
+
+        NAME TWI_Master
+
+        RSEG CSTACK:DATA:NOROOT(0)
+        RSEG RSTACK:DATA:NOROOT(0)
+
+        EXTERN ?EPILOGUE_B4_L09
+        EXTERN ?PROLOGUE4_L09
+        EXTERN ?need_segment_init
+
+        PUBWEAK `?<Segment init: NEAR_Z>`
+        PUBLIC BlockLoad
+        PUBLIC CRC_HI
+        PUBLIC CRC_LO
+        PUBLIC First_Time
+        PUBLIC InitTWI
+        PUBLIC MasterReceive
+        PUBLIC MasterTransmit
+        PUBWEAK _A_DDRC
+        PUBWEAK _A_DDRD
+        PUBWEAK _A_PORTC
+        PUBWEAK _A_PORTD
+        PUBWEAK _A_TWBR
+        PUBWEAK _A_TWCR
+        PUBWEAK _A_TWDR
+        PUBWEAK _A_TWSR
+        PUBWEAK __?EEARH
+        PUBWEAK __?EEARL
+        PUBWEAK __?EECR
+        PUBWEAK __?EEDR
+        PUBLIC addr
+        PUBLIC command_char
+        PUBLIC cycle_reset
+        PUBLIC data_char
+        PUBLIC get_slave_status
+        PUBLIC main
+        PUBLIC over_size_flag
+        PUBLIC pageBuffer
+        PUBLIC read_and_send
+        PUBLIC read_from_slave
+        PUBLIC reps
+        PUBLIC runApp
+        PUBLIC send_command
+        PUBLIC statusCode
+        PUBLIC success
+
+        EXTERN sendchar
+        EXTERN initbootuart
+        EXTERN recchar
+
+// E:\F Drive\Project\Bootloader project\Code\Common for All Devices\TWI_Master\TWI_Master.c
+//    1 #include <inavr.h>
+//    2 #include "defines.h"
+
+        ASEGN ABSOLUTE:DATA:NOROOT,0bcH
+// <__C135> volatile __io _A_TWCR
+_A_TWCR:
+        DS8 1
+
+        ASEGN ABSOLUTE:DATA:NOROOT,0bbH
+// <__C137> volatile __io _A_TWDR
+_A_TWDR:
+        DS8 1
+
+        ASEGN ABSOLUTE:DATA:NOROOT,0b9H
+// <__C143> volatile __io _A_TWSR
+_A_TWSR:
+        DS8 1
+
+        ASEGN ABSOLUTE:DATA:NOROOT,0b8H
+// <__C145> volatile __io _A_TWBR
+_A_TWBR:
+        DS8 1
+
+        ASEGN ABSOLUTE:DATA:NOROOT,02bH
+// <__C455> volatile __io _A_PORTD
+_A_PORTD:
+        DS8 1
+
+        ASEGN ABSOLUTE:DATA:NOROOT,02aH
+// <__C458> volatile __io _A_DDRD
+_A_DDRD:
+        DS8 1
+
+        ASEGN ABSOLUTE:DATA:NOROOT,028H
+// <__C464> volatile __io _A_PORTC
+_A_PORTC:
+        DS8 1
+
+        ASEGN ABSOLUTE:DATA:NOROOT,027H
+// <__C467> volatile __io _A_DDRC
+_A_DDRC:
+        DS8 1
+//    3 #include "serial.h"
+//    4 #include "flash.h"
+//    5 #include "stdint.h"
+//    6 
+//    7 #define TWI_DDR_REG  DDRD
+//    8 #define TWI_PORT_REG PORTD
+//    9 #define TWI_SCL_PIN  PD0
+//   10 #define TWI_SDA_PIN  PD1
+//   11 
+//   12 #define BOOT_DDR_REG      DDRC
+//   13 #define BOOT_PORT_REG     PORTC
+//   14 #define BOOT_PIN          PC0
+//   15 
+//   16 #define RESET_DDR_REG      DDRC
+//   17 #define RESET_PORT_REG     PORTC
+//   18 #define RESET_PIN          PC1
+//   19 
+//   20 
+//   21 // Select the type of communication based on the slave device
+//   22 #if defined(_ATTINY25)   || defined(_ATTINY25V) || \ 
+//   23     defined(_ATTINY45)   || defined(_ATTINY45V) || \ 
+//   24     defined(_ATTINY85)   || defined(_ATTINY85V) || \ 
+//   25     defined(_ATTINY24)   || defined(_ATTINY24A) || \ 
+//   26     defined(_ATTINY44)   || defined(_ATTINY44A) || \ 
+//   27     defined(_ATTINY84)   || defined(_ATTINY84A) || \ 
+//   28     defined(_ATTINY2313) || defined(_ATTINY2313A) || \ 
+//   29     defined(_ATTINY4313) || defined(_ATTINY4313A) || \ 
+//   30     defined(_ATTINY261)  || defined(_ATTINY261A) || \ 
+//   31     defined(_ATTINY461)  || defined(_ATTINY461A) || \ 
+//   32     defined(_ATTINY861)  || defined(_ATTINY861A) || \ 
+//   33     defined(_ATTINY43U)  || \ 
+//   34     defined(_ATTINY87)   || \ 
+//   35     defined(_ATTINY167)
+//   36 #define _USI  // set the communication type as USI
+//   37       
+//   38 #endif 
+//   39 #if defined(_ATTINY48) || defined(_ATTINY88) || \ 
+//   40     defined(_ATMEGA48A) || defined(_ATTINY48PA)
+//   41 #define _TWI
+//   42 
+//   43 #endif      
+//   44    
+//   45 // Page size selection for the controller with 2K flash
+//   46 #if defined(_ATTINY25)   || defined(_ATTINY25V) || \ 
+//   47     defined(_ATTINY24)   || defined(_ATTINY24A) || \ 
+//   48     defined(_ATTINY2313) || defined(_ATTINY2313A) || \ 
+//   49     defined(_ATTINY261)  || defined(_ATTINY261A)
+//   50 
+//   51     #define PAGE_SIZE 32      //16 words = 32 Bytes
+//   52     #define MAX__APP_ADDR 0X0400      // Maximum Application Address
+//   53 #endif
+//   54 // Page size selection for the controller with 4K flash
+//   55 
+//   56       #if defined(_ATTINY45)   || defined(_ATTINY45V) || \ 
+//   57           defined(_ATTINY44)   || defined(_ATTINY44A) || \ 
+//   58           defined(_ATTINY4313) || defined(_ATTINY4313A) || \ 
+//   59           defined(_ATTINY461)  || defined(_ATTINY461A) || \ 
+//   60           defined(_ATTINY43U)  || \ 
+//   61           defined(_ATTINY48)   || \ 
+//   62           defined(_ATMEGA48)   || defined(_ATMEGA48A)  || \ 
+//   63           defined(_ATMEGA48PA)
+//   64                 
+//   65           #define PAGE_SIZE 64      // 32 words = 64 Bytes
+//   66           #define MAX__APP_ADDR 0X0C00      // Maximum Application Address
+//   67 #endif
+//   68 // Page size selection for the controller with 8K flash
+//   69  
+//   70       #if defined(_ATTINY85)   || defined(_ATTINY85V) || \ 
+//   71           defined(_ATTINY84)   || defined(_ATTINY84A) || \ 
+//   72           defined(_ATTINY861)  || defined(_ATTINY861A) || \ 
+//   73           defined(_ATTINY87)   || \ 
+//   74           defined(_ATTINY88)
+//   75              
+//   76           #define PAGE_SIZE 64      // 32 words = 64 Bytes
+//   77           #define MAX__APP_ADDR 0X1800      // Maximum Application Address
+//   78                                             // 0x1c00 means.. 1K bytes for Bootloader
+//   79                                             // 0x1800 Means... 2K bytes for Bootloader
+//   80     
+//   81 #endif
+//   82 // Page size selection for the controller with 16K flash   
+//   83 
+//   84       #if defined(_ATTINY167) 
+//   85       
+//   86           #define PAGE_SIZE 128    // 64 words = 128 Bytes
+//   87           #define MAX__APP_ADDR 0X3C00     // Maximum Application Address
+//   88       #endif      
+//   89  
+//   90       
+//   91 
+//   92 
+//   93 #define SLAVE_ADDRESS 0xb0
+//   94 
+//   95 #define _BV( __THE_LOCATION_OF_PIN__ )    ( 1u << __THE_LOCATION_OF_PIN__ )
+//   96 
+//   97 unsigned char BlockLoad(unsigned int size, unsigned char mem);
+//   98 /* BLOCKSIZE should be chosen so that the following holds: BLOCKSIZE*n = PAGESIZE,  where n=1,2,3... */
+//   99 
+//  100 #define BLOCKSIZE PAGE_SIZE
+//  101 
+//  102 
+
+        RSEG FARCODE:CODE:NOROOT(1)
+//  103 void InitTWI( void )
+InitTWI:
+//  104 {
+//  105 	TWI_DDR_REG &= ~((1 << TWI_SCL_PIN) | (1 << TWI_SDA_PIN));
+        IN      R16, 0x0A
+        ANDI    R16, 0xFC
+        OUT     0x0A, R16
+//  106 	TWI_PORT_REG &= ~((1 << TWI_SCL_PIN) | (1 << TWI_SDA_PIN));
+        IN      R16, 0x0B
+        ANDI    R16, 0xFC
+        OUT     0x0B, R16
+//  107 	
+//  108 	// Init TWI as master.
+//  109 	TWCR = (1 << TWEN);
+        LDI     R16, 4
+        RCALL   ??Subroutine17_0
+//  110 	TWBR = 16; // 250bps @ 8MHz.
+??CrossCallReturnLabel_48:
+        LDI     R16, 16
+        STS     _A_TWBR, R16
+//  111 }
+        RET
+        REQUIRE _A_TWCR
+        REQUIRE _A_TWBR
+        REQUIRE _A_PORTD
+        REQUIRE _A_DDRD
+//  112 
+//  113 
+//  114 #define TWI_CMD_PAGEUPDATE        0x01
+//  115 #define TWI_CMD_EXECUTEAPP        0x02
+//  116 #define TWI_CMD_AVERSION          0x03
+//  117 #define TWI_CMD_BVERSION          0x04
+//  118 #define TWI_CMD_ERASEFLASH        0x05
+//  119 #define TWI_CMD_CRCCHECK          0x06
+//  120 #define TWI_CMD_GETERRCONDN       0x07
+//  121 
+//  122 #define TWI_START_TRANSMITTED     0x08
+//  123 #define TWI_SLAW_ACKED            0x18
+//  124 #define TWI_TXDATA_ACKED          0x28
+//  125 #define TWI_TXDATA_NACKED         0x30
+//  126 #define TWI_SLAR_ACKED            0x40
+//  127 #define TWI_RXDATA_ACKED          0x50
+//  128 #define TWI_RXDATA_NACKED         0x58
+//  129 
+//  130 uint8_t statusCode;
+//  131 uint8_t success;
+//  132 uint8_t over_size_flag=0;
+//  133 
+
+        RSEG FARCODE:CODE:NOROOT(1)
+//  134 void cycle_reset(void)
+cycle_reset:
+//  135 {
+//  136     RESET_PORT_REG &= ~(1 << RESET_PIN);
+        CBI     0x08, 0x01
+//  137     __delay_cycles( 10000 );
+        RCALL   ?Subroutine1
+//  138     RESET_PORT_REG |= (1 << RESET_PIN);
+??CrossCallReturnLabel_0:
+        SBI     0x08, 0x01
+//  139     __delay_cycles( 10000 );
+        REQUIRE ?Subroutine1
+        REQUIRE _A_PORTC
+        ;               // Fall through to label ?Subroutine1
+//  140 }
+
+        RSEG FARCODE:CODE:NOROOT(1)
+?Subroutine1:
+        LDI     R16, 195
+        LDI     R17, 9
+        SUBI    R16, 1
+        SBCI    R17, 0
+        BRNE    $-4
+        RJMP    $+2
+        NOP
+        RET
+//  141 
+//  142 
+
+        RSEG FARCODE:CODE:NOROOT(1)
+//  143 uint8_t MasterReceive( uint8_t address, uint8_t * data, uint16_t length )
+MasterReceive:
+//  144 {
+        RCALL   ?Subroutine2
+//  145 	uint8_t error = 0;
+//  146 	
+//  147 	// START condition.
+//  148 	TWCR = (1 << TWINT) | (1 << TWSTA) | (1 << TWEN);
+//  149 	do {} while ((TWCR & (1 << TWINT)) == 0);
+??CrossCallReturnLabel_1:
+        LDS     R17, _A_TWCR
+        SBRS    R17, 7
+        RJMP    ??CrossCallReturnLabel_1
+//  150 	error = (TWSR != TWI_START_TRANSMITTED);
+        LDS     R17, _A_TWSR
+        CPI     R17, 8
+        BREQ    ??MasterReceive_0
+??MasterReceive_1:
+        LDI     R17, 1
+        RJMP    ??MasterReceive_2
+??MasterReceive_0:
+        LDI     R17, 0
+//  151 
+//  152 	// Send SLA+R.
+//  153 	if (!error) {
+//  154 		TWDR = (address & ~0x01) | 0x01; // LSB set = Read.
+        ORI     R16, 0x01
+        RCALL   ?Subroutine0
+//  155 		TWCR = (1 << TWINT) | (1 << TWEN);
+//  156 		do {} while ((TWCR & (1 << TWINT)) == 0);
+??CrossCallReturnLabel_45:
+        RCALL   ?Subroutine3
+??CrossCallReturnLabel_3:
+        SBRS    R16, 7
+        RJMP    ??CrossCallReturnLabel_45
+//  157 		error = (TWSR != TWI_SLAR_ACKED);
+        RCALL   ?Subroutine4
+//  158 	}
+??CrossCallReturnLabel_7:
+        CPI     R16, 64
+        BRNE    ??MasterReceive_1
+//  159 	
+//  160 	// Read data bytes minus the last one. Return ACK.
+//  161 	uint8_t * bufferPtr = data;
+??MasterReceive_2:
+        MOVW    R31:R30, R19:R18
+//  162 	if (!error) {
+        TST     R17
+        BRNE    ??MasterReceive_3
+//  163 		for (uint16_t i = 0; i < (length - 1); ++i) {
+        LDI     R16, 0
+        LDI     R17, 0
+        RJMP    ??MasterReceive_4
+//  164 			TWCR = (1 << TWINT) | (1 << TWEA) | (1 << TWEN);
+??MasterReceive_5:
+        LDI     R18, 196
+        STS     _A_TWCR, R18
+//  165 			do {} while ((TWCR & (1 << TWINT)) == 0);
+??MasterReceive_6:
+        LDS     R18, _A_TWCR
+        SBRS    R18, 7
+        RJMP    ??MasterReceive_6
+//  166 			error = (TWSR != TWI_RXDATA_ACKED);
+        LDS     R18, _A_TWSR
+        CPI     R18, 80
+        BRNE    ??MasterReceive_3
+//  167 			if (!error) {
+//  168 				*bufferPtr = TWDR;
+        LDS     R18, _A_TWDR
+        ST      Z+, R18
+//  169 				++bufferPtr;
+//  170 			} else {
+//  171 				break;
+//  172 			}
+//  173 		}
+        SUBI    R16, 255
+        SBCI    R17, 255
+??MasterReceive_4:
+        RCALL   ?Subroutine5
+//  174 	}
+??CrossCallReturnLabel_11:
+        BRCS    ??MasterReceive_5
+//  175 	
+//  176 	// Read last data byte. Return NACK.
+//  177 	if (!error) {
+//  178 		TWCR = (1 << TWINT) | (1 << TWEN);
+        RCALL   ??Subroutine16_0
+//  179 		do {} while ((TWCR & (1 << TWINT)) == 0);
+??CrossCallReturnLabel_53:
+        RCALL   ?Subroutine3
+??CrossCallReturnLabel_4:
+        SBRS    R16, 7
+        RJMP    ??CrossCallReturnLabel_53
+//  180 		error = (TWSR != TWI_RXDATA_NACKED);
+        RCALL   ?Subroutine4
+??CrossCallReturnLabel_8:
+        CPI     R16, 88
+        BRNE    ??MasterReceive_3
+//  181 		if (!error) {
+//  182 			*bufferPtr = TWDR;
+        LDS     R16, _A_TWDR
+        ST      Z, R16
+//  183 			TWCR = (1 << TWSTO) | (1 << TWINT) | (1 << TWEN);
+        LDI     R16, 148
+        RCALL   ??Subroutine17_0
+//  184 		}
+//  185 	}
+//  186 
+//  187 	// Abort communication if error.
+//  188 	if (error) {
+//  189 		TWCR = (1 << TWSTO) | (1 << TWINT) | (1 << TWEN);
+//  190 	}
+//  191 	
+//  192 	return (!error);
+??CrossCallReturnLabel_49:
+        LDI     R16, 1
+        RJMP    ??MasterReceive_7
+??MasterReceive_3:
+        LDI     R16, 148
+        RCALL   ??Subroutine17_0
+??CrossCallReturnLabel_50:
+        LDI     R16, 0
+??MasterReceive_7:
+        REQUIRE ?Subroutine14
+        REQUIRE _A_TWCR
+        REQUIRE _A_TWDR
+        REQUIRE _A_TWSR
+        ;               // Fall through to label ?Subroutine14
+//  193 }
+
+        RSEG FARCODE:CODE:NOROOT(1)
+?Subroutine14:
+        MOVW    R25:R24, R23:R22
+        RET
+
+        RSEG FARCODE:CODE:NOROOT(1)
+?Subroutine0:
+        STS     _A_TWDR, R16
+        REQUIRE ??Subroutine16_0
+        ;               // Fall through to label ??Subroutine16_0
+
+        RSEG FARCODE:CODE:NOROOT(1)
+??Subroutine16_0:
+        LDI     R16, 132
+        REQUIRE ??Subroutine17_0
+        ;               // Fall through to label ??Subroutine17_0
+
+        RSEG FARCODE:CODE:NOROOT(1)
+??Subroutine17_0:
+        STS     _A_TWCR, R16
+        RET
+//  194 
+//  195 
+//  196 
+
+        RSEG FARCODE:CODE:NOROOT(1)
+//  197 void get_slave_status(void)
+get_slave_status:
+??get_slave_status_0:
+//  198 {
+        RCALL   ?Subroutine7
+//  199      do {
+//  200 	  success = MasterReceive( SLAVE_ADDRESS, &statusCode, 1 );
+//  201 	} while ((statusCode != 0) || (!success));
+??CrossCallReturnLabel_29:
+        LDS     R17, (addr + 4)
+        TST     R17
+        BRNE    ??get_slave_status_0
+        TST     R16
+        BREQ    ??get_slave_status_0
+//  202 }
+        RET
+//  203 
+//  204 
+//  205 
+
+        RSEG FARCODE:CODE:NOROOT(1)
+//  206 uint8_t MasterTransmit( uint8_t address, uint8_t * data, uint16_t length )
+MasterTransmit:
+//  207 {
+        RCALL   ?Subroutine2
+//  208 	uint8_t error = 0;
+//  209 	
+//  210 	// START condition.
+//  211 	TWCR = (1 << TWINT) | (1 << TWSTA) | (1 << TWEN);
+//  212 	do {} while ((TWCR & (1 << TWINT)) == 0);
+??CrossCallReturnLabel_2:
+        LDS     R17, _A_TWCR
+        SBRS    R17, 7
+        RJMP    ??CrossCallReturnLabel_2
+//  213 	error = (TWSR != TWI_START_TRANSMITTED);
+        LDS     R17, _A_TWSR
+        CPI     R17, 8
+        BREQ    ??MasterTransmit_0
+??MasterTransmit_1:
+        LDI     R17, 1
+        RJMP    ??MasterTransmit_2
+??MasterTransmit_0:
+        LDI     R17, 0
+//  214 
+//  215 	// Send SLA+W.
+//  216 	if (!error) {
+//  217 		TWDR = (address & ~0x01) | 0x00; // LSB cleared = Write.
+        ANDI    R16, 0xFE
+        RCALL   ?Subroutine0
+//  218 		TWCR = (1 << TWINT) | (1 << TWEN);
+//  219 		do {} while ((TWCR & (1 << TWINT)) == 0);
+??CrossCallReturnLabel_46:
+        RCALL   ?Subroutine3
+??CrossCallReturnLabel_5:
+        SBRS    R16, 7
+        RJMP    ??CrossCallReturnLabel_46
+//  220 		error = (TWSR != TWI_SLAW_ACKED);
+        RCALL   ?Subroutine4
+//  221 	}
+??CrossCallReturnLabel_9:
+        CPI     R16, 24
+        BRNE    ??MasterTransmit_1
+//  222 	
+//  223 	// Send data bytes minus the last one. Expect ACK.
+//  224 	const uint8_t * bufferPtr = data;
+??MasterTransmit_2:
+        MOVW    R31:R30, R19:R18
+//  225 	if (!error) {
+        TST     R17
+        BRNE    ??MasterTransmit_3
+//  226 		for (uint16_t i = 0; i < (length - 1); ++i) {
+        LDI     R16, 0
+        LDI     R17, 0
+        RJMP    ??MasterTransmit_4
+//  227 			TWDR = *bufferPtr;
+??MasterTransmit_5:
+        LD      R18, Z+
+        STS     _A_TWDR, R18
+//  228 			TWCR = (1 << TWINT) | (1 << TWEN);
+        LDI     R18, 132
+        STS     _A_TWCR, R18
+//  229 			do {} while ((TWCR & (1 << TWINT)) == 0);
+??MasterTransmit_6:
+        LDS     R18, _A_TWCR
+        SBRS    R18, 7
+        RJMP    ??MasterTransmit_6
+//  230 			error = (TWSR != TWI_TXDATA_ACKED);
+        LDS     R18, _A_TWSR
+        CPI     R18, 40
+        BRNE    ??MasterTransmit_3
+//  231 			if (!error) {
+//  232 				++bufferPtr;
+//  233 			} else {
+//  234 				break;
+//  235 			}
+//  236 		}
+        SUBI    R16, 255
+        SBCI    R17, 255
+??MasterTransmit_4:
+        RCALL   ?Subroutine5
+//  237 	}
+??CrossCallReturnLabel_12:
+        BRCS    ??MasterTransmit_5
+//  238 	
+//  239 	// Send last data byte. Expect NACK.
+//  240 	if (!error) {
+//  241 		TWDR = *bufferPtr;
+        LD      R16, Z
+        RCALL   ?Subroutine0
+//  242 		TWCR = (1 << TWINT) | (1 << TWEN);
+//  243 		do {} while ((TWCR & (1 << TWINT)) == 0);
+??CrossCallReturnLabel_47:
+        RCALL   ?Subroutine3
+??CrossCallReturnLabel_6:
+        SBRS    R16, 7
+        RJMP    ??CrossCallReturnLabel_47
+//  244 		error = (TWSR != TWI_TXDATA_NACKED);
+        RCALL   ?Subroutine4
+??CrossCallReturnLabel_10:
+        CPI     R16, 48
+        BRNE    ??MasterTransmit_3
+//  245 		if (!error) {
+//  246 			TWCR = (1 << TWSTO) | (1 << TWINT) | (1 << TWEN);
+        LDI     R16, 148
+        RCALL   ??Subroutine17_0
+//  247 		}
+//  248 	}
+//  249 
+//  250 	// Abort communication if error.
+//  251 	if (error) {
+//  252 		TWCR = (1 << TWSTO) | (1 << TWINT) | (1 << TWEN);
+//  253 	}
+//  254 	
+//  255 	return (!error);
+??CrossCallReturnLabel_51:
+        LDI     R16, 1
+        RJMP    ??MasterTransmit_7
+??MasterTransmit_3:
+        LDI     R16, 148
+        RCALL   ??Subroutine17_0
+??CrossCallReturnLabel_52:
+        LDI     R16, 0
+??MasterTransmit_7:
+        RJMP    ?Subroutine14
+        REQUIRE _A_TWCR
+        REQUIRE _A_TWDR
+        REQUIRE _A_TWSR
+//  256 }
+
+        RSEG FARCODE:CODE:NOROOT(1)
+?Subroutine5:
+        MOVW    R25:R24, R21:R20
+        SBIW    R25:R24, 1
+        CP      R16, R24
+        CPC     R17, R25
+        RET
+
+        RSEG FARCODE:CODE:NOROOT(1)
+?Subroutine4:
+        LDS     R16, _A_TWSR
+        RET
+
+        RSEG FARCODE:CODE:NOROOT(1)
+?Subroutine3:
+        LDS     R16, _A_TWCR
+        RET
+
+        RSEG FARCODE:CODE:NOROOT(1)
+?Subroutine2:
+        MOVW    R23:R22, R25:R24
+        LDI     R17, 164
+        STS     _A_TWCR, R17
+        RET
+//  257 
+//  258 
+//  259 
+//  260 uint8_t pageBuffer[PAGE_SIZE+3];
+//  261 uint16_t addr=0;
+//  262 
+//  263 
+
+        RSEG FARCODE:CODE:NOROOT(1)
+//  264 void First_Time(void)
+First_Time:
+//  265 {
+//  266   addr=0;
+        LDI     R16, 0
+        LDI     R30, LOW(addr)
+        LDI     R31, (addr) >> 8
+        ST      Z, R16
+        STD     Z+1, R16
+//  267   InitTWI();
+        RCALL   InitTWI
+//  268   pageBuffer[0] = TWI_CMD_PAGEUPDATE;
+        LDI     R16, 1
+        STS     pageBuffer, R16
+//  269   BOOT_PORT_REG &= ~( 1 << BOOT_PIN );
+        RCALL   ?Subroutine12
+//  270   cycle_reset();
+//  271   get_slave_status();
+??CrossCallReturnLabel_25:
+        RJMP    get_slave_status
+        REQUIRE _A_PORTC
+//  272 }
+
+        RSEG NEAR_Z:DATA:NOROOT(0)
+        REQUIRE `?<Segment init: NEAR_Z>`
+addr:
+        DS8 2
+//  273 
+//  274 
+//  275 uint8_t command_char=0, data_char=0, CRC_HI=0, CRC_LO=0;
+//  276 uint8_t runApp[2];
+runApp:
+        DS8 2
+statusCode:
+        DS8 1
+success:
+        DS8 1
+over_size_flag:
+        DS8 1
+command_char:
+        DS8 1
+CRC_HI:
+        DS8 1
+CRC_LO:
+        DS8 1
+//  277 uint8_t reps=0;
+reps:
+        DS8 1
+
+        RSEG NEAR_Z:DATA:NOROOT(0)
+        REQUIRE `?<Segment init: NEAR_Z>`
+pageBuffer:
+        DS8 67
+
+        RSEG NEAR_Z:DATA:NOROOT(0)
+        REQUIRE `?<Segment init: NEAR_Z>`
+data_char:
+        DS8 1
+//  278 
+
+        RSEG FARCODE:CODE:NOROOT(1)
+//  279 void read_from_slave(void)
+read_from_slave:
+//  280 {
+//  281   if (success) 
+        LDS     R16, (addr + 5)
+        TST     R16
+        BREQ    ??read_from_slave_0
+//  282   {
+//  283 	do {
+//  284 		success = MasterReceive( SLAVE_ADDRESS, &statusCode, 1 );
+??read_from_slave_1:
+        RCALL   ?Subroutine7
+//  285 	} while ( !success );                                 
+??CrossCallReturnLabel_30:
+        TST     R16
+        BREQ    ??read_from_slave_1
+//  286   }
+//  287 }
+??read_from_slave_0:
+        RET
+
+        RSEG FARCODE:CODE:NOROOT(1)
+?Subroutine7:
+        LDI     R20, 1
+        LDI     R21, 0
+        LDI     R18, LOW((addr + 4))
+        LDI     R19, HIGH((addr + 4))
+        LDI     R16, 176
+        RCALL   MasterReceive
+        REQUIRE ?Subroutine13
+        ;               // Fall through to label ?Subroutine13
+
+        RSEG FARCODE:CODE:NOROOT(1)
+?Subroutine13:
+        STS     (addr + 5), R16
+        RET
+//  288 
+//  289 
+//  290 
+
+        RSEG FARCODE:CODE:NOROOT(1)
+//  291 void read_and_send(uint8_t whichversion)
+read_and_send:
+//  292 {
+        RCALL   ?Subroutine6
+//  293   runApp[0]=whichversion;
+//  294   runApp[1]=whichversion;
+//  295   BOOT_PORT_REG &= ~( 1 << BOOT_PIN );
+//  296   cycle_reset();
+//  297   get_slave_status();                  
+//  298   success = MasterTransmit( SLAVE_ADDRESS, runApp, 2 );
+//  299   read_from_slave();
+??CrossCallReturnLabel_27:
+        RCALL   ?Subroutine8
+//  300   sendchar( statusCode );		  
+??CrossCallReturnLabel_13:
+        REQUIRE ?Subroutine15
+        REQUIRE _A_PORTC
+        ;               // Fall through to label ?Subroutine15
+//  301 } 
+
+        RSEG FARCODE:CODE:NOROOT(1)
+?Subroutine15:
+        JMP     sendchar
+//  302 
+
+        RSEG FARCODE:CODE:NOROOT(1)
+//  303 void send_command(uint8_t command)
+send_command:
+        REQUIRE ?Subroutine6
+        REQUIRE _A_PORTC
+        ;               // Fall through to label ?Subroutine6
+
+        RSEG FARCODE:CODE:NOROOT(1)
+?Subroutine6:
+        STS     (addr + 2), R16
+        STS     (addr + 3), R16
+        RCALL   ?Subroutine12
+??CrossCallReturnLabel_24:
+        RCALL   get_slave_status
+        LDI     R20, 2
+        LDI     R21, 0
+        LDI     R18, LOW((addr + 2))
+        LDI     R19, HIGH((addr + 2))
+        RJMP    ?Subroutine11
+
+        RSEG FARCODE:CODE:NOROOT(1)
+?Subroutine12:
+        CBI     0x08, 0x00
+        RJMP    cycle_reset
+
+        RSEG FARCODE:CODE:NOROOT(1)
+?Subroutine11:
+        LDI     R16, 176
+        RCALL   MasterTransmit
+        RJMP    ?Subroutine13
+//  304 {
+//  305   runApp[0] = command;
+//  306   runApp[1] = command;
+//  307   BOOT_PORT_REG &= ~( 1 << BOOT_PIN );
+//  308   cycle_reset();
+//  309   get_slave_status();
+//  310   success = MasterTransmit( SLAVE_ADDRESS, runApp, 2 );     
+//  311 }
+//  312 
+//  313 
+//  314 /*************************************************************************/
+
+        RSEG FARCODE:CODE:NOROOT(1)
+//  315 __C_task void main(void)
+main:
+//  316 {
+//  317 	unsigned int temp_int;
+//  318 	unsigned char val=0;                
+//  319          
+//  320 
+//  321 	InitTWI();
+        RCALL   InitTWI
+//  322 
+//  323                
+//  324         BOOT_DDR_REG |= (1 << BOOT_PIN);
+        SBI     0x07, 0x00
+//  325         BOOT_PORT_REG &= ~(1 << BOOT_PIN);
+        CBI     0x08, 0x00
+//  326   
+//  327         RESET_DDR_REG |= (1 << RESET_PIN);                        		
+        SBI     0x07, 0x01
+//  328 	RESET_PORT_REG |= (1 << RESET_PIN);	                                
+        SBI     0x08, 0x01
+//  329 	
+//  330 	initbootuart(); // Initialize UART.
+        CALL    initbootuart
+        LDI     R26, LOW(addr)
+        LDI     R27, (addr) >> 8
+        RJMP    ??CrossCallReturnLabel_42
+//  331 	/* Main loop */
+//  332 	for(;;)          
+//  333 	{      
+//  334 	      val=recchar(); // Wait for command character.
+//  335                 
+//  336               if(( val ==  'P') || ( val == 'L'))
+//  337               {               
+//  338                 sendchar('\r');
+//  339               }
+//  340               
+//  341               else if(val == 'E')
+//  342               {
+//  343                 sendchar('\r');
+//  344               }
+//  345                          
+//  346               // Read lock byte -> execute command
+//  347               else if( val == 'r')
+//  348               {
+//  349                 if( command_char == 'a')
+//  350                 {
+//  351                   BOOT_PORT_REG &= ~( 1 << BOOT_PIN );
+//  352                   read_and_send( TWI_CMD_AVERSION );
+//  353                 }
+//  354                 else if( command_char == 'b' )
+??main_0:
+        CPI     R16, 98
+        BRNE    ??main_1
+//  355                 {
+//  356                   BOOT_PORT_REG &= ~( 1 << BOOT_PIN );
+??main_2:
+        CBI     0x08, 0x00
+//  357                   read_and_send( TWI_CMD_BVERSION );
+        LDI     R16, 4
+??main_3:
+        RCALL   read_and_send
+        RJMP    ??CrossCallReturnLabel_42
+//  358                 }                             
+//  359                 else if( command_char == 'd' )
+??main_1:
+        CPI     R16, 100
+        BRNE    ??main_4
+//  360                 {
+//  361                     // Read CRCHI
+//  362                   sendchar(CRC_HI);
+        LDS     R16, (addr + 8)
+        RJMP    ??main_5
+//  363                 }
+//  364                 else if( command_char == 'e' )
+??main_4:
+        CPI     R16, 101
+        BRNE    ??main_6
+//  365                 {
+//  366                     // Read CRCLO
+//  367                   sendchar(CRC_LO);
+        LDS     R16, (addr + 9)
+        RJMP    ??main_5
+//  368                 }
+//  369                 else if( command_char == 'f' )
+??main_6:
+        CPI     R16, 102
+        BRNE    ??main_7
+//  370                 {
+//  371                     BOOT_PORT_REG &= ~( 1 << BOOT_PIN );
+        CBI     0x08, 0x00
+//  372                     // Status condition
+//  373                     read_and_send(TWI_CMD_GETERRCONDN);
+        LDI     R16, 7
+        RJMP    ??main_3
+//  374                 }
+//  375                 else 
+//  376                   sendchar(0xFF);
+??main_7:
+        LDI     R16, 255
+        RJMP    ??main_5
+//  377              
+//  378               }
+//  379               // Write lock byte -> load command
+//  380               else if( val == 'l')
+??main_8:
+        CPI     R16, 108
+        BRNE    ??main_9
+//  381               {
+//  382                 command_char = recchar();
+        RCALL   ?Subroutine10
+??CrossCallReturnLabel_23:
+        STS     (addr + 7), R16
+//  383                 if( command_char == 'c' )
+        CPI     R16, 99
+        BRNE    ??main_10
+//  384                 {
+//  385                   BOOT_PORT_REG &= ~( 1 << BOOT_PIN );
+        CBI     0x08, 0x00
+//  386                   send_command( TWI_CMD_CRCCHECK );
+        LDI     R16, 6
+        RCALL   send_command
+//  387                   read_from_slave();
+        RCALL   ?Subroutine8
+//  388                   CRC_HI= statusCode;
+??CrossCallReturnLabel_14:
+        STS     (addr + 8), R16
+//  389                   read_from_slave();
+        RCALL   ?Subroutine8
+//  390                   CRC_LO = statusCode;
+//  391                 }       
+//  392                 sendchar('\r');
+//  393               }
+??CrossCallReturnLabel_15:
+        STS     (addr + 9), R16
+??main_10:
+        LDI     R16, 13
+??main_5:
+        RCALL   ?Subroutine15
+??CrossCallReturnLabel_42:
+        RCALL   ?Subroutine10
+??CrossCallReturnLabel_22:
+        CPI     R16, 80
+        BREQ    ??main_10
+        CPI     R16, 76
+        BREQ    ??main_10
+        CPI     R16, 69
+        BREQ    ??main_10
+        CPI     R16, 114
+        BRNE    ??main_8
+        LDS     R16, (addr + 7)
+        CPI     R16, 97
+        BRNE    ??main_0
+??main_11:
+        CBI     0x08, 0x00
+        LDI     R16, 3
+        RJMP    ??main_3
+//  394               
+//  395               // Read high fuse bits -> BVERSION 
+//  396               else if( val == 'N' )
+??main_9:
+        CPI     R16, 78
+        BREQ    ??main_2
+//  397               {
+//  398                  BOOT_PORT_REG &= ~( 1 << BOOT_PIN );
+//  399                  read_and_send( TWI_CMD_BVERSION );
+//  400               }   
+//  401               
+//  402               // Low Fuse Bits -> AVERSION
+//  403               else if( val == 'F' )
+        CPI     R16, 70
+        BREQ    ??main_11
+//  404               {
+//  405                 BOOT_PORT_REG &= ~( 1 << BOOT_PIN );
+//  406                 read_and_send( TWI_CMD_AVERSION );
+//  407               }                            
+//  408                             
+//  409               else  if(val == 'a' )
+        CPI     R16, 97
+        BRNE    ??main_12
+//  410 	      {
+//  411 		sendchar('Y'); // Yes, we do autoincrement.
+        LDI     R16, 89
+        RJMP    ??main_5
+//  412 	      }                   
+//  413 	                                                                          
+//  414               else if(val=='A') // Set address...
+??main_12:
+        CPI     R16, 65
+        BRNE    ??main_13
+//  415 	      {   // NOTE: Flash addresses are given in words, not bytes.
+//  416                   addr =(recchar()<<8) | recchar(); // Read address high and low byte.
+//  417 		  addr = addr<<1;
+        RCALL   ?Subroutine10
+??CrossCallReturnLabel_21:
+        MOV     R25, R16
+        RCALL   ?Subroutine10
+??CrossCallReturnLabel_20:
+        MOV     R24, R16
+        LSL     R24
+        ROL     R25
+        ST      X+, R24
+        ST      X, R25
+        SBIW    R27:R26, 1
+//  418                   if(addr > MAX__APP_ADDR) over_size_flag =1;
+        LD      R16, X+
+        MOV     R17, R25
+        CPI     R16, 1
+        SBCI    R17, 24
+        BRCS    ??main_14
+        LDI     R16, 1
+        STS     (addr + 6), R16
+//  419 		  pageBuffer[1] = (uint8_t)(addr&0x00FF);
+??main_14:
+        STS     (pageBuffer + 1), R24
+//  420 		  addr = addr>>8;
+        SBIW    R27:R26, 1
+        LDI     R17, 0
+        ST      X+, R25
+        ST      X, R17
+//  421 		  pageBuffer[2] = (uint8_t)(addr&0x00FF);
+        SBIW    R27:R26, 1
+        STS     (pageBuffer + 2), R25
+        RJMP    ??main_10
+//  422 		  sendchar('\r'); // Send OK back.  
+//  423 
+//  424 	      }
+//  425               
+//  426             // Chip erase.  
+//  427              else if(val == 'e' )	    
+??main_13:
+        CPI     R16, 101
+        BRNE    ??main_15
+//  428 	     {
+//  429                  runApp[0] =  TWI_CMD_ERASEFLASH;
+        LDI     R16, 5
+        RCALL   ?Subroutine6
+//  430                  runApp[1] =  TWI_CMD_ERASEFLASH;
+//  431                  BOOT_PORT_REG &= ~( 1 << BOOT_PIN );
+//  432                  cycle_reset();
+//  433                  get_slave_status();
+//  434                  success = MasterTransmit( SLAVE_ADDRESS, runApp, 2 );
+//  435 		 sendchar('\r'); // Send OK back.
+//  436 	      }
+??CrossCallReturnLabel_26:
+        RJMP    ??main_10
+//  437                        
+//  438 	      // Check block load support.                                                   
+//  439               else if(val == 'b' )
+??main_15:
+        CPI     R16, 98
+        BRNE    ??main_16
+//  440 	      {
+//  441 		  sendchar('Y'); // Report block load supported.
+        LDI     R16, 89
+        RCALL   ?Subroutine15
+//  442 		  sendchar((BLOCKSIZE>>8) & 0xFF); // MSB first.
+??CrossCallReturnLabel_41:
+        LDI     R16, 0
+        RCALL   ?Subroutine15
+//  443 		  sendchar(BLOCKSIZE&0xFF); // Report BLOCKSIZE (bytes).
+??CrossCallReturnLabel_40:
+        LDI     R16, 64
+        RJMP    ??main_5
+//  444 	      }
+//  445                      
+//  446 	      // Start block load.                                       
+//  447               else  if(val == 'B' )
+??main_16:
+        CPI     R16, 66
+        BRNE    ??main_17
+//  448 	      {
+//  449                  
+//  450 		  temp_int = (recchar()<<8) | recchar(); // Get block size.
+        RCALL   ?Subroutine10
+??CrossCallReturnLabel_19:
+        MOV     R24, R16
+        RCALL   ?Subroutine10
+??CrossCallReturnLabel_18:
+        MOV     R26, R16
+//  451 		  val = recchar(); // Get memtype.
+        RCALL   ?Subroutine10
+//  452 		  sendchar( BlockLoad(temp_int,val) ); // Block load.
+??CrossCallReturnLabel_17:
+        MOV     R18, R16
+        MOV     R17, R24
+        MOV     R16, R26
+        RCALL   BlockLoad
+        RCALL   ?Subroutine15
+//  453                    if(reps == 0)
+??CrossCallReturnLabel_39:
+        LDI     R26, LOW(addr)
+        LDS     R16, (addr + 10)
+        TST     R16
+        BRNE    ??main_18
+//  454                       First_Time();
+        RCALL   First_Time
+//  455                   success = MasterTransmit( SLAVE_ADDRESS, pageBuffer, PAGE_SIZE+3 );
+??main_18:
+        LDI     R20, 67
+        LDI     R21, 0
+        LDI     R18, LOW(pageBuffer)
+        LDI     R19, (pageBuffer) >> 8
+        RCALL   ?Subroutine11
+//  456                   if (success) 
+??CrossCallReturnLabel_28:
+        TST     R16
+        BREQ    ??main_19
+//  457                   {
+//  458                               get_slave_status();
+        RCALL   get_slave_status
+//  459                   }           
+//  460                   reps ++;
+??main_19:
+        ADIW    R27:R26, 10
+        LD      R16, X
+        INC     R16
+        ST      X, R16
+        SBIW    R27:R26, 10
+        RJMP    ??CrossCallReturnLabel_42
+//  461               }
+//  462                     
+//  463             // Return programmer identifier.                                       
+//  464             else if(val == 'S' )
+??main_17:
+        CPI     R16, 83
+        BRNE    ??main_20
+//  465             {
+//  466 		sendchar('A'); // Return 'AVRBOOT'.
+        LDI     R16, 65
+        RCALL   ?Subroutine15
+//  467 		sendchar('V'); // Software identifier (aka programmer signature) is always 7 characters.
+??CrossCallReturnLabel_38:
+        LDI     R16, 86
+        RCALL   ?Subroutine15
+//  468 		sendchar('R');
+??CrossCallReturnLabel_37:
+        LDI     R16, 82
+        RCALL   ?Subroutine15
+//  469 		sendchar('B');
+??CrossCallReturnLabel_36:
+        LDI     R16, 66
+        RCALL   ?Subroutine15
+//  470 		sendchar('O');
+??CrossCallReturnLabel_35:
+        RCALL   ?Subroutine9
+//  471 		sendchar('O');
+??CrossCallReturnLabel_44:
+        RCALL   ?Subroutine9
+//  472 		sendchar('T');
+??CrossCallReturnLabel_43:
+        LDI     R16, 84
+        RCALL   ?Subroutine15
+//  473 		reps =0;              
+??CrossCallReturnLabel_34:
+        LDI     R16, 0
+        STS     (addr + 10), R16
+        RJMP    ??CrossCallReturnLabel_42
+//  474 	    }            
+//  475              
+//  476              // Return software version.		
+//  477              else if(val == 'V' )             
+??main_20:
+        CPI     R16, 86
+        BRNE    ??main_21
+//  478 	     {                                
+//  479                  send_command(TWI_CMD_EXECUTEAPP);   
+        LDI     R16, 2
+        RCALL   send_command
+//  480                 // Disable bootloader mode for slave
+//  481                  BOOT_PORT_REG |= (1 << BOOT_PIN);                 
+        SBI     0x08, 0x00
+//  482   		 sendchar('2');
+        LDI     R16, 50
+        RCALL   ?Subroutine15
+//  483 		 sendchar('0');                
+??CrossCallReturnLabel_33:
+        LDI     R16, 48
+        RJMP    ??main_5
+//  484               }
+//  485 
+//  486 	     // Return signature bytes.		
+//  487              else if(val == 's')
+??main_21:
+        CPI     R16, 115
+        BRNE    ??main_22
+//  488              {
+//  489 		sendchar( SIGNATURE_BYTE_3 );
+        LDI     R16, 1
+        RCALL   ?Subroutine15
+//  490 		sendchar( SIGNATURE_BYTE_2 );
+??CrossCallReturnLabel_32:
+        LDI     R16, 152
+        RCALL   ?Subroutine15
+//  491 		sendchar( SIGNATURE_BYTE_1 );
+??CrossCallReturnLabel_31:
+        LDI     R16, 30
+        RJMP    ??main_5
+//  492              }
+//  493                                                            
+//  494              else if(val != 0x1b)                  // If not ESC, then it is unrecognized...
+??main_22:
+        CPI     R16, 27
+        BRNE    $+2+2
+        RJMP    ??CrossCallReturnLabel_42
+//  495 		sendchar('?');			                                                
+        LDI     R16, 63
+        RJMP    ??main_5
+        REQUIRE _A_PORTC
+        REQUIRE _A_DDRC
+//  496             
+//  497 	} // end: for(;;)
+//  498 } // end: main
+
+        RSEG FARCODE:CODE:NOROOT(1)
+?Subroutine9:
+        LDI     R16, 79
+        RJMP    ?Subroutine15
+
+        RSEG FARCODE:CODE:NOROOT(1)
+?Subroutine8:
+        RCALL   read_from_slave
+        LDS     R16, (addr + 4)
+        RET
+//  499 
+
+        RSEG FARCODE:CODE:NOROOT(1)
+//  500 unsigned char BlockLoad(unsigned int size, unsigned char mem)
+BlockLoad:
+//  501 {
+        CALL    ?PROLOGUE4_L09
+        MOVW    R25:R24, R17:R16
+//  502 	// Flash memory type.
+//  503   if(!over_size_flag) // Check for file size to be less than maximum pages that can be programmed
+        LDS     R16, (addr + 6)
+        TST     R16
+        BRNE    ??BlockLoad_0
+//  504   {
+//  505          if(mem=='F')
+        CPI     R18, 70
+        BRNE    ??BlockLoad_1
+//  506 	{ 
+//  507 		for (uint16_t i = 0; i < size; ++i)
+        LDI     R26, 0
+        LDI     R27, 0
+        RJMP    ??BlockLoad_2
+//  508 		{			
+//  509                       pageBuffer[i+3] = recchar();
+??BlockLoad_3:
+        RCALL   ?Subroutine10
+//  510 		}  
+??CrossCallReturnLabel_16:
+        MOVW    R31:R30, R27:R26
+        SUBI    R30, LOW((-(pageBuffer) & 0xFFFF))
+        SBCI    R31, (-(pageBuffer) & 0xFFFF) >> 8
+        STD     Z+3, R16
+        ADIW    R27:R26, 1
+??BlockLoad_2:
+        CP      R26, R24
+        CPC     R27, R25
+        BRCS    ??BlockLoad_3
+//  511                 return '\r'; // Report programming OK
+        LDI     R16, 13
+        RJMP    ??BlockLoad_4
+//  512           }
+//  513 			
+//  514 	// Invalid memory type?
+//  515 	else
+//  516 	{
+//  517 	  return '?';
+//  518 	}
+//  519   }
+//  520   else
+//  521   {
+//  522   over_size_flag=0;
+??BlockLoad_0:
+        LDI     R16, 0
+        STS     (addr + 6), R16
+//  523      return '?';
+??BlockLoad_1:
+        LDI     R16, 63
+??BlockLoad_4:
+        LDI     R30, 4
+        JMP     ?EPILOGUE_B4_L09
+//  524   }
+//  525 }
+
+        RSEG FARCODE:CODE:NOROOT(1)
+?Subroutine10:
+        JMP     recchar
+
+        ASEGN ABSOLUTE:DATA:NOROOT,01fH
+__?EECR:
+
+        ASEGN ABSOLUTE:DATA:NOROOT,020H
+__?EEDR:
+
+        ASEGN ABSOLUTE:DATA:NOROOT,021H
+__?EEARL:
+
+        ASEGN ABSOLUTE:DATA:NOROOT,022H
+__?EEARH:
+
+        RSEG INITTAB:CODE:NOROOT(0)
+`?<Segment init: NEAR_Z>`:
+        DC16    SFE(NEAR_Z) - SFB(NEAR_Z)
+        DC16    SFB(NEAR_Z)
+        DP      0
+        REQUIRE ?need_segment_init
+
+        END
+// 
+//   8 bytes in segment ABSOLUTE
+// 902 bytes in segment FARCODE
+//   7 bytes in segment INITTAB
+//  79 bytes in segment NEAR_Z
+// 
+// 902 bytes of CODE memory (+ 7 bytes shared)
+//  79 bytes of DATA memory (+ 8 bytes shared)
+//
+//Errors: none
+//Warnings: none

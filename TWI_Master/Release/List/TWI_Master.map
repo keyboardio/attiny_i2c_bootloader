@@ -1,0 +1,843 @@
+################################################################################
+#                                                                              #
+#      IAR Universal Linker V4.61L/W32                                         #
+#                                                                              #
+#           Link time     =  16/Aug/2011  11:15:40                             #
+#           Target CPU    =  A90                                               #
+#           List file     =  "E:\F Drive\Project\Bootloader project\Code\Commo #
+#                            n for All Devices\TWI_Master\Release\List\TWI_Mas #
+#                            ter.map"                                          #
+#           Output file 1 =  "E:\F Drive\Project\Bootloader project\Code\Commo #
+#                            n for All Devices\TWI_Master\Release\Exe\TWI_Mast #
+#                            er.hex"                                           #
+#                            Format: intel-extended                            #
+#           Output file 2 =  "E:\F Drive\Project\Bootloader project\Code\Commo #
+#                            n for All Devices\TWI_Master\Release\Exe\TWI_Mast #
+#                            er.a90"                                           #
+#                            Format: intel-extended                            #
+#           Command line  =  "E:\F Drive\Project\Bootloader project\Code\Commo #
+#                            n for All Devices\TWI_Master\Release\Obj\TWI_Mast #
+#                            er.r90"                                           #
+#                            "E:\F Drive\Project\Bootloader project\Code\Commo #
+#                            n for All Devices\TWI_Master\Release\Obj\serial.r #
+#                            90"                                               #
+#                            -o                                                #
+#                            "E:\F Drive\Project\Bootloader project\Code\Commo #
+#                            n for All Devices\TWI_Master\Release\Exe\TWI_Mast #
+#                            er.hex"                                           #
+#                            -Fintel-extended -l                               #
+#                            "E:\F Drive\Project\Bootloader project\Code\Commo #
+#                            n for All Devices\TWI_Master\Release\List\TWI_Mas #
+#                            ter.map"                                          #
+#                            -xmsn                                             #
+#                            "-IC:\Program Files\IAR Systems\Embedded Workbenc #
+#                            h 5.4\avr\LIB\"                                   #
+#                            -f                                                #
+#                            "E:\F Drive\Project\Bootloader project\Code\Commo #
+#                            n for All Devices\TWI_Master\TWI_Master.xcl"      #
+#                            (-D_..X_BOOT_START=3F000 -D_..X_INTVEC_SIZE=E4    #
+#                            -D_..X_FLASH_TEND=FF -D_..X_FLASH_NEND=FFFF       #
+#                            -D_..X_FLASH_END=3FFFF -D_..X_SRAM_BASE=200       #
+#                            -D_..X_SRAM_TEND=100 -D_..X_SRAM_END=21FF         #
+#                            -D_..X_EEPROM_END=FFF -D_..X_CSTACK_SIZE=200      #
+#                            -D_..X_RSTACK_SIZE=40 -D_..X_HEAP_SIZE=100        #
+#                            -D_..X_NEAR_HEAP_SIZE=100                         #
+#                            -D_..X_EXT_SRAM_BASE=_..X_SRAM_BASE               #
+#                            -D_..X_EXT_SRAM_END=_..X_SRAM_END                 #
+#                            -D_..X_EXT_EPROM_BASE=_..X_SRAM_BASE              #
+#                            -D_..X_EXT_EPROM_END=_..X_SRAM_END                #
+#                            -D_..X_EXT_EEPROM_BASE=_..X_SRAM_BASE             #
+#                            -D_..X_EXT_EEPROM_END=_..X_SRAM_END -ca90         #
+#                            -Z(CODE)INTVEC=_..X_BOOT_START-(_..X_BOOT_START+_ #
+#                            ..X_INTVEC_SIZE-1)                                #
+#                            -H1895                                            #
+#                            -h(CODE)_..X_BOOT_START-(_..X_BOOT_START+_..X_INT #
+#                            VEC_SIZE)                                         #
+#                            -Z(CODE)CODE=(_..X_BOOT_START+_..X_INTVEC_SIZE)-_ #
+#                            ..X_FLASH_END                                     #
+#                            -P(CODE)FAR_F=[(_..X_BOOT_START+_..X_INTVEC_SIZE) #
+#                            -_..X_FLASH_END]/10000                            #
+#                            -Z(CODE)HUGE_F,INITTAB=(_..X_BOOT_START+_..X_INTV #
+#                            EC_SIZE)-_..X_FLASH_END                           #
+#                            -Z(CODE)NEAR_ID,FARCODE=(_..X_BOOT_START+_..X_INT #
+#                            VEC_SIZE)-_..X_FLASH_END                          #
+#                            -Z(CODE)CHECKSUM#_..X_FLASH_END                   #
+#                            -Z(DATA)NEAR_I,NEAR_Z=_..X_SRAM_BASE-_..X_SRAM_EN #
+#                            D,_..X_EXT_SRAM_BASE-_..X_EXT_SRAM_END            #
+#                            -Z(DATA)RSTACK+_..X_RSTACK_SIZE=_..X_SRAM_BASE-_. #
+#                            .X_SRAM_END                                       #
+#                            -Z(DATA)CSTACK+_..X_CSTACK_SIZE=_..X_SRAM_BASE-_. #
+#                            .X_SRAM_END                                       #
+#                            -Z(DATA)HEAP+_..X_HEAP_SIZE=_..X_SRAM_BASE-_..X_S #
+#                            RAM_END,_..X_EXT_SRAM_BASE-_..X_EXT_SRAM_END      #
+#                            -Z(DATA)IOSTREAM_N#_..X_SRAM_BASE-_..X_SRAM_END,_ #
+#                            ..X_EXT_SRAM_BASE-_..X_EXT_SRAM_END               #
+#                            -Z(DATA)NEAR_HEAP+_..X_NEAR_HEAP_SIZE=_..X_SRAM_B #
+#                            ASE-_..X_SRAM_END,_..X_EXT_SRAM_BASE-_..X_EXT_SRA #
+#                            M_END                                             #
+#                            -Z(XDATA)EEPROM_I,EEPROM_N=0-_..X_EEPROM_END      #
+#                            -Z(CONST)NEAR_C=_..X_EXT_EPROM_BASE-_..X_EXT_EPRO #
+#                            M_END                                             #
+#                            -Z(DATA)NEAR_N=_..X_EXT_EEPROM_BASE-_..X_EXT_EEPR #
+#                            OM_END                                            #
+#                            -e_PrintfSmall=_Printf                            #
+#                            -e_small_write=_formatted_write                   #
+#                            -e_small_write_P=_formatted_write_P               #
+#                            -e_ScanfSmall=_Scanf                              #
+#                            -e_medium_read=_formatted_read                    #
+#                            -e_medium_read_P=_formatted_read_P -w29)          #
+#                            "-Ointel-extended=E:\F Drive\Project\Bootloader p #
+#                            roject\Code\Common for All Devices\TWI_Master\Rel #
+#                            ease\Exe\TWI_Master.a90"                          #
+#                            -s __program_start                                #
+#                            "C:\Program Files\IAR Systems\Embedded Workbench  #
+#                            5.4\avr\LIB\CLIB\cl5s-ec_mul.r90"                 #
+#                                                                              #
+#                           Copyright (C) 1987-2009 IAR Systems AB.            #
+################################################################################
+
+
+
+
+
+                ****************************************
+                *                                      *
+                *           CROSS REFERENCE            *
+                *                                      *
+                ****************************************
+
+       Program entry at : CODE      0003F000  Relocatable, from module : ?RESET
+
+
+
+
+                ****************************************
+                *                                      *
+                *            RUNTIME MODEL             *
+                *                                      *
+                ****************************************
+
+  __64bit_doubles = disabled
+  __cpu           = 5
+  __cpu_name      = ATmega2560
+  __enhanced_core = enabled
+  __has_elpm      = true
+  __memory_model  = 2
+  __no_rampd      = enabled
+  __rt_version    = 3
+  __tiny_avr      = false
+
+
+
+                ****************************************
+                *                                      *
+                *              MODULE MAP              *
+                *                                      *
+                ****************************************
+
+
+  DEFINED ABSOLUTE ENTRIES
+  PROGRAM MODULE, NAME : ?ABS_ENTRY_MOD
+
+Absolute parts
+           ENTRY                   ADDRESS         REF BY
+           =====                   =======         ======
+           _..X_EXT_EEPROM_END     000021FF 
+           _..X_EXT_EEPROM_BASE    00000200 
+           _..X_EXT_EPROM_END      000021FF 
+           _..X_EXT_EPROM_BASE     00000200 
+           _..X_EXT_SRAM_END       000021FF 
+           _..X_EXT_SRAM_BASE      00000200 
+           _..X_NEAR_HEAP_SIZE     00000100 
+           _..X_HEAP_SIZE          00000100 
+           _..X_RSTACK_SIZE        00000040 
+           _..X_CSTACK_SIZE        00000200 
+           _..X_EEPROM_END         00000FFF 
+           _..X_SRAM_END           000021FF 
+           _..X_SRAM_TEND          00000100 
+           _..X_SRAM_BASE          00000200 
+           _..X_FLASH_END          0003FFFF 
+           _..X_FLASH_NEND         0000FFFF 
+           _..X_FLASH_TEND         000000FF 
+           _..X_INTVEC_SIZE        000000E4 
+           _..X_BOOT_START         0003F000 
+    *************************************************************************
+
+  FILE NAME : E:\F Drive\Project\Bootloader project\Code\Common for All Devices\TWI_Master\Release\Obj\TWI_Master.r90
+  PROGRAM MODULE, NAME : TWI_Master
+
+  SEGMENTS IN THE MODULE
+  ======================
+ABSOLUTE
+  Relative segment, address: DATA 000000BC - 000000BC (0x1 bytes), align: 0
+  Segment part 1. ROOT.       Intra module refs:   InitTWI
+                                                   MasterReceive
+                                                   MasterTransmit
+                                                   Segment part 26
+                                                   Segment part 31
+                                                   Segment part 32
+           ENTRY                   ADDRESS         REF BY
+           =====                   =======         ======
+           _A_TWCR                 000000BC 
+    -------------------------------------------------------------------------
+ABSOLUTE
+  Relative segment, address: DATA 000000BB - 000000BB (0x1 bytes), align: 0
+  Segment part 2. ROOT.       Intra module refs:   MasterReceive
+                                                   MasterTransmit
+                                                   Segment part 24
+           ENTRY                   ADDRESS         REF BY
+           =====                   =======         ======
+           _A_TWDR                 000000BB 
+    -------------------------------------------------------------------------
+ABSOLUTE
+  Relative segment, address: DATA 000000B9 - 000000B9 (0x1 bytes), align: 0
+  Segment part 3. ROOT.       Intra module refs:   MasterReceive
+                                                   MasterTransmit
+                                                   Segment part 30
+           ENTRY                   ADDRESS         REF BY
+           =====                   =======         ======
+           _A_TWSR                 000000B9 
+    -------------------------------------------------------------------------
+ABSOLUTE
+  Relative segment, address: DATA 000000B8 - 000000B8 (0x1 bytes), align: 0
+  Segment part 4. ROOT.       Intra module refs:   InitTWI
+           ENTRY                   ADDRESS         REF BY
+           =====                   =======         ======
+           _A_TWBR                 000000B8 
+    -------------------------------------------------------------------------
+ABSOLUTE
+  Relative segment, address: DATA 0000002B - 0000002B (0x1 bytes), align: 0
+  Segment part 5. ROOT.       Intra module refs:   InitTWI
+           ENTRY                   ADDRESS         REF BY
+           =====                   =======         ======
+           _A_PORTD                0000002B 
+    -------------------------------------------------------------------------
+ABSOLUTE
+  Relative segment, address: DATA 0000002A - 0000002A (0x1 bytes), align: 0
+  Segment part 6. ROOT.       Intra module refs:   InitTWI
+           ENTRY                   ADDRESS         REF BY
+           =====                   =======         ======
+           _A_DDRD                 0000002A 
+    -------------------------------------------------------------------------
+ABSOLUTE
+  Relative segment, address: DATA 00000028 - 00000028 (0x1 bytes), align: 0
+  Segment part 7. ROOT.       Intra module refs:   First_Time
+                                                   cycle_reset
+                                                   main
+                                                   read_and_send
+                                                   send_command
+           ENTRY                   ADDRESS         REF BY
+           =====                   =======         ======
+           _A_PORTC                00000028 
+    -------------------------------------------------------------------------
+ABSOLUTE
+  Relative segment, address: DATA 00000027 - 00000027 (0x1 bytes), align: 0
+  Segment part 8. ROOT.       Intra module refs:   main
+           ENTRY                   ADDRESS         REF BY
+           =====                   =======         ======
+           _A_DDRC                 00000027 
+    -------------------------------------------------------------------------
+FARCODE
+  Relative segment, address: CODE 0003F132 - 0003F149 (0x18 bytes), align: 1
+  Segment part 19.            Intra module refs:   First_Time
+                                                   main
+           ENTRY                   ADDRESS         REF BY
+           =====                   =======         ======
+           InitTWI                 0003F132 
+               RSTACK = 00000000 ( 00000003 )
+    -------------------------------------------------------------------------
+FARCODE
+  Relative segment, address: CODE 0003F14A - 0003F14F (0x6 bytes), align: 1
+  Segment part 20.            Intra module refs:   Segment part 41
+           ENTRY                   ADDRESS         REF BY
+           =====                   =======         ======
+           cycle_reset             0003F14A 
+               RSTACK = 00000000 ( 00000003 )
+    -------------------------------------------------------------------------
+FARCODE
+  Relative segment, address: CODE 0003F150 - 0003F15F (0x10 bytes), align: 1
+  Segment part 21.            Intra module refs:   cycle_reset
+    -------------------------------------------------------------------------
+FARCODE
+  Relative segment, address: CODE 0003F160 - 0003F1D9 (0x7a bytes), align: 1
+  Segment part 22.            Intra module refs:   Segment part 35
+           ENTRY                   ADDRESS         REF BY
+           =====                   =======         ======
+           MasterReceive           0003F160 
+               RSTACK = 00000000 ( 00000003 )
+    -------------------------------------------------------------------------
+FARCODE
+  Relative segment, address: CODE 0003F1DA - 0003F1DD (0x4 bytes), align: 1
+  Segment part 23.            Intra module refs:   MasterReceive
+                                                   MasterTransmit
+    -------------------------------------------------------------------------
+FARCODE
+  Relative segment, address: CODE 0003F1DE - 0003F1E1 (0x4 bytes), align: 1
+  Segment part 24.            Intra module refs:   MasterReceive
+                                                   MasterTransmit
+    -------------------------------------------------------------------------
+FARCODE
+  Relative segment, address: CODE 0003F1E2 - 0003F1E3 (0x2 bytes), align: 1
+  Segment part 25.            Intra module refs:   MasterReceive
+                                                   Segment part 24
+    -------------------------------------------------------------------------
+FARCODE
+  Relative segment, address: CODE 0003F1E4 - 0003F1E9 (0x6 bytes), align: 1
+  Segment part 26.            Intra module refs:   InitTWI
+                                                   MasterReceive
+                                                   MasterTransmit
+                                                   Segment part 25
+    -------------------------------------------------------------------------
+FARCODE
+  Relative segment, address: CODE 0003F1EA - 0003F1F9 (0x10 bytes), align: 1
+  Segment part 27.            Intra module refs:   First_Time
+                                                   Segment part 40
+                                                   main
+           ENTRY                   ADDRESS         REF BY
+           =====                   =======         ======
+           get_slave_status        0003F1EA 
+               calls direct
+               RSTACK = 00000000 ( 00000003 )
+    -------------------------------------------------------------------------
+FARCODE
+  Relative segment, address: CODE 0003F1FA - 0003F271 (0x78 bytes), align: 1
+  Segment part 28.            Intra module refs:   Segment part 42
+           ENTRY                   ADDRESS         REF BY
+           =====                   =======         ======
+           MasterTransmit          0003F1FA 
+               RSTACK = 00000000 ( 00000003 )
+    -------------------------------------------------------------------------
+FARCODE
+  Relative segment, address: CODE 0003F272 - 0003F27B (0xa bytes), align: 1
+  Segment part 29.            Intra module refs:   MasterReceive
+                                                   MasterTransmit
+    -------------------------------------------------------------------------
+FARCODE
+  Relative segment, address: CODE 0003F27C - 0003F281 (0x6 bytes), align: 1
+  Segment part 30.            Intra module refs:   MasterReceive
+                                                   MasterTransmit
+    -------------------------------------------------------------------------
+FARCODE
+  Relative segment, address: CODE 0003F282 - 0003F287 (0x6 bytes), align: 1
+  Segment part 31.            Intra module refs:   MasterReceive
+                                                   MasterTransmit
+    -------------------------------------------------------------------------
+FARCODE
+  Relative segment, address: CODE 0003F288 - 0003F291 (0xa bytes), align: 1
+  Segment part 32.            Intra module refs:   MasterReceive
+                                                   MasterTransmit
+    -------------------------------------------------------------------------
+FARCODE
+  Relative segment, address: CODE 0003F292 - 0003F2A7 (0x16 bytes), align: 1
+  Segment part 33.            Intra module refs:   main
+           ENTRY                   ADDRESS         REF BY
+           =====                   =======         ======
+           First_Time              0003F292 
+               calls direct
+               RSTACK = 00000000 ( 00000003 )
+    -------------------------------------------------------------------------
+NEAR_Z
+  Relative segment, address: DATA 00000200 - 0000020A (0xb bytes), align: 0
+  Segment part 15.            Intra module refs:   BlockLoad
+                                                   First_Time
+                                                   Segment part 35
+                                                   Segment part 36
+                                                   Segment part 40
+                                                   Segment part 45
+                                                   get_slave_status
+                                                   main
+                                                   read_from_slave
+           ENTRY                   ADDRESS         REF BY
+           =====                   =======         ======
+           CRC_HI                  00000208 
+           CRC_LO                  00000209 
+           addr                    00000200 
+           command_char            00000207 
+           over_size_flag          00000206 
+           reps                    0000020A 
+           runApp                  00000202 
+           statusCode              00000204 
+           success                 00000205 
+    -------------------------------------------------------------------------
+NEAR_Z
+  Relative segment, address: DATA 0000020B - 0000024D (0x43 bytes), align: 0
+  Segment part 17.            Intra module refs:   BlockLoad
+                                                   First_Time
+                                                   main
+           ENTRY                   ADDRESS         REF BY
+           =====                   =======         ======
+           pageBuffer              0000020B 
+    -------------------------------------------------------------------------
+FARCODE
+  Relative segment, address: CODE 0003F2A8 - 0003F2B7 (0x10 bytes), align: 1
+  Segment part 34.            Intra module refs:   Segment part 45
+           ENTRY                   ADDRESS         REF BY
+           =====                   =======         ======
+           read_from_slave         0003F2A8 
+               calls direct
+               RSTACK = 00000000 ( 00000003 )
+    -------------------------------------------------------------------------
+FARCODE
+  Relative segment, address: CODE 0003F2B8 - 0003F2C3 (0xc bytes), align: 1
+  Segment part 35.            Intra module refs:   get_slave_status
+                                                   read_from_slave
+    -------------------------------------------------------------------------
+FARCODE
+  Relative segment, address: CODE 0003F2C4 - 0003F2C9 (0x6 bytes), align: 1
+  Segment part 36.            Intra module refs:   Segment part 35
+                                                   Segment part 42
+    -------------------------------------------------------------------------
+FARCODE
+  Relative segment, address: CODE 0003F2CA - 0003F2CD (0x4 bytes), align: 1
+  Segment part 37.            Intra module refs:   main
+           ENTRY                   ADDRESS         REF BY
+           =====                   =======         ======
+           read_and_send           0003F2CA 
+               calls direct
+               RSTACK = 00000000 ( 00000003 )
+    -------------------------------------------------------------------------
+FARCODE
+  Relative segment, address: CODE 0003F2CE - 0003F2D1 (0x4 bytes), align: 1
+  Segment part 38.            Intra module refs:   Segment part 44
+                                                   main
+                                                   read_and_send
+    -------------------------------------------------------------------------
+FARCODE
+  Relative segment, address: CODE 0003F2D2, align: 1
+  Segment part 39.            Intra module refs:   main
+           ENTRY                   ADDRESS         REF BY
+           =====                   =======         ======
+           send_command            0003F2D2 
+               calls direct
+               RSTACK = 00000000 ( 00000003 )
+    -------------------------------------------------------------------------
+FARCODE
+  Relative segment, address: CODE 0003F2D2 - 0003F2E7 (0x16 bytes), align: 1
+  Segment part 40.            Intra module refs:   main
+                                                   read_and_send
+                                                   send_command
+    -------------------------------------------------------------------------
+FARCODE
+  Relative segment, address: CODE 0003F2E8 - 0003F2EB (0x4 bytes), align: 1
+  Segment part 41.            Intra module refs:   First_Time
+                                                   Segment part 40
+    -------------------------------------------------------------------------
+FARCODE
+  Relative segment, address: CODE 0003F2EC - 0003F2F1 (0x6 bytes), align: 1
+  Segment part 42.            Intra module refs:   Segment part 40
+                                                   main
+    -------------------------------------------------------------------------
+FARCODE
+  Relative segment, address: CODE 0003F2F2 - 0003F46B (0x17a bytes), align: 1
+  Segment part 43.
+           ENTRY                   ADDRESS         REF BY
+           =====                   =======         ======
+           main                    0003F2F2        ?cstartup_call_main (?C_STARTUP)
+               calls direct
+               RSTACK = 00000000 ( 00000003 )
+    -------------------------------------------------------------------------
+FARCODE
+  Relative segment, address: CODE 0003F46C - 0003F46F (0x4 bytes), align: 1
+  Segment part 44.            Intra module refs:   main
+    -------------------------------------------------------------------------
+FARCODE
+  Relative segment, address: CODE 0003F470 - 0003F477 (0x8 bytes), align: 1
+  Segment part 45.            Intra module refs:   main
+                                                   read_and_send
+    -------------------------------------------------------------------------
+FARCODE
+  Relative segment, address: CODE 0003F478 - 0003F4B3 (0x3c bytes), align: 1
+  Segment part 46.            Intra module refs:   main
+           ENTRY                   ADDRESS         REF BY
+           =====                   =======         ======
+           BlockLoad               0003F478 
+               calls direct
+               RSTACK = 00000000 ( 00000003 )
+               CSTACK = 00000000 ( 00000004 )
+    -------------------------------------------------------------------------
+FARCODE
+  Relative segment, address: CODE 0003F4B4 - 0003F4B7 (0x4 bytes), align: 1
+  Segment part 47.            Intra module refs:   BlockLoad
+                                                   main
+    -------------------------------------------------------------------------
+ABSOLUTE
+  Relative segment, address: DATA 0000001F, align: 0
+  Segment part 9. ROOT.
+           ENTRY                   ADDRESS         REF BY
+           =====                   =======         ======
+           __?EECR                 0000001F 
+    -------------------------------------------------------------------------
+ABSOLUTE
+  Relative segment, address: DATA 00000020, align: 0
+  Segment part 10. ROOT.
+           ENTRY                   ADDRESS         REF BY
+           =====                   =======         ======
+           __?EEDR                 00000020 
+    -------------------------------------------------------------------------
+ABSOLUTE
+  Relative segment, address: DATA 00000021, align: 0
+  Segment part 11. ROOT.
+           ENTRY                   ADDRESS         REF BY
+           =====                   =======         ======
+           __?EEARL                00000021 
+    -------------------------------------------------------------------------
+ABSOLUTE
+  Relative segment, address: DATA 00000022, align: 0
+  Segment part 12. ROOT.
+           ENTRY                   ADDRESS         REF BY
+           =====                   =======         ======
+           __?EEARH                00000022 
+    -------------------------------------------------------------------------
+INITTAB
+  Relative segment, address: CODE 0003F12A - 0003F130 (0x7 bytes), align: 0
+  Segment part 16.            Intra module refs:   Segment part 15
+                                                   pageBuffer
+           ENTRY                   ADDRESS         REF BY
+           =====                   =======         ======
+           ?<Segment init: NEAR_Z>
+                                   0003F12A 
+
+    *************************************************************************
+
+  FILE NAME : E:\F Drive\Project\Bootloader project\Code\Common for All Devices\TWI_Master\Release\Obj\serial.r90
+  PROGRAM MODULE, NAME : serial
+
+  SEGMENTS IN THE MODULE
+  ======================
+ABSOLUTE
+  Relative segment, address: DATA 000000C6 - 000000C6 (0x1 bytes), align: 0
+  Segment part 1. ROOT.       Intra module refs:   recchar
+                                                   sendchar
+           ENTRY                   ADDRESS         REF BY
+           =====                   =======         ======
+           _A_UDR0                 000000C6 
+    -------------------------------------------------------------------------
+ABSOLUTE
+  Relative segment, address: DATA 000000C4 - 000000C5 (0x2 bytes), align: 0
+  Segment part 2. ROOT.       Intra module refs:   initbootuart
+           ENTRY                   ADDRESS         REF BY
+           =====                   =======         ======
+           _A_UBRR0                000000C4 
+    -------------------------------------------------------------------------
+ABSOLUTE
+  Relative segment, address: DATA 000000C1 - 000000C1 (0x1 bytes), align: 0
+  Segment part 3. ROOT.       Intra module refs:   initbootuart
+           ENTRY                   ADDRESS         REF BY
+           =====                   =======         ======
+           _A_UCSR0B               000000C1 
+    -------------------------------------------------------------------------
+ABSOLUTE
+  Relative segment, address: DATA 000000C0 - 000000C0 (0x1 bytes), align: 0
+  Segment part 4. ROOT.       Intra module refs:   recchar
+                                                   sendchar
+           ENTRY                   ADDRESS         REF BY
+           =====                   =======         ======
+           _A_UCSR0A               000000C0 
+    -------------------------------------------------------------------------
+FARCODE
+  Relative segment, address: CODE 0003F4B8 - 0003F4C5 (0xe bytes), align: 1
+  Segment part 11.
+           ENTRY                   ADDRESS         REF BY
+           =====                   =======         ======
+           initbootuart            0003F4B8        main (TWI_Master)
+               RSTACK = 00000000 ( 00000003 )
+    -------------------------------------------------------------------------
+FARCODE
+  Relative segment, address: CODE 0003F4C6 - 0003F4DD (0x18 bytes), align: 1
+  Segment part 12.
+           ENTRY                   ADDRESS         REF BY
+           =====                   =======         ======
+           sendchar                0003F4C6        Segment part 38 (TWI_Master)
+               RSTACK = 00000000 ( 00000003 )
+    -------------------------------------------------------------------------
+FARCODE
+  Relative segment, address: CODE 0003F4DE - 0003F4EB (0xe bytes), align: 1
+  Segment part 13.
+           ENTRY                   ADDRESS         REF BY
+           =====                   =======         ======
+           recchar                 0003F4DE        Segment part 47 (TWI_Master)
+               RSTACK = 00000000 ( 00000003 )
+
+    *************************************************************************
+
+  FILE NAME : C:\Program Files\IAR Systems\Embedded Workbench 5.4\avr\LIB\CLIB\cl5s-ec_mul.r90
+  LIBRARY MODULE, NAME : ?__exit
+
+  SEGMENTS IN THE MODULE
+  ======================
+CODE
+  Relative segment, address: CODE 0003F0E4 - 0003F0E9 (0x6 bytes), align: 1
+  Segment part 0.
+           ENTRY                   ADDRESS         REF BY
+           =====                   =======         ======
+           __exit                  0003F0E6 
+           ?C_EXIT                 0003F0E6 
+           ?C_FUNCALL              0003F0E4 
+           _exit                   0003F0E4        ?cstartup_call_main (?C_STARTUP)
+           exit                    0003F0E4        ?cstartup_call_main (?C_STARTUP)
+
+    -------------------------------------------------------------------------
+  LIBRARY MODULE, NAME : ?RESET
+
+  SEGMENTS IN THE MODULE
+  ======================
+INTVEC
+  Common segment, address: CODE 0003F000 - 0003F003 (0x4 bytes), align: 1
+  Segment part 0. ROOT.
+           ENTRY                   ADDRESS         REF BY
+           =====                   =======         ======
+           __program_start         0003F000        Absolute parts (?ABS_ENTRY_MOD)
+           ?RESET                  0003F000        Segment part 2 (?C_STARTUP)
+
+    -------------------------------------------------------------------------
+  LIBRARY MODULE, NAME : ?C_STARTUP
+
+  SEGMENTS IN THE MODULE
+  ======================
+CODE
+  Relative segment, address: CODE 0003F0EA, align: 1
+  Segment part 2.
+           ENTRY                   ADDRESS         REF BY
+           =====                   =======         ======
+           ?C_STARTUP              0003F0EA        Segment part 0 (?RESET)
+           __RESTART               0003F0EA 
+    -------------------------------------------------------------------------
+CODE
+  Relative segment, address: CODE 0003F0EA - 0003F0F5 (0xc bytes), align: 1
+  Segment part 5.             Intra module refs:   Segment part 2
+    -------------------------------------------------------------------------
+CODE
+  Relative segment, address: CODE 0003F0F6 - 0003F0F9 (0x4 bytes), align: 1
+  Segment part 7.             Intra module refs:   Segment part 5
+           ENTRY                   ADDRESS         REF BY
+           =====                   =======         ======
+           ?call_low_level_init    0003F0F6 
+    -------------------------------------------------------------------------
+CODE
+  Relative segment, address: CODE 0003F0FA - 0003F101 (0x8 bytes), align: 1
+  Segment part 8.
+           ENTRY                   ADDRESS         REF BY
+           =====                   =======         ======
+           ?need_segment_init      0003F0FA        ?<Segment init: NEAR_Z> (TWI_Master)
+    -------------------------------------------------------------------------
+CODE
+  Relative segment, address: CODE 0003F102 - 0003F10D (0xc bytes), align: 1
+  Segment part 9.             Intra module refs:   ?call_low_level_init
+           ENTRY                   ADDRESS         REF BY
+           =====                   =======         ======
+           ?cstartup_call_main     0003F102 
+
+    -------------------------------------------------------------------------
+  LIBRARY MODULE, NAME : ?PROLOGUE_L09
+
+  SEGMENTS IN THE MODULE
+  ======================
+CODE
+  Relative segment, address: CODE 0003F10E - 0003F10F (0x2 bytes), align: 1
+  Segment part 12.
+           ENTRY                   ADDRESS         REF BY
+           =====                   =======         ======
+           ?PROLOGUE4_L09          0003F10E        BlockLoad (TWI_Master)
+    -------------------------------------------------------------------------
+CODE
+  Relative segment, address: CODE 0003F110 - 0003F111 (0x2 bytes), align: 1
+  Segment part 13.            Intra module refs:   ?PROLOGUE4_L09
+           ENTRY                   ADDRESS         REF BY
+           =====                   =======         ======
+           ?PROLOGUE3_L09          0003F110 
+    -------------------------------------------------------------------------
+CODE
+  Relative segment, address: CODE 0003F112 - 0003F113 (0x2 bytes), align: 1
+  Segment part 14.            Intra module refs:   ?PROLOGUE3_L09
+           ENTRY                   ADDRESS         REF BY
+           =====                   =======         ======
+           ?PROLOGUE2_L09          0003F112 
+    -------------------------------------------------------------------------
+CODE
+  Relative segment, address: CODE 0003F114 - 0003F115 (0x2 bytes), align: 1
+  Segment part 15.            Intra module refs:   ?PROLOGUE2_L09
+           ENTRY                   ADDRESS         REF BY
+           =====                   =======         ======
+           ?PROLOGUE1_L09          0003F114 
+    -------------------------------------------------------------------------
+CODE
+  Relative segment, address: CODE 0003F116 - 0003F117 (0x2 bytes), align: 1
+  Segment part 16.            Intra module refs:   ?PROLOGUE1_L09
+
+    -------------------------------------------------------------------------
+  LIBRARY MODULE, NAME : ?EPILOGUE_B_L09
+
+  SEGMENTS IN THE MODULE
+  ======================
+CODE
+  Relative segment, address: CODE 0003F118 - 0003F119 (0x2 bytes), align: 1
+  Segment part 12.
+           ENTRY                   ADDRESS         REF BY
+           =====                   =======         ======
+           ?EPILOGUE_B4_L09        0003F118        BlockLoad (TWI_Master)
+    -------------------------------------------------------------------------
+CODE
+  Relative segment, address: CODE 0003F11A - 0003F11B (0x2 bytes), align: 1
+  Segment part 13.            Intra module refs:   ?EPILOGUE_B4_L09
+           ENTRY                   ADDRESS         REF BY
+           =====                   =======         ======
+           ?EPILOGUE_B3_L09        0003F11A 
+    -------------------------------------------------------------------------
+CODE
+  Relative segment, address: CODE 0003F11C - 0003F11D (0x2 bytes), align: 1
+  Segment part 14.            Intra module refs:   ?EPILOGUE_B3_L09
+           ENTRY                   ADDRESS         REF BY
+           =====                   =======         ======
+           ?EPILOGUE_B2_L09        0003F11C 
+    -------------------------------------------------------------------------
+CODE
+  Relative segment, address: CODE 0003F11E - 0003F11F (0x2 bytes), align: 1
+  Segment part 15.            Intra module refs:   ?EPILOGUE_B2_L09
+           ENTRY                   ADDRESS         REF BY
+           =====                   =======         ======
+           ?EPILOGUE_B1_L09        0003F11E 
+    -------------------------------------------------------------------------
+CODE
+  Relative segment, address: CODE 0003F120 - 0003F129 (0xa bytes), align: 1
+  Segment part 16.            Intra module refs:   ?EPILOGUE_B1_L09
+           ENTRY                   ADDRESS         REF BY
+           =====                   =======         ======
+           ?EPILOGUE_B0_L09        0003F120 
+
+    -------------------------------------------------------------------------
+  LIBRARY MODULE, NAME : ?low_level_init
+
+  SEGMENTS IN THE MODULE
+  ======================
+FARCODE
+  Relative segment, address: CODE 0003F4EC - 0003F4EF (0x4 bytes), align: 1
+  Segment part 3.
+           ENTRY                   ADDRESS         REF BY
+           =====                   =======         ======
+           __low_level_init        0003F4EC        ?call_low_level_init (?C_STARTUP)
+               RSTACK = 00000000 ( 00000003 )
+
+    -------------------------------------------------------------------------
+  LIBRARY MODULE, NAME : ?segment_init
+
+  SEGMENTS IN THE MODULE
+  ======================
+FARCODE
+  Relative segment, address: CODE 0003F4F0 - 0003F4F7 (0x8 bytes), align: 1
+  Segment part 3.             Intra module refs:   __segment_init
+           LOCAL                   ADDRESS         
+           =====                   =======         
+           __memclr                0003F4F0 
+               RSTACK = 00000000 ( 00000003 )
+    -------------------------------------------------------------------------
+FARCODE
+  Relative segment, address: CODE 0003F4F8 - 0003F503 (0xc bytes), align: 1
+  Segment part 4.             Intra module refs:   __segment_init
+           LOCAL                   ADDRESS         
+           =====                   =======         
+           __flashcpy              0003F4F8 
+               RSTACK = 00000000 ( 00000003 )
+    -------------------------------------------------------------------------
+FARCODE
+  Relative segment, address: CODE 0003F504 - 0003F50F (0xc bytes), align: 1
+  Segment part 5.             Intra module refs:   __flashcpy
+                                                   __memclr
+    -------------------------------------------------------------------------
+FARCODE
+  Relative segment, address: CODE 0003F510 - 0003F56F (0x60 bytes), align: 1
+  Segment part 6.
+           ENTRY                   ADDRESS         REF BY
+           =====                   =======         ======
+           __segment_init          0003F510        ?need_segment_init (?C_STARTUP)
+               calls direct
+               RSTACK = 00000000 ( 00000003 )
+
+    *************************************************************************
+
+  DEFINED ABSOLUTE ENTRIES
+  PROGRAM MODULE, NAME : ?FILLER_BYTES
+
+  SEGMENTS IN THE MODULE
+  ======================
+INTVEC
+  Common segment, address: CODE 0003F000 - 0003F003 (0x4 bytes), align: 0
+  Segment part 1.
+    -------------------------------------------------------------------------
+?FILL1
+  Relative segment, address: CODE 0003F004 - 0003F0E3 (0xe0 bytes), align: 0
+  Segment part 0.
+
+
+
+
+                ****************************************
+                *                                      *
+                *            MODULE SUMMARY            *
+                *                                      *
+                ****************************************
+
+Module               CODE      DATA
+------               ----      ----
+                    (Rel)  (Rel)  (Abs)
+?C_STARTUP             36
+?EPILOGUE_B_L09        18
+?FILLER_BYTES         224
+  + common              4
+?PROLOGUE_L09          10
+?RESET
+  + common              4
+?__exit                 6
+?low_level_init         4
+?segment_init         128
+TWI_Master            909     78      8
+serial                 52             5
+N/A (command line)           576
+N/A (alignment)
+----------          -----    ---     --
+Total:              1 387    654     13
+  + common              4
+
+
+                ****************************************
+                *                                      *
+                *      SEGMENTS IN ADDRESS ORDER       *
+                *                                      *
+                ****************************************
+
+
+SEGMENT              SPACE    START ADDRESS   END ADDRESS     SIZE  TYPE  ALIGN
+=======              =====    =============   ===========     ====  ====  =====
+INTVEC               CODE          0003F000 - 0003F003           4   com    1
+?FILL1               CODE          0003F004 - 0003F0E3          E0   rel    0
+CODE                 CODE          0003F0E4 - 0003F129          46   rel    1
+HUGE_F               CODE               0003F12A                     dse    0
+INITTAB              CODE          0003F12A - 0003F130           7   rel    0
+NEAR_ID              CODE               0003F131                     dse    0
+FARCODE              CODE          0003F132 - 0003F56F         43E   rel    1
+ABSOLUTE             DATA               0000001F                     rel    0
+                     DATA               00000020                   
+                     DATA               00000021                   
+                     DATA               00000022                   
+                     DATA          00000027 - 00000028           2 
+                     DATA          0000002A - 0000002B           2 
+                     DATA          000000B8 - 000000B9           2 
+                     DATA          000000BB - 000000BC           2 
+                     DATA          000000C0 - 000000C1           2 
+                     DATA          000000C4 - 000000C6           3 
+NEAR_I               DATA               00000200                     dse    0
+NEAR_Z               DATA          00000200 - 0000024D          4E   rel    0
+RSTACK               DATA          0000024E - 0000028D          40   dse    0
+CSTACK               DATA          0000028E - 0000048D         200   dse    0
+
+                ****************************************
+                *                                      *
+                *        END OF CROSS REFERENCE        *
+                *                                      *
+                ****************************************
+
+ 1 167 bytes of CODE memory (+             224 range fill )
+   654 bytes of DATA memory (+ 13 absolute )
+
+Errors: none
+Warnings: none
+
