@@ -26,7 +26,6 @@
 
 
 //
-uint8_t state = 0;
 
 /***********************************************************************/
 
@@ -308,7 +307,6 @@ void read_and_process_packet (void) {
         break;
 
     case TWI_SLAR_RECEIVED:
-        if (state == 0)
             process_slave_transmit (get_status_code () & STATUSMASK_SPMBUSY);
         break;
 
