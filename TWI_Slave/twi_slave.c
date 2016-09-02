@@ -145,7 +145,6 @@ uint8_t SlaveReceiveByteAndNACK (uint8_t * data) {
         return 1;
 
     default:
-        // Reset the SLRBAN busy LED
         AbortTWI ();
         return 0;
     }
