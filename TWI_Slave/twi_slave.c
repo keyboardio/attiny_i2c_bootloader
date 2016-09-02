@@ -80,16 +80,16 @@ uint8_t slave_receive_byte (uint8_t * data, uint8_t ack) {
     TWCR = _BV(TWINT) | _BV(TWEN) | ( ack == ACK  ? _BV(TWEA) : 0 );
 
     wait_for_activity();
-            
+
     // Check TWI status code for SLAVE_RX_ACK. or SLAVE_RX_NACK
     // Basically, if the status register has the same value as
     // the type of packet we're looking for, then proceeed
-   
+
     if ( TWSR == ack) {
-        // Get byte 
+        // Get byte
         *data = TWDR;
         if (ack == TWI_SLAVE_RX_NACK_RETURNED) {
-        // If we're doing a NACK, then twiddle TWCR
+            // If we're doing a NACK, then twiddle TWCR
             TWCR = _BV(TWINT) | _BV(TWEN);
         }
         return 1;
@@ -262,12 +262,12 @@ int main (void) {
     if (MCUSR & _BV (PORF)) {	// Only in case of Power On Reset
         MCUSR = 0;
         host_boot_delay ();
-    init_twi();
-    wdt_enable(WDTO_8S);
+        init_twi();
+        wdt_enable(WDTO_8S);
 
-    while (1) {
-        read_and_process_packet (); // Process the TWI Commands
-    }
+        while (1) {
+            read_and_process_packet (); // Process the TWI Commands
+        }
     } else {
 
         cleanup_and_run_application ();
