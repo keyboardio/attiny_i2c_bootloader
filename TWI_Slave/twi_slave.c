@@ -8,15 +8,11 @@
 #include "common_define.h"
 
 
-
 //configuring LAST_INTVECT_ADDRESS as per device selected
 /*****************************************************************************/
 #define LAST_INTVECT_ADDRESS 		TWI_vect // The start of the application code
 
 
-
-
-/*****************************************************************************/
 /*****************************************************************************/
 #define TWI_SLAW_RECEIVED         	0x60	// Status slave address and write command received
 #define TWI_SLAR_RECEIVED         	0xa8	// Status slave address and read command received
@@ -24,12 +20,11 @@
 #define TWI_SLAVE_RX_ACK_RETURNED  	0x80	// Status slave receive and acknowledgement returned
 #define TWI_SLAVE_RX_NACK_RETURNED 	0x88	// Status slave receive and no acknowledgement or last byte
 
+// 10 s delay code for allowing ARM9 linux to boot
+#define HOST_BOOT_DELAY_SEC 10
 
-//
 
-/***********************************************************************/
 
-/***********************************************************************/
 void init_twi (void) {
     DDRC &= ~(_BV(PORTC5) | _BV(PORTC4)); // Set SCL and SDA as input
     PORTC &= ~(_BV(PORTC5) | _BV(PORTC4)); // Set SCL and SDA low
@@ -39,11 +34,9 @@ void init_twi (void) {
     TWCR = _BV(TWEN);
     // Enable, but don't enable ACK until we are ready to receive packets.
 }
-/***********************************************************************/
 
 
 
-/***********************************************************************/
 //! Return non-zero if "Enter Bootloader" pin is held low externally.
 uint8_t is_boot_pin_low (void) {
     // Make sure "Enter Bootloader" pin is input with internal pull-up.
@@ -56,14 +49,12 @@ uint8_t is_boot_pin_low (void) {
     return ((PINB & _BV(PORTB0)) == 0);
 
 }
-/***********************************************************************/
 
 void wait_for_activity(void) {
     do {} while ((TWCR & _BV(TWINT)) == 0);
     wdt_reset ();
 }
 
-/***********************************************************************/
 uint8_t get_status_code (void) {
     // Check if SPM operation is complete
     if ((SPMCSR & _BV(SELFPROGEN)) != 0)
@@ -71,18 +62,12 @@ uint8_t get_status_code (void) {
 
     return 0;
 }
-/***********************************************************************/
 
-
-/***********************************************************************/
 void abort_twi (void) {
     // Recover from error condition by releasing bus lines.
     TWCR = _BV(TWINT) | _BV(TWSTO) | _BV(TWEN);
 }
-/***********************************************************************/
 
-
-/***********************************************************************/
 void process_slave_transmit (uint8_t data) {
     // Prepare data for transmission.
     TWDR = data;
@@ -99,10 +84,7 @@ void process_slave_transmit (uint8_t data) {
         abort_twi ();
     }
 }
-/***********************************************************************/
 
-
-/***********************************************************************/
 uint8_t slave_receive_byte_and_ack (uint8_t * data) {
     // Receive byte and return ACK.
     TWCR = _BV(TWINT) | _BV(TWEA) | _BV(TWEN);
@@ -120,10 +102,7 @@ uint8_t slave_receive_byte_and_ack (uint8_t * data) {
         return 0;
     }
 }
-/***********************************************************************/
 
-
-/***********************************************************************/
 uint8_t slave_receive_byte_and_nack (uint8_t * data) {
     // Receive byte and return NACK.
     TWCR = _BV(TWINT) | _BV(TWEN);
@@ -143,11 +122,7 @@ uint8_t slave_receive_byte_and_nack (uint8_t * data) {
         return 0;
     }
 }
-/***********************************************************************/
 
-
-
-/***********************************************************************/
 void update_page (uint16_t pageAddress) {
     // Mask out in-page address bits.
     pageAddress &= ~(PAGE_SIZE - 1);
@@ -172,13 +147,7 @@ void update_page (uint16_t pageAddress) {
     boot_page_write_safe (pageAddress);
 
     wdt_reset (); // Reset the watchdog timer
-
 }
-
-
-/***********************************************************************/
-
-/***********************************************************************/
 
 void process_page_update (void) {
     // Check the SPM is ready, abort if not.
@@ -189,7 +158,6 @@ void process_page_update (void) {
     uint8_t pageAddressLo;
     uint8_t pageAddressHi;
     uint8_t *bufferPtr = pageBuffer;
-
 
     // Receive two-byte page address.
     if (slave_receive_byte_and_ack (&pageAddressLo) ) {
@@ -210,10 +178,6 @@ void process_page_update (void) {
     }
 }
 
-/***********************************************************************/
-
-/***********************************************************************/
-
 void cleanup_and_run_application (void) {
     wdt_disable(); // After Reset the WDT state does not change
     // Set up function pointer to address after last interrupt vector.
@@ -225,10 +189,6 @@ void cleanup_and_run_application (void) {
     for (;;); // Make sure function does not return to help compiler optimize
 
 }
-
-/***********************************************************************/
-
-/***********************************************************************/
 
 void process_page_erase (void) {
     uint16_t addr = 0;
@@ -249,10 +209,6 @@ void process_page_erase (void) {
     }
 }
 
-
-/***********************************************************************/
-
-/***********************************************************************/
 void process_slave_receive (void) {
     uint8_t commandCode;
 
@@ -280,9 +236,7 @@ void process_slave_receive (void) {
         abort_twi ();
     }
 }
-/***********************************************************************/
 
-/***********************************************************************/
 void read_and_process_packet (void) {
     // Enable ACK and clear pending interrupts.
     TWCR = _BV(TWINT) | _BV(TWEA) | _BV(TWEN);
@@ -304,9 +258,7 @@ void read_and_process_packet (void) {
         abort_twi ();
     }
 }
-/***********************************************************************/
 
-/***********************************************************************/
 void start_timer (void) {
     TIFR1   = TIFR1;  // Clear flags
     TCNT1H  = 0;
@@ -316,12 +268,6 @@ void start_timer (void) {
     // Prescaller:1024
 }
 
-// 10 s delay code for allowing ARM9 linux to boot
-#define HOST_BOOT_DELAY_SEC 10
-
-/***********************************************************************/
-
-/***********************************************************************/
 void host_boot_delay () {
     uint8_t time_lapse_sec = HOST_BOOT_DELAY_SEC;
 
@@ -337,9 +283,6 @@ void host_boot_delay () {
 
 }
 
-/***********************************************************************/
-
-/***********************************************************************/
 // Main Starts from here
 int main (void) {
     if (MCUSR & _BV (PORF)) {	// Only in case of Power On Reset
