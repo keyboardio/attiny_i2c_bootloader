@@ -58,7 +58,10 @@ uint8_t is_boot_pin_low (void) {
 }
 /***********************************************************************/
 
-
+void wait_for_activity(void) {
+    do {} while ((TWCR & _BV(TWINT)) == 0);
+    wdt_reset ();
+}
 
 /***********************************************************************/
 uint8_t get_status_code (void) {
@@ -84,9 +87,7 @@ void process_slave_transmit (uint8_t data) {
     // Prepare data for transmission.
     TWDR = data;
     TWCR = _BV(TWINT) | _BV(TWEN);	// Send byte, NACK expected from master.
-    // Wait for activity.
-    do {} while ((TWCR & _BV(TWINT)) == 0);
-    wdt_reset ();
+    wait_for_activity();
     // Check TWI status code for SLAVE_TX_NACK.
     switch (TWSR) {
     case TWI_SLAVE_TX_NACK_RECEIVED:
@@ -105,9 +106,8 @@ void process_slave_transmit (uint8_t data) {
 uint8_t slave_receive_byte_and_ack (uint8_t * data) {
     // Receive byte and return ACK.
     TWCR = _BV(TWINT) | _BV(TWEA) | _BV(TWEN);
-    // Wait for activity.
-    do {} while ((TWCR & _BV(TWINT)) == 0);
-    wdt_reset ();
+    
+    wait_for_activity();
     // Check TWI status code for SLAVE_RX_ACK.
     switch (TWSR) {
     case TWI_SLAVE_RX_ACK_RETURNED:
@@ -127,9 +127,8 @@ uint8_t slave_receive_byte_and_ack (uint8_t * data) {
 uint8_t slave_receive_byte_and_nack (uint8_t * data) {
     // Receive byte and return NACK.
     TWCR = _BV(TWINT) | _BV(TWEN);
-    // Wait for activity.
-    do {} while ((TWCR & _BV(TWINT)) == 0);
-    wdt_reset ();
+    
+    wait_for_activity();
 
     // Check TWI status code for SLAVE_RX_ACK.
     switch (TWSR) {
@@ -287,10 +286,8 @@ void read_and_process_packet (void) {
     // Enable ACK and clear pending interrupts.
     TWCR = _BV(TWINT) | _BV(TWEA) | _BV(TWEN);
 
-    // Wait for activity.
-    do { } while ((TWCR & _BV(TWINT)) == 0);
+    wait_for_activity();
 
-    wdt_reset ();
 
     // Check TWI status code for SLA+W or SLA+R.
     switch (TWSR) {
