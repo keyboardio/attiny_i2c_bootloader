@@ -190,11 +190,3 @@ __no_init uint8_t pageBuffer[PAGE_SIZE];
 
 
 void UpdatePage (uint16_t);  
-
-#ifndef _BV
-#define _BV( __BIT_POSITION__ ) ( 1 << __BIT_POSITION__ )
-#endif
-
-#ifdef _BV
-#warning _BV now stands defined
-#endif
