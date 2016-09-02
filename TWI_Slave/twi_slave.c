@@ -31,7 +31,7 @@ uint8_t state = 0;
 /***********************************************************************/
 
 /***********************************************************************/
-void InitTWI (void) {
+void init_twi (void) {
     DDRC &= ~((1 << PORTC5) | (1 << PORTC4)); // Set SCL and SDA as input
     PORTC &= ~((1 << PORTC5) | (1 << PORTC4)); // Set SCL and SDA low
     // Note: PORTC4 and PORT5 commonly used for tiny48. tiny88, mega48 TWI based devices
@@ -46,7 +46,7 @@ void InitTWI (void) {
 
 /***********************************************************************/
 //! Return non-zero if "Enter Bootloader" pin is held low externally.
-uint8_t IsBootPinLow (void) {
+uint8_t is_boot_pin_low (void) {
     // Make sure "Enter Bootloader" pin is input with internal pull-up.
 
     DDRB &= ~(1 << PORTB0);  //making port pin as input
@@ -62,7 +62,7 @@ uint8_t IsBootPinLow (void) {
 
 
 /***********************************************************************/
-uint8_t GetStatusCode (void) {
+uint8_t get_status_code (void) {
     uint8_t statusCode = 0;
     // Check if SPM operation is complete
     if ((SPMCSR & (1 << SELFPROGEN)) != 0)
@@ -74,7 +74,7 @@ uint8_t GetStatusCode (void) {
 
 
 /***********************************************************************/
-void AbortTWI (void) {
+void abort_twi (void) {
     // Recover from error condition by releasing bus lines.
     TWCR = (1 << TWINT) | (1 << TWSTO) | (1 << TWEN);
 }
@@ -82,7 +82,7 @@ void AbortTWI (void) {
 
 
 /***********************************************************************/
-void ProcessSlaveTransmit (uint8_t data) {
+void process_slave_transmit (uint8_t data) {
     // Prepare data for transmission.
     TWDR = data;
     TWCR = (1 << TWINT) | (1 << TWEN);	// Send byte, NACK expected from master.
@@ -97,14 +97,14 @@ void ProcessSlaveTransmit (uint8_t data) {
         break;
 
     default:
-        AbortTWI ();
+        abort_twi ();
     }
 }
 /***********************************************************************/
 
 
 /***********************************************************************/
-uint8_t SlaveReceiveByteAndACK (uint8_t * data) {
+uint8_t slave_receive_byte_and_ack (uint8_t * data) {
     // Receive byte and return ACK.
     TWCR = (1 << TWINT) | (1 << TWEA) | (1 << TWEN);
     // Wait for activity.
@@ -118,7 +118,7 @@ uint8_t SlaveReceiveByteAndACK (uint8_t * data) {
         return 1;
 
     default:
-        AbortTWI ();
+        abort_twi ();
         return 0;
     }
 }
@@ -126,7 +126,7 @@ uint8_t SlaveReceiveByteAndACK (uint8_t * data) {
 
 
 /***********************************************************************/
-uint8_t SlaveReceiveByteAndNACK (uint8_t * data) {
+uint8_t slave_receive_byte_and_nack (uint8_t * data) {
     // Receive byte and return NACK.
     TWCR = (1 << TWINT) | (1 << TWEN);
     // Wait for activity.
@@ -142,7 +142,7 @@ uint8_t SlaveReceiveByteAndNACK (uint8_t * data) {
         return 1;
 
     default:
-        AbortTWI ();
+        abort_twi ();
         return 0;
     }
 }
@@ -151,7 +151,7 @@ uint8_t SlaveReceiveByteAndNACK (uint8_t * data) {
 
 
 /***********************************************************************/
-void UpdatePage (uint16_t pageAddress) {
+void update_page (uint16_t pageAddress) {
     // Mask out in-page address bits.
     pageAddress &= ~(PAGE_SIZE - 1);
     // Protect RESET vector if this is page 0.
@@ -186,10 +186,10 @@ void UpdatePage (uint16_t pageAddress) {
 
 /***********************************************************************/
 
-void ProcessPageUpdate (void) {
+void process_page_update (void) {
     // Check the SPM is ready, abort if not.
     if ((SPMCSR & (1 << SELFPROGEN)) != 0) {
-        AbortTWI ();
+        abort_twi ();
 
     } else {
         uint8_t pageAddressLo;
@@ -198,20 +198,20 @@ void ProcessPageUpdate (void) {
 
 
         // Receive two-byte page address.
-        if (SlaveReceiveByteAndACK (&pageAddressLo) ) {
-            if (SlaveReceiveByteAndACK (&pageAddressHi) ) {
+        if (slave_receive_byte_and_ack (&pageAddressLo) ) {
+            if (slave_receive_byte_and_ack (&pageAddressHi) ) {
                 // Receive page data.
                 for (uint8_t i = 0; i < (PAGE_SIZE - 1); ++i) {
-                    if (SlaveReceiveByteAndACK (bufferPtr) != 0) {
+                    if (slave_receive_byte_and_ack (bufferPtr) != 0) {
                         ++bufferPtr;
                     } else {
                         return;
                     }
                 }
 
-                if (SlaveReceiveByteAndNACK (bufferPtr) ) {
+                if (slave_receive_byte_and_nack (bufferPtr) ) {
                     // Now program if everything went well.
-                    UpdatePage ((pageAddressHi << 8) | pageAddressLo);
+                    update_page ((pageAddressHi << 8) | pageAddressLo);
                 }
             }
         }
@@ -222,7 +222,7 @@ void ProcessPageUpdate (void) {
 
 /***********************************************************************/
 
-void CleanupAndRunApplication (void) {
+void cleanup_and_run_application (void) {
     wdt_disable(); // After Reset the WDT state does not change
     // Set up function pointer to address after last interrupt vector.
 //  void (*FuncPtr) (void) = (void (*)(void)) ((LAST_INTVECT_ADDRESS + 2) / 2);
@@ -238,7 +238,7 @@ void CleanupAndRunApplication (void) {
 
 /***********************************************************************/
 
-void ProcessPageErase (void) {
+void process_page_erase (void) {
     uint16_t addr = 0;
     uint8_t i;
 
@@ -246,7 +246,7 @@ void ProcessPageErase (void) {
         pageBuffer[i] = 0xFF;
     }
 
-    UpdatePage (addr);		// To restore reset vector
+    update_page (addr);		// To restore reset vector
     addr += PAGE_SIZE;
 
     for (i = 0; i < (LAST_PAGE_NO_TO_BE_ERASED - 1); i++, addr += PAGE_SIZE) {
@@ -262,37 +262,37 @@ void ProcessPageErase (void) {
 /***********************************************************************/
 
 /***********************************************************************/
-void ProcessSlaveReceive (void) {
+void process_slave_receive (void) {
     uint8_t commandCode;
 
-    if (! SlaveReceiveByteAndACK (&commandCode) ) {
+    if (! slave_receive_byte_and_ack (&commandCode) ) {
         return;
     }
     // Process command byte.
     switch (commandCode) {
     case TWI_CMD_PAGEUPDATE:
-        ProcessPageUpdate ();
+        process_page_update ();
         break;
 
     case TWI_CMD_EXECUTEAPP:
         // Read dummy byte and NACK, just to be nice to our TWI master.
-        SlaveReceiveByteAndNACK (&commandCode);
+        slave_receive_byte_and_nack (&commandCode);
         wdt_enable(WDT_TIMEOUT_min);  // Set WDT min for cleanup using reset
         while(1); // Wait for WDT reset
 
     case TWI_CMD_ERASEFLASH:
-        SlaveReceiveByteAndNACK (&commandCode);
-        ProcessPageErase ();
+        slave_receive_byte_and_nack (&commandCode);
+        process_page_erase ();
         break;
 
     default:
-        AbortTWI ();
+        abort_twi ();
     }
 }
 /***********************************************************************/
 
 /***********************************************************************/
-void ReadAndProcessPacket (void) {
+void read_and_process_packet (void) {
     // Enable ACK and clear pending interrupts.
     TWCR = (1 << TWINT) | (1 << TWEA) | (1 << TWEN);
 
@@ -304,22 +304,22 @@ void ReadAndProcessPacket (void) {
     // Check TWI status code for SLA+W or SLA+R.
     switch (TWSR) {
     case TWI_SLAW_RECEIVED:
-        ProcessSlaveReceive ();
+        process_slave_receive ();
         break;
 
     case TWI_SLAR_RECEIVED:
         if (state == 0)
-            ProcessSlaveTransmit (GetStatusCode () & STATUSMASK_SPMBUSY);
+            process_slave_transmit (get_status_code () & STATUSMASK_SPMBUSY);
         break;
 
     default:
-        AbortTWI ();
+        abort_twi ();
     }
 }
 /***********************************************************************/
 
 /***********************************************************************/
-void Start_Timer (void) {
+void start_timer (void) {
     TIFR1   = TIFR1;  // Clear flags
     TCNT1H  = 0;
     TCNT1L  = 0;
@@ -334,10 +334,10 @@ void Start_Timer (void) {
 /***********************************************************************/
 
 /***********************************************************************/
-void Host_Boot_Delay () {
+void host_boot_delay () {
     int16_t time_lapse_sec = HOST_BOOT_DELAY_SEC;
 
-    Start_Timer ();
+    start_timer ();
     do {
         if (TIFR1 & _BV (OCF1A)) {
             time_lapse_sec--;
@@ -364,22 +364,22 @@ int main (void) {
 
         DDRB |= (_BV (1) + _BV (3));	// otp LED iterface
         PORTB &= ~(_BV (1) + _BV (3));     // ON the LEDs
-        Host_Boot_Delay ();
+        host_boot_delay ();
         PORTB |= (_BV (1) + _BV (3));     // OFF the LEDs
 
 
 
     }
 
-    if (IsBootPinLow ()) {
-        InitTWI();
+    if (is_boot_pin_low ()) {
+        init_twi();
         wdt_enable(WDT_TIMEOUT_8s);
 
         while (1) {
             // Process the TWI Commands
-            ReadAndProcessPacket ();
+            read_and_process_packet ();
         }
     } else {
-        CleanupAndRunApplication ();
+        cleanup_and_run_application ();
     }
 }
