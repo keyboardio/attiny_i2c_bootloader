@@ -62,12 +62,11 @@ uint8_t is_boot_pin_low (void) {
 
 /***********************************************************************/
 uint8_t get_status_code (void) {
-    uint8_t statusCode = 0;
     // Check if SPM operation is complete
     if ((SPMCSR & _BV(SELFPROGEN)) != 0)
-        statusCode |= STATUSMASK_SPMBUSY;
+        return STATUSMASK_SPMBUSY;
 
-    return statusCode;
+    return 0;
 }
 /***********************************************************************/
 
