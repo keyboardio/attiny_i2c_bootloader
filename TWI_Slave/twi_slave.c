@@ -195,37 +195,28 @@ void ProcessPageUpdate (void) {
         AbortTWI ();
 
     } else {
-        uint8_t error = 0;
         uint8_t pageAddressLo;
         uint8_t pageAddressHi;
         uint8_t *bufferPtr = pageBuffer;
 
 
         // Receive two-byte page address.
-        error = SlaveReceiveByteAndACK (&pageAddressLo) == 0;
-        if (!error) {
-            error = SlaveReceiveByteAndACK (&pageAddressHi) == 0;
-        }
+        if (SlaveReceiveByteAndACK (&pageAddressLo) ) {
+        if (SlaveReceiveByteAndACK (&pageAddressHi) ) {
         // Receive page data.
-        if (!error) {
             for (uint8_t i = 0; i < (PAGE_SIZE - 1); ++i) {
                 if (SlaveReceiveByteAndACK (bufferPtr) != 0) {
                     ++bufferPtr;
                 } else {
-                    error = 1;
-                    break;
+                    return;
                 }
             }
-        }
 
-        if (!error) {
-            error = SlaveReceiveByteAndNACK (bufferPtr) == 0;
-        }
-
-
+            if (SlaveReceiveByteAndNACK (bufferPtr) ) {
         // Now program if everything went well.
-        if (!error) {
             UpdatePage ((pageAddressHi << 8) | pageAddressLo);
+            }
+        }
         }
     }
 }
