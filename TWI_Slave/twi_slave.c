@@ -27,8 +27,6 @@
 
 //
 uint8_t state = 0;
-// __no_init uint8_t pageBuffer[PAGE_SIZE];
-uint16_t time_lapse_sec = 0;
 uint8_t volatile gtimeout;
 uint8_t statusCode = 0;
 
@@ -339,15 +337,15 @@ void Start_Timer (void) {
 
 /***********************************************************************/
 void Host_Boot_Delay () {
-//  time_lapse_sec = 0;
+    int16_t time_lapse_sec = HOST_BOOT_DELAY_SEC;
 
     Start_Timer ();
     do {
         if (TIFR1 & _BV (OCF1A)) {
-            time_lapse_sec++;
+            time_lapse_sec--;
             TIFR1 = TIFR1;
         }
-    } while (time_lapse_sec < HOST_BOOT_DELAY_SEC);
+    } while (time_lapse_sec > 0);
     TCCR1B = 0;
     // stop the timer NOW
 
