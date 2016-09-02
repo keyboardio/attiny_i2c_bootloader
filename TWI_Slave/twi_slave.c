@@ -106,7 +106,7 @@ void process_slave_transmit (uint8_t data) {
 uint8_t slave_receive_byte_and_ack (uint8_t * data) {
     // Receive byte and return ACK.
     TWCR = _BV(TWINT) | _BV(TWEA) | _BV(TWEN);
-    
+
     wait_for_activity();
     // Check TWI status code for SLAVE_RX_ACK.
     switch (TWSR) {
@@ -127,7 +127,7 @@ uint8_t slave_receive_byte_and_ack (uint8_t * data) {
 uint8_t slave_receive_byte_and_nack (uint8_t * data) {
     // Receive byte and return NACK.
     TWCR = _BV(TWINT) | _BV(TWEN);
-    
+
     wait_for_activity();
 
     // Check TWI status code for SLAVE_RX_ACK.
@@ -162,17 +162,17 @@ void update_page (uint16_t pageAddress) {
     if (pageAddress >= BOOT_PAGE_ADDRESS) {
         return;
     }
-        boot_page_erase_safe (pageAddress);
+    boot_page_erase_safe (pageAddress);
 
-        for (uint8_t i = 0; i < PAGE_SIZE; i += 2) {
-            uint16_t tempWord = ((pageBuffer[i+1] << 8) | pageBuffer[i]);
-            boot_page_fill_safe (pageAddress + i, tempWord); // Fill the temporary buffer with the given data
-        }
-        // Write page from temporary buffer to the given location in flasm memory
-        boot_page_write_safe (pageAddress);
+    for (uint8_t i = 0; i < PAGE_SIZE; i += 2) {
+        uint16_t tempWord = ((pageBuffer[i+1] << 8) | pageBuffer[i]);
+        boot_page_fill_safe (pageAddress + i, tempWord); // Fill the temporary buffer with the given data
+    }
+    // Write page from temporary buffer to the given location in flasm memory
+    boot_page_write_safe (pageAddress);
 
-        wdt_reset (); // Reset the watchdog timer
-    
+    wdt_reset (); // Reset the watchdog timer
+
 }
 
 
@@ -185,29 +185,29 @@ void process_page_update (void) {
     if ((SPMCSR & _BV(SELFPROGEN)) != 0) {
         abort_twi ();
         return;
-    } 
-        uint8_t pageAddressLo;
-        uint8_t pageAddressHi;
-        uint8_t *bufferPtr = pageBuffer;
+    }
+    uint8_t pageAddressLo;
+    uint8_t pageAddressHi;
+    uint8_t *bufferPtr = pageBuffer;
 
 
-        // Receive two-byte page address.
-        if (slave_receive_byte_and_ack (&pageAddressLo) ) {
-            if (slave_receive_byte_and_ack (&pageAddressHi) ) {
-                // Receive page data.
-                for (uint8_t i = 0; i < (PAGE_SIZE - 1); ++i) {
-                    if (slave_receive_byte_and_ack (bufferPtr) == 0) {
-                        return;
-                    }
-                    ++bufferPtr;
+    // Receive two-byte page address.
+    if (slave_receive_byte_and_ack (&pageAddressLo) ) {
+        if (slave_receive_byte_and_ack (&pageAddressHi) ) {
+            // Receive page data.
+            for (uint8_t i = 0; i < (PAGE_SIZE - 1); ++i) {
+                if (slave_receive_byte_and_ack (bufferPtr) == 0) {
+                    return;
                 }
+                ++bufferPtr;
+            }
 
-                if (slave_receive_byte_and_nack (bufferPtr) ) {
-                    // Now program if everything went well.
-                    update_page ((pageAddressHi << 8) | pageAddressLo);
-                }
+            if (slave_receive_byte_and_nack (bufferPtr) ) {
+                // Now program if everything went well.
+                update_page ((pageAddressHi << 8) | pageAddressLo);
             }
         }
+    }
 }
 
 /***********************************************************************/
@@ -298,7 +298,7 @@ void read_and_process_packet (void) {
         break;
 
     case TWI_SLAR_RECEIVED:
-            process_slave_transmit (get_status_code () & STATUSMASK_SPMBUSY);
+        process_slave_transmit (get_status_code () & STATUSMASK_SPMBUSY);
         break;
 
     default:
