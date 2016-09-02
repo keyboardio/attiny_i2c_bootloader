@@ -357,16 +357,7 @@ int main (void) {
     if (MCUSR & _BV (PORF)) {	// Only in case of Power On Reset
         MCUSR = 0;
 
-
-// Select the LED0 and LED1 interfacing port pins
-
-        DDRB |= (_BV (1) + _BV (3));	// otp LED iterface
-        PORTB &= ~(_BV (1) + _BV (3));     // ON the LEDs
         host_boot_delay ();
-        PORTB |= (_BV (1) + _BV (3));     // OFF the LEDs
-
-
-
     }
 
     if (is_boot_pin_low ()) {
