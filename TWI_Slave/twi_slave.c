@@ -196,11 +196,10 @@ void process_page_update (void) {
             if (slave_receive_byte_and_ack (&pageAddressHi) ) {
                 // Receive page data.
                 for (uint8_t i = 0; i < (PAGE_SIZE - 1); ++i) {
-                    if (slave_receive_byte_and_ack (bufferPtr) != 0) {
-                        ++bufferPtr;
-                    } else {
+                    if (slave_receive_byte_and_ack (bufferPtr) == 0) {
                         return;
                     }
+                    ++bufferPtr;
                 }
 
                 if (slave_receive_byte_and_nack (bufferPtr) ) {
