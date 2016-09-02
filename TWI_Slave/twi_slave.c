@@ -212,7 +212,7 @@ void process_slave_receive (void) {
     case TWI_CMD_EXECUTEAPP:
         // Read dummy byte and NACK, just to be nice to our TWI master.
         slave_receive_byte_and_nack (&commandCode);
-        wdt_enable(WDT_TIMEOUT_min);  // Set WDT min for cleanup using reset
+        wdt_enable(WDTO_15MS  );  // Set WDT min for cleanup using reset
         while(1); // Wait for WDT reset
 
     case TWI_CMD_ERASEFLASH:
@@ -277,7 +277,7 @@ int main (void) {
         MCUSR = 0;
         host_boot_delay ();
     init_twi();
-    wdt_enable(WDT_TIMEOUT_8s);
+    wdt_enable(WDTO_8S);
 
     while (1) {
         read_and_process_packet (); // Process the TWI Commands

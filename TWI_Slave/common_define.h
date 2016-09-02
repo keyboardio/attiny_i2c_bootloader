@@ -45,10 +45,6 @@ uint8_t pageBuffer[PAGE_SIZE];
 /*****************************************************************************/
 
 
-#define WDT_TIMEOUT_8s      		( _BV( WDP3 ) | _BV( WDP0 ) )	        // Watchdog timeout for inactivity in the boot section
-#define WDT_TIMEOUT_16ms    		0	// Watchdog timeout for system reset (cleanup) before jump to application
-#define WDT_TIMEOUT_min     		WDT_TIMEOUT_16ms	                // The minimum watchdog reset time interval for jump to application
-
 
 /*****************************************************************************/
 /*****************************************************************************/
