@@ -18,78 +18,13 @@
 #define RESET_PIN          PC1
 
 
-// Select the type of communication based on the slave device
-#if defined(_ATTINY25)   || defined(_ATTINY25V) || \
-    defined(_ATTINY45)   || defined(_ATTINY45V) || \
-    defined(_ATTINY85)   || defined(_ATTINY85V) || \
-    defined(_ATTINY24)   || defined(_ATTINY24A) || \
-    defined(_ATTINY44)   || defined(_ATTINY44A) || \
-    defined(_ATTINY84)   || defined(_ATTINY84A) || \
-    defined(_ATTINY2313) || defined(_ATTINY2313A) || \
-    defined(_ATTINY4313) || defined(_ATTINY4313A) || \
-    defined(_ATTINY261)  || defined(_ATTINY261A) || \
-    defined(_ATTINY461)  || defined(_ATTINY461A) || \
-    defined(_ATTINY861)  || defined(_ATTINY861A) || \
-    defined(_ATTINY43U)  || \
-    defined(_ATTINY87)   || \
-    defined(_ATTINY167)
-#define _USI  // set the communication type as USI
-      
-#endif 
-#if defined(_ATTINY48) || defined(_ATTINY88) || \
-    defined(_ATMEGA48A) || defined(_ATTINY48PA)
-#define _TWI
-
-#endif      
    
-// Page size selection for the controller with 2K flash
-#if defined(_ATTINY25)   || defined(_ATTINY25V) || \
-    defined(_ATTINY24)   || defined(_ATTINY24A) || \
-    defined(_ATTINY2313) || defined(_ATTINY2313A) || \
-    defined(_ATTINY261)  || defined(_ATTINY261A)
-
-    #define PAGE_SIZE 32      //16 words = 32 Bytes
-    #define MAX__APP_ADDR 0X0400      // Maximum Application Address
-#endif
-// Page size selection for the controller with 4K flash
-
-      #if defined(_ATTINY45)   || defined(_ATTINY45V) || \
-          defined(_ATTINY44)   || defined(_ATTINY44A) || \
-          defined(_ATTINY4313) || defined(_ATTINY4313A) || \
-          defined(_ATTINY461)  || defined(_ATTINY461A) || \
-          defined(_ATTINY43U)  || \
-          defined(_ATTINY48)   || \
-          defined(_ATMEGA48)   || defined(_ATMEGA48A)  || \
-          defined(_ATMEGA48PA)
-                
-          #define PAGE_SIZE 64      // 32 words = 64 Bytes
-          #define MAX__APP_ADDR 0X0C00      // Maximum Application Address
-#endif
-// Page size selection for the controller with 8K flash
- 
-      #if defined(_ATTINY85)   || defined(_ATTINY85V) || \
-          defined(_ATTINY84)   || defined(_ATTINY84A) || \
-          defined(_ATTINY861)  || defined(_ATTINY861A) || \
-          defined(_ATTINY87)   || \
-          defined(_ATTINY88)
-             
-          #define PAGE_SIZE 64      // 32 words = 64 Bytes
-          #define MAX__APP_ADDR 0X1800      // Maximum Application Address
-                                            // 0x1c00 means.. 1K bytes for Bootloader
-                                            // 0x1800 Means... 2K bytes for Bootloader
+     
+#define PAGE_SIZE 64      // 32 words = 64 Bytes
+#define MAX__APP_ADDR 0X1800      // Maximum Application Address
+                                    // 0x1c00 means.. 1K bytes for Bootloader
+                                    // 0x1800 Means... 2K bytes for Bootloader
     
-#endif
-// Page size selection for the controller with 16K flash   
-
-      #if defined(_ATTINY167) 
-      
-          #define PAGE_SIZE 128    // 64 words = 128 Bytes
-          #define MAX__APP_ADDR 0X3C00     // Maximum Application Address
-      #endif      
- 
-      
-
-
 #define SLAVE_ADDRESS 0xb0
 
 #define _BV( __THE_LOCATION_OF_PIN__ )    ( 1u << __THE_LOCATION_OF_PIN__ )
@@ -102,11 +37,11 @@ unsigned char BlockLoad(unsigned int size, unsigned char mem);
 
 void InitTWI( void )
 {
-	TWI_DDR_REG &= ~((1 << TWI_SCL_PIN) | (1 << TWI_SDA_PIN));
-	TWI_PORT_REG &= ~((1 << TWI_SCL_PIN) | (1 << TWI_SDA_PIN));
+	TWI_DDR_REG &= ~(_BV(TWI_SCL_PIN) | _BV(TWI_SDA_PIN));
+	TWI_PORT_REG &= ~(_BV(TWI_SCL_PIN) | _BV(TWI_SDA_PIN));
 	
 	// Init TWI as master.
-	TWCR = (1 << TWEN);
+	TWCR = _BV(TWEN);
 	TWBR = 16; // 250bps @ 8MHz.
 }
 
@@ -133,9 +68,9 @@ uint8_t over_size_flag=0;
 
 void cycle_reset(void)
 {
-    RESET_PORT_REG &= ~(1 << RESET_PIN);
+    RESET_PORT_REG &= ~_BV(RESET_PIN);
     __delay_cycles( 10000 );
-    RESET_PORT_REG |= (1 << RESET_PIN);
+    RESET_PORT_REG |= _BV(RESET_PIN);
     __delay_cycles( 10000 );
 }
 
@@ -145,15 +80,15 @@ uint8_t MasterReceive( uint8_t address, uint8_t * data, uint16_t length )
 	uint8_t error = 0;
 	
 	// START condition.
-	TWCR = (1 << TWINT) | (1 << TWSTA) | (1 << TWEN);
-	do {} while ((TWCR & (1 << TWINT)) == 0);
+	TWCR = _BV(TWINT) | _BV(TWSTA) | _BV(TWEN);
+	do {} while ((TWCR & _BV(TWINT)) == 0);
 	error = (TWSR != TWI_START_TRANSMITTED);
 
 	// Send SLA+R.
 	if (!error) {
 		TWDR = (address & ~0x01) | 0x01; // LSB set = Read.
-		TWCR = (1 << TWINT) | (1 << TWEN);
-		do {} while ((TWCR & (1 << TWINT)) == 0);
+		TWCR = _BV(TWINT) | _BV(TWEN);
+		do {} while ((TWCR & _BV(TWINT)) == 0);
 		error = (TWSR != TWI_SLAR_ACKED);
 	}
 	
@@ -161,8 +96,8 @@ uint8_t MasterReceive( uint8_t address, uint8_t * data, uint16_t length )
 	uint8_t * bufferPtr = data;
 	if (!error) {
 		for (uint16_t i = 0; i < (length - 1); ++i) {
-			TWCR = (1 << TWINT) | (1 << TWEA) | (1 << TWEN);
-			do {} while ((TWCR & (1 << TWINT)) == 0);
+			TWCR = _BV(TWINT) | _BV(TWEA) | _BV(TWEN);
+			do {} while ((TWCR & _BV(TWINT)) == 0);
 			error = (TWSR != TWI_RXDATA_ACKED);
 			if (!error) {
 				*bufferPtr = TWDR;
@@ -175,18 +110,18 @@ uint8_t MasterReceive( uint8_t address, uint8_t * data, uint16_t length )
 	
 	// Read last data byte. Return NACK.
 	if (!error) {
-		TWCR = (1 << TWINT) | (1 << TWEN);
-		do {} while ((TWCR & (1 << TWINT)) == 0);
+		TWCR = _BV(TWINT) | _BV(TWEN);
+		do {} while ((TWCR & _BV(TWINT)) == 0);
 		error = (TWSR != TWI_RXDATA_NACKED);
 		if (!error) {
 			*bufferPtr = TWDR;
-			TWCR = (1 << TWSTO) | (1 << TWINT) | (1 << TWEN);
+			TWCR = _BV(TWSTO) | _BV(TWINT) | _BV(TWEN);
 		}
 	}
 
 	// Abort communication if error.
 	if (error) {
-		TWCR = (1 << TWSTO) | (1 << TWINT) | (1 << TWEN);
+		TWCR = _BV(TWSTO) | _BV(TWINT) | _BV(TWEN);
 	}
 	
 	return (!error);
@@ -208,15 +143,15 @@ uint8_t MasterTransmit( uint8_t address, uint8_t * data, uint16_t length )
 	uint8_t error = 0;
 	
 	// START condition.
-	TWCR = (1 << TWINT) | (1 << TWSTA) | (1 << TWEN);
-	do {} while ((TWCR & (1 << TWINT)) == 0);
+	TWCR = _BV(TWINT) | _BV(TWSTA) | _BV(TWEN);
+	do {} while ((TWCR & _BV(TWINT)) == 0);
 	error = (TWSR != TWI_START_TRANSMITTED);
 
 	// Send SLA+W.
 	if (!error) {
 		TWDR = (address & ~0x01) | 0x00; // LSB cleared = Write.
-		TWCR = (1 << TWINT) | (1 << TWEN);
-		do {} while ((TWCR & (1 << TWINT)) == 0);
+		TWCR = _BV(TWINT) | _BV(TWEN);
+		do {} while ((TWCR & _BV(TWINT)) == 0);
 		error = (TWSR != TWI_SLAW_ACKED);
 	}
 	
@@ -225,8 +160,8 @@ uint8_t MasterTransmit( uint8_t address, uint8_t * data, uint16_t length )
 	if (!error) {
 		for (uint16_t i = 0; i < (length - 1); ++i) {
 			TWDR = *bufferPtr;
-			TWCR = (1 << TWINT) | (1 << TWEN);
-			do {} while ((TWCR & (1 << TWINT)) == 0);
+			TWCR = _BV(TWINT) | _BV(TWEN);
+			do {} while ((TWCR & _BV(TWINT)) == 0);
 			error = (TWSR != TWI_TXDATA_ACKED);
 			if (!error) {
 				++bufferPtr;
@@ -239,17 +174,17 @@ uint8_t MasterTransmit( uint8_t address, uint8_t * data, uint16_t length )
 	// Send last data byte. Expect NACK.
 	if (!error) {
 		TWDR = *bufferPtr;
-		TWCR = (1 << TWINT) | (1 << TWEN);
-		do {} while ((TWCR & (1 << TWINT)) == 0);
+		TWCR = _BV(TWINT) | _BV(TWEN);
+		do {} while ((TWCR & _BV(TWINT)) == 0);
 		error = (TWSR != TWI_TXDATA_NACKED);
 		if (!error) {
-			TWCR = (1 << TWSTO) | (1 << TWINT) | (1 << TWEN);
+			TWCR = _BV(TWSTO) | _BV(TWINT) | _BV(TWEN);
 		}
 	}
 
 	// Abort communication if error.
 	if (error) {
-		TWCR = (1 << TWSTO) | (1 << TWINT) | (1 << TWEN);
+		TWCR = _BV(TWSTO) | _BV(TWINT) | _BV(TWEN);
 	}
 	
 	return (!error);
@@ -321,11 +256,11 @@ __C_task void main(void)
 	InitTWI();
 
                
-        BOOT_DDR_REG |= (1 << BOOT_PIN);
-        BOOT_PORT_REG &= ~(1 << BOOT_PIN);
+        BOOT_DDR_REG |= _BV(BOOT_PIN);
+        BOOT_PORT_REG &= ~_BV(BOOT_PIN);
   
-        RESET_DDR_REG |= (1 << RESET_PIN);                        		
-	RESET_PORT_REG |= (1 << RESET_PIN);	                                
+        RESET_DDR_REG |= _BV(RESET_PIN);                        		
+	RESET_PORT_REG |= _BV(RESET_PIN);	                                
 	
 	initbootuart(); // Initialize UART.
 	/* Main loop */
@@ -333,40 +268,40 @@ __C_task void main(void)
 	{      
 	      val=recchar(); // Wait for command character.
                 
-              if(( val ==  'P') || ( val == 'L'))
+              if (( val ==  'P') || ( val == 'L'))
               {               
                 sendchar('\r');
               }
               
-              else if(val == 'E')
+              else if (val == 'E')
               {
                 sendchar('\r');
               }
                          
               // Read lock byte -> execute command
-              else if( val == 'r')
+              else if ( val == 'r')
               {
-                if( command_char == 'a')
+                if ( command_char == 'a')
                 {
                   BOOT_PORT_REG &= ~( 1 << BOOT_PIN );
                   read_and_send( TWI_CMD_AVERSION );
                 }
-                else if( command_char == 'b' )
+                else if ( command_char == 'b' )
                 {
                   BOOT_PORT_REG &= ~( 1 << BOOT_PIN );
                   read_and_send( TWI_CMD_BVERSION );
                 }                             
-                else if( command_char == 'd' )
+                else if ( command_char == 'd' )
                 {
                     // Read CRCHI
                   sendchar(CRC_HI);
                 }
-                else if( command_char == 'e' )
+                else if ( command_char == 'e' )
                 {
                     // Read CRCLO
                   sendchar(CRC_LO);
                 }
-                else if( command_char == 'f' )
+                else if ( command_char == 'f' )
                 {
                     BOOT_PORT_REG &= ~( 1 << BOOT_PIN );
                     // Status condition
@@ -377,10 +312,10 @@ __C_task void main(void)
              
               }
               // Write lock byte -> load command
-              else if( val == 'l')
+              else if ( val == 'l')
               {
                 command_char = recchar();
-                if( command_char == 'c' )
+                if ( command_char == 'c' )
                 {
                   BOOT_PORT_REG &= ~( 1 << BOOT_PIN );
                   send_command( TWI_CMD_CRCCHECK );
@@ -393,29 +328,29 @@ __C_task void main(void)
               }
               
               // Read high fuse bits -> BVERSION 
-              else if( val == 'N' )
+              else if ( val == 'N' )
               {
                  BOOT_PORT_REG &= ~( 1 << BOOT_PIN );
                  read_and_send( TWI_CMD_BVERSION );
               }   
               
               // Low Fuse Bits -> AVERSION
-              else if( val == 'F' )
+              else if ( val == 'F' )
               {
                 BOOT_PORT_REG &= ~( 1 << BOOT_PIN );
                 read_and_send( TWI_CMD_AVERSION );
               }                            
                             
-              else  if(val == 'a' )
+              else  if (val == 'a' )
 	      {
 		sendchar('Y'); // Yes, we do autoincrement.
 	      }                   
 	                                                                          
-              else if(val=='A') // Set address...
+              else if (val=='A') // Set address...
 	      {   // NOTE: Flash addresses are given in words, not bytes.
                   addr =(recchar()<<8) | recchar(); // Read address high and low byte.
 		  addr = addr<<1;
-                  if(addr > MAX__APP_ADDR) over_size_flag =1;
+                  if (addr > MAX__APP_ADDR) over_size_flag =1;
 		  pageBuffer[1] = (uint8_t)(addr&0x00FF);
 		  addr = addr>>8;
 		  pageBuffer[2] = (uint8_t)(addr&0x00FF);
@@ -424,7 +359,7 @@ __C_task void main(void)
 	      }
               
             // Chip erase.  
-             else if(val == 'e' )	    
+             else if (val == 'e' )	    
 	     {
                  runApp[0] =  TWI_CMD_ERASEFLASH;
                  runApp[1] =  TWI_CMD_ERASEFLASH;
@@ -436,7 +371,7 @@ __C_task void main(void)
 	      }
                        
 	      // Check block load support.                                                   
-              else if(val == 'b' )
+              else if (val == 'b' )
 	      {
 		  sendchar('Y'); // Report block load supported.
 		  sendchar((BLOCKSIZE>>8) & 0xFF); // MSB first.
@@ -444,13 +379,13 @@ __C_task void main(void)
 	      }
                      
 	      // Start block load.                                       
-              else  if(val == 'B' )
+              else  if (val == 'B' )
 	      {
                  
 		  temp_int = (recchar()<<8) | recchar(); // Get block size.
 		  val = recchar(); // Get memtype.
 		  sendchar( BlockLoad(temp_int,val) ); // Block load.
-                   if(reps == 0)
+                   if (reps == 0)
                       First_Time();
                   success = MasterTransmit( SLAVE_ADDRESS, pageBuffer, PAGE_SIZE+3 );
                   if (success) 
@@ -461,7 +396,7 @@ __C_task void main(void)
               }
                     
             // Return programmer identifier.                                       
-            else if(val == 'S' )
+            else if (val == 'S' )
             {
 		sendchar('A'); // Return 'AVRBOOT'.
 		sendchar('V'); // Software identifier (aka programmer signature) is always 7 characters.
@@ -474,24 +409,24 @@ __C_task void main(void)
 	    }            
              
              // Return software version.		
-             else if(val == 'V' )             
+             else if (val == 'V' )             
 	     {                                
                  send_command(TWI_CMD_EXECUTEAPP);   
                 // Disable bootloader mode for slave
-                 BOOT_PORT_REG |= (1 << BOOT_PIN);                 
+                 BOOT_PORT_REG |= _BV(BOOT_PIN);                 
   		 sendchar('2');
 		 sendchar('0');                
               }
 
 	     // Return signature bytes.		
-             else if(val == 's')
+             else if (val == 's')
              {
 		sendchar( SIGNATURE_BYTE_3 );
 		sendchar( SIGNATURE_BYTE_2 );
 		sendchar( SIGNATURE_BYTE_1 );
              }
                                                            
-             else if(val != 0x1b)                  // If not ESC, then it is unrecognized...
+             else if (val != 0x1b)                  // If not ESC, then it is unrecognized...
 		sendchar('?');			                                                
             
 	} // end: for(;;)
@@ -500,9 +435,9 @@ __C_task void main(void)
 unsigned char BlockLoad(unsigned int size, unsigned char mem)
 {
 	// Flash memory type.
-  if(!over_size_flag) // Check for file size to be less than maximum pages that can be programmed
+  if (!over_size_flag) // Check for file size to be less than maximum pages that can be programmed
   {
-         if(mem=='F')
+         if (mem=='F')
 	{ 
 		for (uint16_t i = 0; i < size; ++i)
 		{			
