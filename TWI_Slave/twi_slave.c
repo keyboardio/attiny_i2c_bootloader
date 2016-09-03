@@ -140,7 +140,7 @@ void process_page_update (void) {
             // Receive page data.
             for (uint8_t i = 0; i < (PAGE_SIZE - 1); ++i) {
                 if (slave_receive_byte (bufferPtr, ACK)) {
-                ++bufferPtr;
+                    ++bufferPtr;
                 } else {
                     return;
                 }
