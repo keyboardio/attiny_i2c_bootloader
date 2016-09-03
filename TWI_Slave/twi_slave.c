@@ -270,7 +270,6 @@ int main (void) {
             read_and_process_packet (); // Process the TWI Commands
         }
     } else {
-
         cleanup_and_run_application ();
     }
 

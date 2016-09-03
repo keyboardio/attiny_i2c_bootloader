@@ -29,13 +29,13 @@
 
 #define _BV( __THE_LOCATION_OF_PIN__ )    ( 1u << __THE_LOCATION_OF_PIN__ )
 
-unsigned char BlockLoad(unsigned int size, unsigned char mem);
+unsigned char block_load(unsigned int size, unsigned char mem);
 /* BLOCKSIZE should be chosen so that the following holds: BLOCKSIZE*n = PAGESIZE,  where n=1,2,3... */
 
 #define BLOCKSIZE PAGE_SIZE
 
 
-void InitTWI( void )
+void init_twi( void )
 {
 	TWI_DDR_REG &= ~(_BV(TWI_SCL_PIN) | _BV(TWI_SDA_PIN));
 	TWI_PORT_REG &= ~(_BV(TWI_SCL_PIN) | _BV(TWI_SDA_PIN));
@@ -75,7 +75,7 @@ void cycle_reset(void)
 }
 
 
-uint8_t MasterReceive( uint8_t address, uint8_t * data, uint16_t length )
+uint8_t master_recieve( uint8_t address, uint8_t * data, uint16_t length )
 {
 	uint8_t error = 0;
 	
@@ -132,13 +132,13 @@ uint8_t MasterReceive( uint8_t address, uint8_t * data, uint16_t length )
 void get_slave_status(void)
 {
      do {
-	  success = MasterReceive( SLAVE_ADDRESS, &statusCode, 1 );
+	  success = master_recieve( SLAVE_ADDRESS, &statusCode, 1 );
 	} while ((statusCode != 0) || (!success));
 }
 
 
 
-uint8_t MasterTransmit( uint8_t address, uint8_t * data, uint16_t length )
+uint8_t master_transmit( uint8_t address, uint8_t * data, uint16_t length )
 {
 	uint8_t error = 0;
 	
@@ -196,10 +196,10 @@ uint8_t pageBuffer[PAGE_SIZE+3];
 uint16_t addr=0;
 
 
-void First_Time(void)
+void first_time(void)
 {
   addr=0;
-  InitTWI();
+  init_twi();
   pageBuffer[0] = TWI_CMD_PAGEUPDATE;
   BOOT_PORT_REG &= ~( 1 << BOOT_PIN );
   cycle_reset();
@@ -216,7 +216,7 @@ void read_from_slave(void)
   if (success) 
   {
 	do {
-		success = MasterReceive( SLAVE_ADDRESS, &statusCode, 1 );
+		success = master_recieve( SLAVE_ADDRESS, &statusCode, 1 );
 	} while ( !success );                                 
   }
 }
@@ -230,7 +230,7 @@ void read_and_send(uint8_t whichversion)
   BOOT_PORT_REG &= ~( 1 << BOOT_PIN );
   cycle_reset();
   get_slave_status();                  
-  success = MasterTransmit( SLAVE_ADDRESS, runApp, 2 );
+  success = master_transmit( SLAVE_ADDRESS, runApp, 2 );
   read_from_slave();
   sendchar( statusCode );		  
 } 
@@ -242,7 +242,7 @@ void send_command(uint8_t command)
   BOOT_PORT_REG &= ~( 1 << BOOT_PIN );
   cycle_reset();
   get_slave_status();
-  success = MasterTransmit( SLAVE_ADDRESS, runApp, 2 );     
+  success = master_transmit( SLAVE_ADDRESS, runApp, 2 );     
 }
 
 
@@ -253,7 +253,7 @@ __C_task void main(void)
 	unsigned char val=0;                
          
 
-	InitTWI();
+	init_twi();
 
                
         BOOT_DDR_REG |= _BV(BOOT_PIN);
@@ -366,7 +366,7 @@ __C_task void main(void)
                  BOOT_PORT_REG &= ~( 1 << BOOT_PIN );
                  cycle_reset();
                  get_slave_status();
-                 success = MasterTransmit( SLAVE_ADDRESS, runApp, 2 );
+                 success = master_transmit( SLAVE_ADDRESS, runApp, 2 );
 		 sendchar('\r'); // Send OK back.
 	      }
                        
@@ -384,10 +384,10 @@ __C_task void main(void)
                  
 		  temp_int = (recchar()<<8) | recchar(); // Get block size.
 		  val = recchar(); // Get memtype.
-		  sendchar( BlockLoad(temp_int,val) ); // Block load.
+		  sendchar( block_load(temp_int,val) ); // Block load.
                    if (reps == 0)
-                      First_Time();
-                  success = MasterTransmit( SLAVE_ADDRESS, pageBuffer, PAGE_SIZE+3 );
+                      first_time();
+                  success = master_transmit( SLAVE_ADDRESS, pageBuffer, PAGE_SIZE+3 );
                   if (success) 
                   {
                               get_slave_status();
@@ -432,7 +432,7 @@ __C_task void main(void)
 	} // end: for(;;)
 } // end: main
 
-unsigned char BlockLoad(unsigned int size, unsigned char mem)
+unsigned char block_load(unsigned int size, unsigned char mem)
 {
 	// Flash memory type.
   if (!over_size_flag) // Check for file size to be less than maximum pages that can be programmed
