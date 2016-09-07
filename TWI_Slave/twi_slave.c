@@ -254,7 +254,11 @@ void start_timer (void) {
 
 // Main Starts from here
 int main (void) {
-    if (MCUSR & _BV (PORF)) {	// Only in case of Power On Reset
+    if (MCUSR & _BV (PORF) || MCUSR & _BV(EXTRF)) {
+        // Only in case of Power On Reset
+        // Or external reset
+        // We can toggle the left hand's extrf and the right hand's
+        // power
         MCUSR = 0;
         init_twi();
         wdt_enable(WDTO_8S);
