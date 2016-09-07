@@ -84,17 +84,19 @@ uint8_t slave_receive_byte (uint8_t * data, uint8_t ack) {
     // Basically, if the status register has the same value as
     // the type of packet we're looking for, then proceeed
 
-    if ( TWSR == ack) {
-        // Get byte
-        *data = TWDR;
-        if (ack == TWI_SLAVE_RX_NACK_RETURNED) {
-            // If we're doing a NACK, then twiddle TWCR
-            TWCR = _BV(TWINT) | _BV(TWEN);
-        }
-        return 1;
+    if ( TWSR != ack) {
+        abort_twi ();
+        return 0;
     }
-    abort_twi ();
-    return 0;
+
+    // Get byte
+    *data = TWDR;
+    if (ack == TWI_SLAVE_RX_NACK_RETURNED) {
+        // If we're doing a NACK, then twiddle TWCR
+        TWCR = _BV(TWINT) | _BV(TWEN);
+    }
+    return 1;
+
 }
 
 void update_page (uint16_t pageAddress) {
