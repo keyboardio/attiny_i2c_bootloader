@@ -63,16 +63,15 @@ void process_slave_transmit (uint8_t data) {
     TWDR = data;
     TWCR = _BV(TWINT) | _BV(TWEN);	// Send byte, NACK expected from master.
     wait_for_activity();
-    // Check TWI status code for SLAVE_TX_NACK.
-    switch (TWSR) {
-    case TWI_SLAVE_TX_NACK_RECEIVED:
-        // End communication.
-        TWCR = _BV(TWINT) | _BV(TWEN);
-        break;
 
-    default:
+    // Check TWI status code for SLAVE_TX_NACK.
+    if ( TWSR != TWI_SLAVE_TX_NACK_RECEIVED ) {
         abort_twi ();
+        return;
     }
+
+    // End communication.
+    TWCR = _BV(TWINT) | _BV(TWEN);
 }
 
 uint8_t slave_receive_byte (uint8_t * data, uint8_t ack) {
