@@ -139,23 +139,27 @@ void process_page_update (void) {
     uint8_t *bufferPtr = pageBuffer;
 
     // Receive two-byte page address.
-    if (slave_receive_byte (&pageAddressLo, ACK) ) {
-        if (slave_receive_byte (&pageAddressHi, ACK) ) {
-            // Receive page data.
-            for (uint8_t i = 0; i < (PAGE_SIZE - 1); ++i) {
-                if (slave_receive_byte (bufferPtr, ACK)) {
-                    ++bufferPtr;
-                } else {
-                    return;
-                }
-            }
-
-            if (slave_receive_byte(bufferPtr, NAK) ) {
-                // Now program if everything went well.
-                update_page ((pageAddressHi << 8) | pageAddressLo);
-            }
-        }
+    if (!slave_receive_byte (&pageAddressLo, ACK) ) {
+        return;
     }
+    if (!slave_receive_byte (&pageAddressHi, ACK) ) {
+        return;
+    }
+    // Receive page data.
+    for (uint8_t i = 0; i < (PAGE_SIZE - 1); ++i) {
+        if (!slave_receive_byte (bufferPtr, ACK)) {
+            return;
+        }
+        ++bufferPtr;
+    }
+
+    if (!slave_receive_byte(bufferPtr, NAK) ) {
+        return;
+    }
+
+    // Now program if everything went well.
+    update_page ((pageAddressHi << 8) | pageAddressLo);
+    
 }
 
 void cleanup_and_run_application (void) {
