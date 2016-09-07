@@ -170,15 +170,14 @@ void cleanup_and_run_application (void) {
 
 void process_page_erase (void) {
     uint16_t addr = 0;
-    uint8_t i;
-    for (i = 0; i < PAGE_SIZE; ++i) {
+    for (uint8_t i = 0; i < PAGE_SIZE; ++i) {
         pageBuffer[i] = 0xFF;
     }
 
     update_page (addr);		// To restore reset vector
     addr += PAGE_SIZE;
 
-    for (i = 0; i < (LAST_PAGE_NO_TO_BE_ERASED - 1); i++, addr += PAGE_SIZE) {
+    for (uint8_t i = 0; i < (LAST_PAGE_NO_TO_BE_ERASED - 1); i++, addr += PAGE_SIZE) {
         addr &= ~(PAGE_SIZE - 1);
 
         if (addr < BOOT_PAGE_ADDRESS)
