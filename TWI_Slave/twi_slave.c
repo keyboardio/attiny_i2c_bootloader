@@ -252,26 +252,10 @@ void start_timer (void) {
     // Prescaller:1024
 }
 
-void host_boot_delay () {
-    uint8_t time_lapse_sec = HOST_BOOT_DELAY_SEC;
-
-    start_timer ();
-    do {
-        if (TIFR1 & _BV (OCF1A)) {
-            time_lapse_sec--;
-            TIFR1 = TIFR1;
-        }
-    } while (time_lapse_sec > 0);
-    TCCR1B = 0;
-    // stop the timer NOW
-
-}
-
 // Main Starts from here
 int main (void) {
     if (MCUSR & _BV (PORF)) {	// Only in case of Power On Reset
         MCUSR = 0;
-        host_boot_delay ();
         init_twi();
         wdt_enable(WDTO_8S);
 
