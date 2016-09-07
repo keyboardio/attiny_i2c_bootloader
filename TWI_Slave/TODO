@@ -1,0 +1,6 @@
+[x]  on the right hand, we trigger on power on. on the left hand, we can trigger on reset, since the atmega has a reset line for us
+* make sure to pull our address bits from the same pins as the app code
+* use different addresses than when runnign app code
+* make sure to set comm_en
+* see if we can fit in an LED driver to show status?
+* figure out how the jump vector works and what we need to do to massage user code to make it work
