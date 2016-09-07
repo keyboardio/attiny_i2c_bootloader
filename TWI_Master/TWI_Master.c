@@ -1,4 +1,11 @@
-#include <inavr.h>
+#include <avr/io.h>
+#include <avr/interrupt.h>
+#include <avr/wdt.h>
+#include <util/delay.h>
+#include <avr/boot.h>
+#include <avr/pgmspace.h>
+#include <avr/eeprom.h>
+
 #include "defines.h"
 #include "serial.h"
 #include "flash.h"
@@ -11,11 +18,11 @@
 
 #define BOOT_DDR_REG      DDRC
 #define BOOT_PORT_REG     PORTC
-#define BOOT_PIN          PC0
+#define BOOT_PIN          0
 
 #define RESET_DDR_REG      DDRC
 #define RESET_PORT_REG     PORTC
-#define RESET_PIN          PC1
+#define RESET_PIN          1
 
 
 
@@ -27,7 +34,6 @@
 
 #define SLAVE_ADDRESS 0xb0
 
-#define _BV( __THE_LOCATION_OF_PIN__ )    ( 1u << __THE_LOCATION_OF_PIN__ )
 
 unsigned char block_load(unsigned int size, unsigned char mem);
 /* BLOCKSIZE should be chosen so that the following holds: BLOCKSIZE*n = PAGESIZE,  where n=1,2,3... */
@@ -67,9 +73,9 @@ uint8_t over_size_flag=0;
 
 void cycle_reset(void) {
     RESET_PORT_REG &= ~_BV(RESET_PIN);
-    __delay_cycles( 10000 );
+    _delay_us( 10000 );
     RESET_PORT_REG |= _BV(RESET_PIN);
-    __delay_cycles( 10000 );
+    _delay_us( 10000 );
 }
 
 
@@ -237,7 +243,7 @@ void send_command(uint8_t command) {
 
 
 /*************************************************************************/
-__C_task void main(void) {
+void main(void) {
     unsigned int temp_int;
     unsigned char val=0;
 
