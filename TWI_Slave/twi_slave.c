@@ -40,7 +40,7 @@ void init_twi (void) {
 
 
 
-void wait_for_activity(void) {
+inline void wait_for_activity(void) {
     do {} while ((TWCR & _BV(TWINT)) == 0);
     wdt_reset ();
 }
