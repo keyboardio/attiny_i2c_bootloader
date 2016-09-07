@@ -180,7 +180,7 @@ void process_page_erase (void) {
     for (uint8_t i = 0; i < (LAST_PAGE_NO_TO_BE_ERASED - 1); i++, addr += PAGE_SIZE) {
         addr &= ~(PAGE_SIZE - 1);
 
-        if (addr < BOOT_PAGE_ADDRESS)
+        if (addr < BOOT_PAGE_ADDRESS) {
             // Erase each page one by one until the bootloader section
             boot_page_erase (addr);
             boot_spm_busy_wait();
