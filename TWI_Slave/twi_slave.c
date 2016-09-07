@@ -112,14 +112,17 @@ void update_page (uint16_t pageAddress) {
     if (pageAddress >= BOOT_PAGE_ADDRESS) {
         return;
     }
-    boot_page_erase_safe (pageAddress);
+    boot_page_erase (pageAddress);
+    boot_spm_busy_wait();
 
     for (uint8_t i = 0; i < PAGE_SIZE; i += 2) {
         uint16_t tempWord = ((pageBuffer[i+1] << 8) | pageBuffer[i]);
-        boot_page_fill_safe (pageAddress + i, tempWord); // Fill the temporary buffer with the given data
+        boot_page_fill (pageAddress + i, tempWord); // Fill the temporary buffer with the given dataa
+        boot_spm_busy_wait();
     }
     // Write page from temporary buffer to the given location in flash memory
-    boot_page_write_safe (pageAddress);
+    boot_page_write (pageAddress);
+    boot_spm_busy_wait();
 
     wdt_reset (); // Reset the watchdog timer
 }
@@ -181,7 +184,9 @@ void process_page_erase (void) {
 
         if (addr < BOOT_PAGE_ADDRESS)
             // Erase each page one by one until the bootloader section
-            boot_page_erase_safe (addr);
+            boot_page_erase (addr);
+            boot_spm_busy_wait();
+        }
     }
 }
 
