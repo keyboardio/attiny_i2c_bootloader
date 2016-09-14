@@ -159,7 +159,7 @@ void process_page_update (void) {
 
     // Now program if everything went well.
     update_page ((pageAddressHi << 8) | pageAddressLo);
-    
+
 }
 
 void cleanup_and_run_application (void) {
@@ -169,7 +169,7 @@ void cleanup_and_run_application (void) {
 //  void (*FuncPtr) (void) = (void (*)(void)) ((LAST_INTVECT_ADDRESS + 2) / 2);
 // FuncPtr ();
 
-    asm volatile ("rjmp __vectors - 4"); // jump to application reset vector at end of flash
+    asm volatile ("rjmp 0x38"); // jump to start of user code
 
     for (;;); // Make sure function does not return to help compiler optimize
 
@@ -270,6 +270,4 @@ int main (void) {
     } else {
         cleanup_and_run_application ();
     }
-
-
 }
