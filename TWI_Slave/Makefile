@@ -92,6 +92,31 @@ twi_slave.hex: twi_slave.elf
 	rm -f twi_slave.hex
 	avr-objcopy -j .text -j .data -O ihex twi_slave.elf twi_slave.hex
 	avr-size --format=avr --mcu=$(DEVICE) twi_slave.elf
+	# write bootloader jump vector to beginning
+	sed -i '' -e '$$ d' twi_slave.hex # two dollar signs because Make otherwise interprets them
+	# write a new vector table to jump to the bootloader
+	# rjmp to 0x1C00, etc.
+	echo ':02000000FFCD32' >> twi_slave.hex
+	echo ':02000200FFCD30' >> twi_slave.hex
+	echo ':02000400FFCD2E' >> twi_slave.hex
+	echo ':02000600FFCD2C' >> twi_slave.hex
+	echo ':02000800FFCD2A' >> twi_slave.hex
+	echo ':02000A00FFCD28' >> twi_slave.hex
+	echo ':02000C00FFCD26' >> twi_slave.hex
+	echo ':02000E00FFCD24' >> twi_slave.hex
+	echo ':02001200FFCD20' >> twi_slave.hex
+	echo ':02001400FFCD1E' >> twi_slave.hex
+	echo ':02001600FFCD1C' >> twi_slave.hex
+	echo ':02001800FFCD1A' >> twi_slave.hex
+	echo ':02001A00FFCD18' >> twi_slave.hex
+	echo ':02001C00FFCD16' >> twi_slave.hex
+	echo ':02001E00FFCD14' >> twi_slave.hex
+	echo ':02002000FFCD12' >> twi_slave.hex
+	echo ':02002200FFCD10' >> twi_slave.hex
+	echo ':02002400FFCD0E' >> twi_slave.hex
+	echo ':02002600FFCD0C' >> twi_slave.hex
+	echo ':02002800FFCD0A' >> twi_slave.hex
+	echo ':00000001FF' >> twi_slave.hex
 # If you have an EEPROM section, you must also create a hex file for the
 # EEPROM and add it to the "flash" target.
 
