@@ -163,6 +163,7 @@ void process_page_update (void) {
 }
 
 void cleanup_and_run_application (void) {
+    MCUSR = 0; // clear resets
     wdt_disable(); // After Reset the WDT state does not change
     // Set up function pointer to address after last interrupt vector.
 //  void (*FuncPtr) (void) = (void (*)(void)) ((LAST_INTVECT_ADDRESS + 2) / 2);
