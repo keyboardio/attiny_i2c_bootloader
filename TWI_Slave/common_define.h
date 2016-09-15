@@ -1,16 +1,17 @@
 
 
 /*****************************************************************************/
-#define TWI_CMD_PAGEUPDATE        	0x01	// TWI Command to program a flash page
-#define TWI_CMD_EXECUTEAPP        	0x02	// TWI Command to jump to the application program
-#define TWI_CMD_ERASEFLASH        	0x05	// TWI Command to erase the entire application section of flash memory
+#define TWI_CMD_PAGEUPDATE_FIRST_HALF   0x01	// TWI Command to program a flash page, first half page
+#define TWI_CMD_PAGEUPDATE_SECOND_HALF  0x02	// TWI Command to program a flash page, second half page
+#define TWI_CMD_EXECUTEAPP            	0x03	// TWI Command to jump to the application program
+#define TWI_CMD_ERASEFLASH              0x04	// TWI Command to erase the entire application section of flash memory
 #define TWI_CMD_GETERRCONDN             0x07    // TWI Command to get Error condition
 
 /*****************************************************************************/
 
 
 #define BOOT_SETTLE_DELAY         	100	// Debounce delay for the boot pin in MCU cycles
-#define SLAVE_ADDRESS             	0xb0	// The address identifier of this slave device on the TWI (I2C) bus
+#define SLAVE_ADDRESS             	0x58	// The address identifier of this slave device on the TWI (I2C) bus
 #define INTVECT_PAGE_ADDRESS      	0x000	// The location of the start of the interrupt vector table address
 
 
@@ -19,13 +20,13 @@
 
 // Page size selection for the controller with 8K flash
 // The flash memory page size for these devices
-#define PAGE_SIZE 64
+#define PAGE_SIZE 32
 
 // Page 112, the start of bootloader section
 #define BOOT_PAGE_ADDRESS 0X1C00
 
 // 8KB of flash divided by pages of size 64 bytes
-#define TOTAL_NO_OF_PAGES  128
+#define TOTAL_NO_OF_PAGES  256
 
 // The number of pages being used for bootloader code
 #define BOOTLOADER_PAGES          	(TOTAL_NO_OF_PAGES - BOOT_PAGE_ADDRESS/PAGE_SIZE)

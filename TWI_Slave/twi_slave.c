@@ -27,28 +27,26 @@
 #define NAK TWI_SLAVE_RX_NACK_RETURNED
 
 
-void init_twi (void) {
+void init_twi() {
     DDRC &= ~(_BV(PORTC5) | _BV(PORTC4)); // Set SCL and SDA as input
     PORTC &= ~(_BV(PORTC5) | _BV(PORTC4)); // Set SCL and SDA low
     // Note: PORTC4 and PORT5 commonly used for tiny48. tiny88, mega48 TWI based devices
 
-    TWAR = SLAVE_ADDRESS;
-    TWCR = _BV(TWEN);
+    TWAR = SLAVE_ADDRESS << 1; // ignore the general call address
+    TWCR = _BV(TWEN) | _BV(TWEA); // activate, ack our address
     // Enable, but don't enable ACK until we are ready to receive packets.
 }
 
-
-
-
-inline void wait_for_activity(void) {
+inline void wait_for_activity() {
     do {} while ((TWCR & _BV(TWINT)) == 0);
     wdt_reset ();
 }
 
-uint8_t get_status_code (void) {
+uint8_t get_status_code() {
     // Check if SPM operation is complete
-    if ((SPMCSR & _BV(SELFPROGEN)) != 0)
+    if ((SPMCSR & _BV(SELFPROGEN)) != 0) {
         return STATUSMASK_SPMBUSY;
+    }
 
     return 0;
 }
@@ -65,7 +63,7 @@ void process_slave_transmit (uint8_t data) {
     wait_for_activity();
 
     // Check TWI status code for SLAVE_TX_NACK.
-    if ( TWSR != TWI_SLAVE_TX_NACK_RECEIVED ) {
+    if (TWSR != TWI_SLAVE_TX_NACK_RECEIVED) {
         abort_twi ();
         return;
     }
@@ -84,8 +82,8 @@ uint8_t slave_receive_byte (uint8_t * data, uint8_t ack) {
     // Basically, if the status register has the same value as
     // the type of packet we're looking for, then proceeed
 
-    if ( TWSR != ack) {
-        abort_twi ();
+    if (TWSR != ack) {
+        abort_twi();
         return 0;
     }
 
@@ -99,89 +97,110 @@ uint8_t slave_receive_byte (uint8_t * data, uint8_t ack) {
 
 }
 
-void update_page (uint16_t pageAddress) {
+uint8_t update_page(uint16_t pageAddress) {
     // Mask out in-page address bits.
     pageAddress &= ~(PAGE_SIZE - 1);
     // Protect RESET vector if this is page 0.
     if (pageAddress == INTVECT_PAGE_ADDRESS) {
         // Load existing RESET vector contents into buffer.
-        pageBuffer[0] = pgm_read_word(INTVECT_PAGE_ADDRESS + 0);
-        pageBuffer[1] = pgm_read_word(INTVECT_PAGE_ADDRESS + 1);
+        pageBuffer[0] = pgm_read_byte(INTVECT_PAGE_ADDRESS + 0);
+        pageBuffer[1] = pgm_read_byte(INTVECT_PAGE_ADDRESS + 1);
+        pageBuffer[2] = pgm_read_byte(INTVECT_PAGE_ADDRESS + 2);
+        pageBuffer[3] = pgm_read_byte(INTVECT_PAGE_ADDRESS + 3);
     }
 
     // Ignore any attempt to update boot section.
     if (pageAddress >= BOOT_PAGE_ADDRESS) {
-        return;
+        return 0;
     }
-    boot_page_erase (pageAddress);
-    boot_spm_busy_wait();
 
     for (uint8_t i = 0; i < PAGE_SIZE; i += 2) {
         uint16_t tempWord = ((pageBuffer[i+1] << 8) | pageBuffer[i]);
-        boot_page_fill (pageAddress + i, tempWord); // Fill the temporary buffer with the given dataa
-        boot_spm_busy_wait();
+        boot_page_fill_safe(pageAddress + i, tempWord); // Fill the temporary buffer with the given data
     }
     // Write page from temporary buffer to the given location in flash memory
-    boot_page_write (pageAddress);
-    boot_spm_busy_wait();
+    boot_page_write_safe(pageAddress);
 
     wdt_reset (); // Reset the watchdog timer
+    return 1;
 }
 
-void process_page_update (void) {
+uint8_t pageAddressLo;
+uint8_t pageAddressHi;
+
+void process_read_first_half() {
     // Check the SPM is ready, abort if not.
     if ((SPMCSR & _BV(SELFPROGEN)) != 0) {
-        abort_twi ();
+        abort_twi();
         return;
     }
-    uint8_t pageAddressLo;
-    uint8_t pageAddressHi;
     uint8_t *bufferPtr = pageBuffer;
 
     // Receive two-byte page address.
-    if (!slave_receive_byte (&pageAddressLo, ACK) ) {
+    if (!slave_receive_byte(&pageAddressLo, ACK)) {
         return;
     }
-    if (!slave_receive_byte (&pageAddressHi, ACK) ) {
+    if (!slave_receive_byte(&pageAddressHi, ACK)) {
         return;
     }
     // Receive page data.
-    for (uint8_t i = 0; i < (PAGE_SIZE - 1); ++i) {
+    for (uint8_t i = 0; i < PAGE_SIZE / 2; ++i) {
         if (!slave_receive_byte (bufferPtr, ACK)) {
             return;
         }
         ++bufferPtr;
     }
+}
 
+void process_read_second_half() {
+    // Check the SPM is ready, abort if not.
+    if ((SPMCSR & _BV(SELFPROGEN)) != 0) {
+        abort_twi ();
+        return;
+    }
+    uint8_t *bufferPtr = &pageBuffer[PAGE_SIZE / 2];
+
+    // Receive page data.
+    for (uint8_t i = 0; i < PAGE_SIZE / 2 - 1; ++i) {
+        if (!slave_receive_byte(bufferPtr, ACK)) {
+            return;
+        }
+        ++bufferPtr;
+    }
+
+    // NAK the last byte?
     if (!slave_receive_byte(bufferPtr, NAK) ) {
         return;
     }
-
-    // Now program if everything went well.
-    update_page ((pageAddressHi << 8) | pageAddressLo);
-
 }
 
-void cleanup_and_run_application (void) {
+
+// Now program if everything went well.
+void process_page_update (void) {
+    if (!update_page ((pageAddressHi << 8) | pageAddressLo)) {
+        return;
+    }
+}
+
+void cleanup_and_run_application() {
     MCUSR = 0; // clear resets
     wdt_disable(); // After Reset the WDT state does not change
-    // Set up function pointer to address after last interrupt vector.
-//  void (*FuncPtr) (void) = (void (*)(void)) ((LAST_INTVECT_ADDRESS + 2) / 2);
-// FuncPtr ();
 
-    asm volatile ("rjmp 0x38"); // jump to start of user code
+    // TODO: this should be possible to do with rjmp and save 2 bytes
+    asm volatile ("ldi r30, 0x28");
+    asm volatile ("ijmp"); // jump to start of user code
 
     for (;;); // Make sure function does not return to help compiler optimize
 
 }
 
-void process_page_erase (void) {
+void process_page_erase() {
     uint16_t addr = 0;
     for (uint8_t i = 0; i < PAGE_SIZE; ++i) {
         pageBuffer[i] = 0xFF;
     }
 
-    update_page (addr);		// To restore reset vector
+    update_page(addr);		// To restore reset vector
     addr += PAGE_SIZE;
 
     for (uint8_t i = 0; i < (LAST_PAGE_NO_TO_BE_ERASED - 1); i++, addr += PAGE_SIZE) {
@@ -189,36 +208,39 @@ void process_page_erase (void) {
 
         if (addr < BOOT_PAGE_ADDRESS) {
             // Erase each page one by one until the bootloader section
-            boot_page_erase (addr);
-            boot_spm_busy_wait();
+            boot_page_erase_safe(addr);
         }
     }
 }
 
-void process_slave_receive (void) {
+void process_slave_receive() {
     uint8_t commandCode;
 
-    if (! slave_receive_byte (&commandCode, ACK) ) {
+    if (!slave_receive_byte(&commandCode, ACK) ) {
         return;
     }
     // Process command byte.
     switch (commandCode) {
-    case TWI_CMD_PAGEUPDATE:
-        process_page_update ();
+    case TWI_CMD_PAGEUPDATE_FIRST_HALF:
+        process_read_first_half();
+        break;
+    case TWI_CMD_PAGEUPDATE_SECOND_HALF:
+        process_read_second_half();
+        process_page_update();
         break;
     case TWI_CMD_EXECUTEAPP:
         // Read dummy byte and NACK, just to be nice to our TWI master.
-        slave_receive_byte (&commandCode, NAK);
-        wdt_enable(WDTO_15MS  );  // Set WDT min for cleanup using reset
+        slave_receive_byte(&commandCode, NAK);
+        wdt_enable(WDTO_15MS);  // Set WDT min for cleanup using reset
         for (;;); // Wait for WDT reset
 
     case TWI_CMD_ERASEFLASH:
-        slave_receive_byte (&commandCode, NAK);
-        process_page_erase ();
+        slave_receive_byte(&commandCode, NAK);
+        process_page_erase();
         break;
 
     default:
-        abort_twi ();
+        abort_twi();
     }
 }
 
@@ -227,7 +249,6 @@ void read_and_process_packet (void) {
     TWCR = _BV(TWINT) | _BV(TWEA) | _BV(TWEN);
 
     wait_for_activity();
-
 
     // Check TWI status code for SLA+W or SLA+R.
     switch (TWSR) {
@@ -240,21 +261,12 @@ void read_and_process_packet (void) {
         break;
 
     default:
-        abort_twi ();
+        abort_twi();
     }
 }
 
-void start_timer (void) {
-    TIFR1   = TIFR1;  // Clear flags
-    TCNT1H  = 0;
-    TCNT1L  = 0;
-    OCR1A   = 7813;   // 7812.5 (one sec at 8 MHz clock operation)
-    TCCR1B  = _BV (CS12) + _BV (CS10) + _BV (WGM12);	// mode4: CTC,
-    // Prescaller:1024
-}
-
 // Main Starts from here
-int main (void) {
+int main() {
     if (MCUSR & _BV (PORF) || MCUSR & _BV(EXTRF)) {
         // Only in case of Power On Reset
         // Or external reset
@@ -265,9 +277,9 @@ int main (void) {
         wdt_enable(WDTO_8S);
 
         while (1) {
-            read_and_process_packet (); // Process the TWI Commands
+            read_and_process_packet(); // Process the TWI Commands
         }
     } else {
-        cleanup_and_run_application ();
+        cleanup_and_run_application();
     }
 }

@@ -35,7 +35,7 @@ OBJECTS    =  twi_slave.o
 
 # For computing fuse byte values for other devices and options see
 # the fuse bit calculator at http://www.engbedded.com/fusecalc/
-FUSES      = -U lfuse:w:0xee:m -U hfuse:w:0xdd:m -U efuse:w:0xff:m
+FUSES      = -U lfuse:w:0xee:m -U hfuse:w:0xdd:m -U efuse:w:0xfe:m
 
 AVRDUDE_PATH ?= avrdude
 GCC_PATH ?= avr-gcc
@@ -104,6 +104,7 @@ twi_slave.hex: twi_slave.elf
 	echo ':02000A00FFCD28' >> twi_slave.hex
 	echo ':02000C00FFCD26' >> twi_slave.hex
 	echo ':02000E00FFCD24' >> twi_slave.hex
+	echo ':02001000FFCD22' >> twi_slave.hex
 	echo ':02001200FFCD20' >> twi_slave.hex
 	echo ':02001400FFCD1E' >> twi_slave.hex
 	echo ':02001600FFCD1C' >> twi_slave.hex
