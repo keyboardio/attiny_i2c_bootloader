@@ -7,6 +7,8 @@
 #include <avr/eeprom.h>
 #include "common_define.h"
 
+// AD01: lower two bits of device address
+#define AD01 ((PINB & _BV(0)) | (PINB & _BV(1)))
 
 //configuring LAST_INTVECT_ADDRESS as per device selected
 /*****************************************************************************/
@@ -32,7 +34,7 @@ void init_twi() {
     PORTC &= ~(_BV(PORTC5) | _BV(PORTC4)); // Set SCL and SDA low
     // Note: PORTC4 and PORT5 commonly used for tiny48. tiny88, mega48 TWI based devices
 
-    TWAR = SLAVE_ADDRESS << 1; // ignore the general call address
+    TWAR = (SLAVE_BASE_ADDRESS | AD01) << 1; // ignore the general call address
     TWCR = _BV(TWEN) | _BV(TWEA); // activate, ack our address
     // Enable, but don't enable ACK until we are ready to receive packets.
 }
