@@ -30,6 +30,7 @@
 
 
 void init_twi() {
+    DDRC &= ~(_BV(0) | _BV(1)); // set the AD01 ports as inputs
     DDRC &= ~(_BV(PORTC5) | _BV(PORTC4)); // Set SCL and SDA as input
     PORTC &= ~(_BV(PORTC5) | _BV(PORTC4)); // Set SCL and SDA low
     // Note: PORTC4 and PORT5 commonly used for tiny48. tiny88, mega48 TWI based devices
@@ -188,8 +189,9 @@ void cleanup_and_run_application() {
     MCUSR = 0; // clear resets
     wdt_disable(); // After Reset the WDT state does not change
 
-    // TODO: this should be possible to do with rjmp and save 2 bytes
-    asm volatile ("ldi r30, 0x28");
+    // TODO: this should be possible to do with rjmp and save 4 bytes
+    asm volatile ("ldi r31, 0x00");
+    asm volatile ("ldi r30, 0x38");
     asm volatile ("ijmp"); // jump to start of user code
 
     for (;;); // Make sure function does not return to help compiler optimize
