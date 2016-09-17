@@ -2,7 +2,6 @@
 #include <avr/interrupt.h>
 #include <avr/wdt.h>
 #include <util/delay.h>
-#include <avr/boot.h>
 #include <avr/pgmspace.h>
 #include <avr/eeprom.h>
 #include "common_define.h"
@@ -21,9 +20,6 @@
 #define TWI_SLAVE_TX_NACK_RECEIVED 	0xc0	// Status slave transmit and no acknowledgement or last byte
 #define TWI_SLAVE_RX_ACK_RETURNED  	0x80	// Status slave receive and acknowledgement returned
 #define TWI_SLAVE_RX_NACK_RETURNED 	0x88	// Status slave receive and no acknowledgement or last byte
-
-// 10 s delay code for allowing ARM9 linux to boot
-#define HOST_BOOT_DELAY_SEC 5
 
 #define ACK TWI_SLAVE_RX_ACK_RETURNED
 #define NAK TWI_SLAVE_RX_NACK_RETURNED
@@ -75,9 +71,9 @@ void process_slave_transmit (uint8_t data) {
     TWCR = _BV(TWINT) | _BV(TWEN);
 }
 
-uint8_t slave_receive_byte (uint8_t * data, uint8_t ack) {
+uint8_t slave_receive_byte(uint8_t *data, uint8_t ack) {
     // Receive byte and return ACK.
-    TWCR = _BV(TWINT) | _BV(TWEN) | ( ack == ACK  ? _BV(TWEA) : 0 );
+    TWCR = _BV(TWINT) | _BV(TWEN) | (ack == ACK  ? _BV(TWEA) : 0);
 
     wait_for_activity();
 
@@ -100,6 +96,17 @@ uint8_t slave_receive_byte (uint8_t * data, uint8_t ack) {
 
 }
 
+// don't call this, call update_page unless you need to bypass safety checks
+void unsafe_update_page(uint16_t pageAddress) {
+  for (uint8_t i = 0; i < PAGE_SIZE; i += 2) {
+      uint16_t tempWord = ((pageBuffer[i+1] << 8) | pageBuffer[i]);
+      boot_page_fill_safe(pageAddress + i, tempWord); // Fill the temporary buffer with the given data
+  }
+
+  // Write page from temporary buffer to the given location in flash memory
+  boot_page_write_safe(pageAddress);
+}
+
 uint8_t update_page(uint16_t pageAddress) {
     // Mask out in-page address bits.
     pageAddress &= ~(PAGE_SIZE - 1);
@@ -117,72 +124,63 @@ uint8_t update_page(uint16_t pageAddress) {
         return 0;
     }
 
-    for (uint8_t i = 0; i < PAGE_SIZE; i += 2) {
-        uint16_t tempWord = ((pageBuffer[i+1] << 8) | pageBuffer[i]);
-        boot_page_fill_safe(pageAddress + i, tempWord); // Fill the temporary buffer with the given data
-    }
-    // Write page from temporary buffer to the given location in flash memory
-    boot_page_write_safe(pageAddress);
+    unsafe_update_page(pageAddress);
 
-    wdt_reset (); // Reset the watchdog timer
+    wdt_reset(); // Reset the watchdog timer
     return 1;
 }
 
 uint8_t pageAddressLo;
 uint8_t pageAddressHi;
 
-void process_read_first_half() {
+// which frame of the page we are processing
+uint8_t frame = 0;
+
+uint8_t process_read_address() {
+  frame = 0; // reset which frame we are reading
+
+  // clear the page buffer
+  for (uint8_t i = 0; i < PAGE_SIZE; ++i) {
+      pageBuffer[i] = 0xFF;
+  }
+
+  // Receive two-byte page address.
+  if (!slave_receive_byte(&pageAddressLo, ACK)) {
+      return 0;
+  }
+  if (!slave_receive_byte(&pageAddressHi, ACK)) {
+      return 0;
+  }
+  wdt_reset(); // Reset the watchdog timer
+  return 1;
+}
+
+uint8_t process_read_frame() {
     // Check the SPM is ready, abort if not.
     if ((SPMCSR & _BV(SELFPROGEN)) != 0) {
         abort_twi();
-        return;
+        return 0;
     }
-    uint8_t *bufferPtr = pageBuffer;
+    uint8_t *bufferPtr = &pageBuffer[frame * FRAME_SIZE];
 
-    // Receive two-byte page address.
-    if (!slave_receive_byte(&pageAddressLo, ACK)) {
-        return;
-    }
-    if (!slave_receive_byte(&pageAddressHi, ACK)) {
-        return;
-    }
-    // Receive page data.
-    for (uint8_t i = 0; i < PAGE_SIZE / 2; ++i) {
-        if (!slave_receive_byte (bufferPtr, ACK)) {
-            return;
-        }
-        ++bufferPtr;
-    }
-}
-
-void process_read_second_half() {
-    // Check the SPM is ready, abort if not.
-    if ((SPMCSR & _BV(SELFPROGEN)) != 0) {
-        abort_twi ();
-        return;
-    }
-    uint8_t *bufferPtr = &pageBuffer[PAGE_SIZE / 2];
-
-    // Receive page data.
-    for (uint8_t i = 0; i < PAGE_SIZE / 2 - 1; ++i) {
+    // Receive page data in frame-sized chunks
+    for (uint8_t i = 0; i < FRAME_SIZE; i++) {
         if (!slave_receive_byte(bufferPtr, ACK)) {
-            return;
+            return 0;
         }
-        ++bufferPtr;
+        bufferPtr++;
     }
-
-    // NAK the last byte?
-    if (!slave_receive_byte(bufferPtr, NAK) ) {
-        return;
-    }
+    frame++;
+    wdt_reset(); // Reset the watchdog timer
+    return 1;
 }
-
 
 // Now program if everything went well.
-void process_page_update (void) {
-    if (!update_page ((pageAddressHi << 8) | pageAddressLo)) {
-        return;
+uint8_t process_page_update (void) {
+    if (!update_page((pageAddressHi << 8) | pageAddressLo)) {
+        return 0;
     }
+    return 1;
 }
 
 void cleanup_and_run_application() {
@@ -199,19 +197,27 @@ void cleanup_and_run_application() {
 }
 
 void process_page_erase() {
-    uint16_t addr = 0;
     for (uint8_t i = 0; i < PAGE_SIZE; ++i) {
         pageBuffer[i] = 0xFF;
     }
+    // read the reset vector
+    pageBuffer[0] = pgm_read_byte(INTVECT_PAGE_ADDRESS + 0);
+    pageBuffer[1] = pgm_read_byte(INTVECT_PAGE_ADDRESS + 1);
+    pageBuffer[2] = pgm_read_byte(INTVECT_PAGE_ADDRESS + 2);
+    pageBuffer[3] = pgm_read_byte(INTVECT_PAGE_ADDRESS + 3);
 
-    update_page(addr);		// To restore reset vector
+    boot_page_erase_safe(0); // have to erase the first page or else it will not write correctly
+
+    unsafe_update_page(0); // restore just the initial vector
+
+    uint16_t addr = 0;
     addr += PAGE_SIZE;
+    update_page(addr);
 
     for (uint8_t i = 0; i < (LAST_PAGE_NO_TO_BE_ERASED - 1); i++, addr += PAGE_SIZE) {
         addr &= ~(PAGE_SIZE - 1);
 
         if (addr < BOOT_PAGE_ADDRESS) {
-            // Erase each page one by one until the bootloader section
             boot_page_erase_safe(addr);
         }
     }
@@ -220,27 +226,42 @@ void process_page_erase() {
 void process_slave_receive() {
     uint8_t commandCode;
 
-    if (!slave_receive_byte(&commandCode, ACK) ) {
+    if (!slave_receive_byte(&commandCode, ACK)) {
         return;
     }
+
     // Process command byte.
     switch (commandCode) {
-    case TWI_CMD_PAGEUPDATE_FIRST_HALF:
-        process_read_first_half();
+    case TWI_CMD_PAGEUPDATE_ADDR:
+        if (!process_read_address()) {
+          break;
+        }
+        // nack for a last dummy byte to say we read everything
+        slave_receive_byte(&commandCode, NAK);
         break;
-    case TWI_CMD_PAGEUPDATE_SECOND_HALF:
-        process_read_second_half();
-        process_page_update();
+    case TWI_CMD_PAGEUPDATE_FRAME:
+        if (!process_read_frame()) {
+          break;
+        }
+        if (frame == PAGE_SIZE / FRAME_SIZE) {
+          if (!process_page_update()) {
+            break;
+          }
+        }
+        // nack for a last dummy byte to say we read everything
+        slave_receive_byte(&commandCode, NAK);
         break;
+
     case TWI_CMD_EXECUTEAPP:
-        // Read dummy byte and NACK, just to be nice to our TWI master.
+        // nack for a last dummy byte to say we read everything
         slave_receive_byte(&commandCode, NAK);
         wdt_enable(WDTO_15MS);  // Set WDT min for cleanup using reset
         for (;;); // Wait for WDT reset
 
     case TWI_CMD_ERASEFLASH:
-        slave_receive_byte(&commandCode, NAK);
         process_page_erase();
+        // nack for a last dummy byte to say we read everything
+        slave_receive_byte(&commandCode, NAK);
         break;
 
     default:
@@ -248,7 +269,7 @@ void process_slave_receive() {
     }
 }
 
-void read_and_process_packet (void) {
+void read_and_process_packet() {
     // Enable ACK and clear pending interrupts.
     TWCR = _BV(TWINT) | _BV(TWEA) | _BV(TWEN);
 
@@ -257,11 +278,11 @@ void read_and_process_packet (void) {
     // Check TWI status code for SLA+W or SLA+R.
     switch (TWSR) {
     case TWI_SLAW_RECEIVED:
-        process_slave_receive ();
+        process_slave_receive();
         break;
 
     case TWI_SLAR_RECEIVED:
-        process_slave_transmit (get_status_code () & STATUSMASK_SPMBUSY);
+        process_slave_transmit(get_status_code() & STATUSMASK_SPMBUSY);
         break;
 
     default:
@@ -276,6 +297,7 @@ int main() {
         // Or external reset
         // We can toggle the left hand's extrf and the right hand's
         // power
+        // rewrite the vector
         MCUSR = 0;
         init_twi();
         wdt_enable(WDTO_8S);

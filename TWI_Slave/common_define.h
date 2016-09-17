@@ -1,8 +1,8 @@
-
+#include <avr/boot.h>
 
 /*****************************************************************************/
-#define TWI_CMD_PAGEUPDATE_FIRST_HALF   0x01	// TWI Command to program a flash page, first half page
-#define TWI_CMD_PAGEUPDATE_SECOND_HALF  0x02	// TWI Command to program a flash page, second half page
+#define TWI_CMD_PAGEUPDATE_ADDR         0x01	// TWI Command to program a flash page address to write
+#define TWI_CMD_PAGEUPDATE_FRAME        0x02	// TWI Command to program the next frame of the page of flash
 #define TWI_CMD_EXECUTEAPP            	0x03	// TWI Command to jump to the application program
 #define TWI_CMD_ERASEFLASH              0x04	// TWI Command to erase the entire application section of flash memory
 #define TWI_CMD_GETERRCONDN             0x07    // TWI Command to get Error condition
@@ -20,13 +20,14 @@
 
 // Page size selection for the controller with 8K flash
 // The flash memory page size for these devices
-#define PAGE_SIZE 32
+#define PAGE_SIZE 64 // SPM_PAGESIZE is sometimes 32 for attiny88, which is incorrect
+#define FRAME_SIZE 16 // how big of chunks of data we can write over TWI
 
 // Page 112, the start of bootloader section
 #define BOOT_PAGE_ADDRESS 0X1C00
 
 // 8KB of flash divided by pages of size 64 bytes
-#define TOTAL_NO_OF_PAGES  256
+#define TOTAL_NO_OF_PAGES  (8192 / PAGE_SIZE)
 
 // The number of pages being used for bootloader code
 #define BOOTLOADER_PAGES          	(TOTAL_NO_OF_PAGES - BOOT_PAGE_ADDRESS/PAGE_SIZE)
@@ -62,6 +63,3 @@ uint8_t pageBuffer[PAGE_SIZE];
 /*****************************************************************************/
 
 #define BVERSION 			0x96	// This bootloader revision identifier
-
-
-void UpdatePage (uint16_t);
