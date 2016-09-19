@@ -127,10 +127,9 @@ void update_page(uint16_t pageAddress) {
     // Protect RESET vector if this is page 0.
     if (pageAddress == INTVECT_PAGE_ADDRESS) {
         // Load existing RESET vector contents into buffer.
-        pageBuffer[0] = pgm_read_byte(INTVECT_PAGE_ADDRESS + 0);
-        pageBuffer[1] = pgm_read_byte(INTVECT_PAGE_ADDRESS + 1);
-        pageBuffer[2] = pgm_read_byte(INTVECT_PAGE_ADDRESS + 2);
-        pageBuffer[3] = pgm_read_byte(INTVECT_PAGE_ADDRESS + 3);
+	for( uint8_t i=0; i < 4; i++) {
+            pageBuffer[i] = pgm_read_byte(INTVECT_PAGE_ADDRESS + i);
+	}
     }
 
     // Ignore any attempt to update boot section.
