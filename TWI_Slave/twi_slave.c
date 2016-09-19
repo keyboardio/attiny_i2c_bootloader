@@ -121,15 +121,19 @@ void unsafe_update_page(uint16_t pageAddress) {
   boot_page_write(pageAddress);
 }
 
+void buffer_reset_vector() {
+    // Load existing RESET vector contents into buffer.
+    for( uint8_t i=0; i < 4; i++) {
+        pageBuffer[i] = pgm_read_byte(INTVECT_PAGE_ADDRESS + i);
+    }
+}
+
 void update_page(uint16_t pageAddress) {
     // Mask out in-page address bits.
     pageAddress &= ~(PAGE_SIZE - 1);
     // Protect RESET vector if this is page 0.
     if (pageAddress == INTVECT_PAGE_ADDRESS) {
-        // Load existing RESET vector contents into buffer.
-	for( uint8_t i=0; i < 4; i++) {
-            pageBuffer[i] = pgm_read_byte(INTVECT_PAGE_ADDRESS + i);
-	}
+	buffer_reset_vector();
     }
 
     // Ignore any attempt to update boot section.
@@ -201,14 +205,12 @@ void cleanup_and_run_application(void) {
     for (;;); // Make sure function does not return to help compiler optimize
 }
 
+
 void process_page_erase() {
     erase_page_buffer();
 
     // read the reset vector
-    pageBuffer[0] = pgm_read_byte(INTVECT_PAGE_ADDRESS + 0);
-    pageBuffer[1] = pgm_read_byte(INTVECT_PAGE_ADDRESS + 1);
-    pageBuffer[2] = pgm_read_byte(INTVECT_PAGE_ADDRESS + 2);
-    pageBuffer[3] = pgm_read_byte(INTVECT_PAGE_ADDRESS + 3);
+    buffer_reset_vector();
 
     boot_spm_busy_wait();
     boot_page_erase(0); // have to erase the first page or else it will not write correctly
