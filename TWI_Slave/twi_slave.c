@@ -123,8 +123,8 @@ void unsafe_update_page(uint16_t pageAddress) {
 
 void buffer_reset_vector() {
     // Load existing RESET vector contents into buffer.
-    for( uint8_t i=0; i < 4; i++) {
-        pageBuffer[i] = pgm_read_byte(INTVECT_PAGE_ADDRESS + i);
+    for(uint8_t i = 4; i != 0; i--) {
+        pageBuffer[i] = pgm_read_byte(INTVECT_PAGE_ADDRESS + i - 1);
     }
 }
 
