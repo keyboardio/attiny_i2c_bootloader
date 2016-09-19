@@ -103,7 +103,7 @@ void get_slave_status(void) {
 uint8_t master_transmit( uint8_t address, uint8_t * data, uint16_t length ) {
   Wire.beginTransmission(address);
   return Wire.write(data,length);
-    
+
 }
 
 

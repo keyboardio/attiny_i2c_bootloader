@@ -4,6 +4,7 @@
 #include <util/delay.h>
 #include <avr/pgmspace.h>
 #include <avr/eeprom.h>
+#include <util/crc16.h>
 #include "common_define.h"
 
 // AD01: lower two bits of device address
@@ -156,6 +157,8 @@ uint8_t process_read_address() {
 }
 
 uint8_t process_read_frame() {
+    uint16_t crc16 = 0xffff;
+
     // Check the SPM is ready, abort if not.
     if ((SPMCSR & _BV(SELFPROGEN)) != 0) {
         abort_twi();
@@ -168,7 +171,20 @@ uint8_t process_read_frame() {
         if (!slave_receive_byte(bufferPtr, ACK)) {
             return 0;
         }
+        crc16 = _crc16_update(crc16, *bufferPtr);
         bufferPtr++;
+    }
+    // grab the CRC16 checksum, sent little end first.
+    uint8_t c0, c1;
+    if (!slave_receive_byte(&c0, ACK)) {
+        return 0;
+    }
+    if (!slave_receive_byte(&c1, ACK)) {
+        return 0;
+    }
+    // if the CRC16 doesn't match, reject the frame
+    if (crc16 != (uint16_t) ((c1 << 8) | c0)) {
+      return 0;
     }
     frame++;
     wdt_reset(); // Reset the watchdog timer
@@ -234,6 +250,8 @@ void process_slave_receive() {
     switch (commandCode) {
     case TWI_CMD_PAGEUPDATE_ADDR:
         if (!process_read_address()) {
+          // indicate an error
+          slave_receive_byte(&commandCode, ACK);
           break;
         }
         // nack for a last dummy byte to say we read everything
@@ -241,10 +259,14 @@ void process_slave_receive() {
         break;
     case TWI_CMD_PAGEUPDATE_FRAME:
         if (!process_read_frame()) {
+          // indicate an error
+          slave_receive_byte(&commandCode, ACK);
           break;
         }
         if (frame == PAGE_SIZE / FRAME_SIZE) {
           if (!process_page_update()) {
+            // indicate an error
+            slave_receive_byte(&commandCode, ACK);
             break;
           }
         }
