@@ -5,6 +5,7 @@
 #define TWI_CMD_PAGEUPDATE_FRAME        0x02	// TWI Command to program the next frame of the page of flash
 #define TWI_CMD_EXECUTEAPP            	0x03	// TWI Command to jump to the application program
 #define TWI_CMD_ERASEFLASH              0x04	// TWI Command to erase the entire application section of flash memory
+#define TWI_CMD_GETCRC16                0x06  // TWI Command to get application version and CRC16 of memory contents
 #define TWI_CMD_GETERRCONDN             0x07    // TWI Command to get Error condition
 
 /*****************************************************************************/
@@ -26,8 +27,10 @@
 // Page 112, the start of bootloader section
 #define BOOT_PAGE_ADDRESS 0X1C00
 
+#define FLASH_SIZE 8192
+
 // 8KB of flash divided by pages of size 64 bytes
-#define TOTAL_NO_OF_PAGES  (8192 / PAGE_SIZE)
+#define TOTAL_NO_OF_PAGES  (FLASH_SIZE / PAGE_SIZE)
 
 // The number of pages being used for bootloader code
 #define BOOTLOADER_PAGES          	(TOTAL_NO_OF_PAGES - BOOT_PAGE_ADDRESS/PAGE_SIZE)
@@ -62,4 +65,4 @@ uint8_t pageBuffer[PAGE_SIZE];
 /*****************************************************************************/
 /*****************************************************************************/
 
-#define BVERSION 			0x96	// This bootloader revision identifier
+#define BVERSION 			0x01	// This bootloader revision identifier
