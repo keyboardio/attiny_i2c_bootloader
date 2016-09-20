@@ -196,12 +196,8 @@ void cleanup_and_run_application(void) {
     MCUSR = 0; // clear resets
     wdt_disable(); // After Reset the WDT state does not change
 
-    // TODO: this should be possible to do with rjmp and save 4 bytes
-    asm volatile ("ldi r31, 0x00");
-    asm volatile ("ldi r30, 0x38");
-    asm volatile ("ijmp"); // jump to start of user code
-    // asm volatile ("rjmp 0x38");
-
+    asm volatile ("rjmp __vectors-0x1bc8");  // jump to start of user code at 0x38
+    
     for (;;); // Make sure function does not return to help compiler optimize
 }
 
