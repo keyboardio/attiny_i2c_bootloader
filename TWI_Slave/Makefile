@@ -93,7 +93,7 @@ twi_slave.hex: twi_slave.elf
 	avr-objcopy -j .text -j .data -O ihex twi_slave.elf twi_slave.hex
 	avr-size --format=avr --mcu=$(DEVICE) twi_slave.elf
 	# write bootloader jump vector to beginning
-	sed -i '' -e '$$ d' twi_slave.hex # two dollar signs because Make otherwise interprets them
+	sed -i'' -e '$$ d' twi_slave.hex # two dollar signs because Make otherwise interprets them
 	# write a new vector table to jump to the bootloader
 	# rjmp to 0x1C00, etc.
 	echo ':02000000FFCD32' >> twi_slave.hex
