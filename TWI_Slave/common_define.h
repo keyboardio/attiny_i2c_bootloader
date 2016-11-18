@@ -12,7 +12,7 @@
 
 
 #define BOOT_SETTLE_DELAY         	100	// Debounce delay for the boot pin in MCU cycles
-#define SLAVE_BASE_ADDRESS          0x58	// The base address identifier of this slave device on the TWI (I2C) bus
+#define SLAVE_BASE_ADDRESS          0x50	// The base address identifier of this slave device on the TWI (I2C) bus
 #define INTVECT_PAGE_ADDRESS      	0x000	// The location of the start of the interrupt vector table address
 
 
