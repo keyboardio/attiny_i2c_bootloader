@@ -289,8 +289,9 @@ void process_slave_receive() {
         break;
 
     case TWI_CMD_EXECUTEAPP:
-        wdt_enable(WDTO_15MS);  // Set WDT min for cleanup using reset
-        for (;;); // Wait for WDT reset
+	wdt_enable(WDTO_15MS);  // Set WDT min for cleanup using reset
+        asm volatile ("HERE:rjmp HERE");//Yes it's an infinite loop
+	//for (;;); // Wait for WDT reset
 
     case TWI_CMD_ERASEFLASH:
         process_page_erase();
@@ -329,8 +330,22 @@ void read_and_process_packet() {
     }
 }
 
+
+void blank_leds() {
+        SPCR = _BV(SPE) | _BV(MSTR) | _BV(SPIE) | _BV(SPR0);
+      //   SPSR |= _BV(SPI2X);
+    /* Set MOSI, SCK, SS all to outputs */
+    DDRB = _BV(5)|_BV(3)|_BV(2);
+   PORTB &= ~(_BV(5)|_BV(3)|_BV(2));
+
+}
+ISR(SPI_STC_vect) {
+	SPDR=0;
+}
+
 // Main Starts from here
 int main() {
+    blank_leds();
     if (MCUSR & _BV (PORF) || MCUSR & _BV(EXTRF)) {
         // Only in case of Power On Reset
         // Or external reset
