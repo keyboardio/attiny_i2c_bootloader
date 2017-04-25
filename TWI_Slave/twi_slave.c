@@ -39,6 +39,7 @@ uint8_t frame = 0;
 void init_twi() {
     // set the AD01 ports as inputs
     // Set SCL and SDA as input
+    // TODO: I think We want B0 and B1, not C0 and C1 for the addr bits
     DDRC &= ~(_BV(0) | _BV(1) | _BV(PORTC5) | _BV(PORTC4));
     PORTC &= ~(_BV(PORTC5) | _BV(PORTC4)); // Set SCL and SDA low
 
