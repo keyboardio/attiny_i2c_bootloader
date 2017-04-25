@@ -39,7 +39,11 @@ void setup_pins() {
     DDRC |= _BV(7); // C7 is COMM_EN - this turns on the PCA9614 that does differential i2c between hands
     PORTC |= _BV(7); // Without it, the right hand can't talk to the world.
 
+    
     DDRB &= ~(_BV(0) | _BV(1) ); // set the AD01 ports as inputs
+
+    DDRB |= _BV(5)|_BV(3)|_BV(2); /* Set MOSI, SCK, SS all to outputs so we can use them to clear out the LEDs*/
+    PORTB &= ~(_BV(5)|_BV(3)|_BV(2)); // Drive MOSI/SCK/SS low
 }
 
 void init_twi() {
@@ -330,9 +334,6 @@ void read_and_process_packet() {
 void blank_leds() {
         SPCR = _BV(SPE) | _BV(MSTR) | _BV(SPIE) | _BV(SPR0);
       //   SPSR |= _BV(SPI2X);
-    /* Set MOSI, SCK, SS all to outputs */
-    DDRB = _BV(5)|_BV(3)|_BV(2);
-   PORTB &= ~(_BV(5)|_BV(3)|_BV(2));
 
 }
 ISR(SPI_STC_vect) {
