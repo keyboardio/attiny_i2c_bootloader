@@ -35,16 +35,14 @@ uint16_t pageAddr;
 // which frame of the page we are processing
 uint8_t frame = 0;
 
-
-void init_twi() {
-    // set the AD01 ports as inputs
-    // Set SCL and SDA as input
-    // TODO: I think We want B0 and B1, not C0 and C1 for the addr bits
-    DDRC &= ~(_BV(0) | _BV(1));
-
+void setup_pins() {
     DDRC |= _BV(7); // C7 is COMM_EN - this turns on the PCA9614 that does differential i2c between hands
     PORTC |= _BV(7); // Without it, the right hand can't talk to the world.
 
+    DDRB &= ~(_BV(0) | _BV(1) ); // set the AD01 ports as inputs
+}
+
+void init_twi() {
     TWAR = (SLAVE_BASE_ADDRESS | AD01) << 1; // ignore the general call address
     TWCR = _BV(TWEN) | _BV(TWEA); // activate, ack our address
     // Enable, but don't enable ACK until we are ready to receive packets.
@@ -351,7 +349,7 @@ ISR(SPI_STC_vect) {
 
 // Main Starts from here
 int main() {
-    blank_leds();
+    setup_pins();
     if (MCUSR & _BV (PORF) || MCUSR & _BV(EXTRF)) {
         // Only in case of Power On Reset
         // Or external reset
