@@ -338,7 +338,15 @@ void blank_leds() {
 
 }
 ISR(SPI_STC_vect) {
-	SPDR=0;
+    // Technically, we should be writing out a start frame, 
+    // followed by 32 LEDs worth of data frames
+    // followed by an end frame.
+    // But all of those would be zeros.
+    //
+    // Hopefully, doing this won't cause the LEDs to get into a bad state
+    // when we load the user program
+   
+    SPDR=0;
 }
 
 // Main Starts from here
