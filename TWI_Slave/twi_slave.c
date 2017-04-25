@@ -41,8 +41,11 @@ void setup_pins() {
 
     
     DDRB &= ~(_BV(0) | _BV(1) ); // set the AD01 ports as inputs
-
     DDRB |= _BV(5)|_BV(3)|_BV(2); /* Set MOSI, SCK, SS all to outputs so we can use them to clear out the LEDs*/
+    // TODO: Replace the last two lines with otentially sketchy optimization
+    // DDRB = _BV(5)|_BV(3)|_BV(2); //0b0011100; 
+
+
     PORTB &= ~(_BV(5)|_BV(3)|_BV(2)); // Drive MOSI/SCK/SS low
 }
 
