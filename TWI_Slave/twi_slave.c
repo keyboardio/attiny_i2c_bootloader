@@ -40,13 +40,10 @@ void init_twi() {
     // set the AD01 ports as inputs
     // Set SCL and SDA as input
     // TODO: I think We want B0 and B1, not C0 and C1 for the addr bits
-    DDRC &= ~(_BV(0) | _BV(1) | _BV(PORTC5) | _BV(PORTC4));
-    PORTC &= ~(_BV(PORTC5) | _BV(PORTC4)); // Set SCL and SDA low
+    DDRC &= ~(_BV(0) | _BV(1));
 
     DDRC |= _BV(7); // C7 is COMM_EN - this turns on the PCA9614 that does differential i2c between hands
     PORTC |= _BV(7); // Without it, the right hand can't talk to the world.
-
-    // Note: PORTC4 and PORT5 commonly used for tiny48. tiny88, mega48 TWI based devices
 
     TWAR = (SLAVE_BASE_ADDRESS | AD01) << 1; // ignore the general call address
     TWCR = _BV(TWEN) | _BV(TWEA); // activate, ack our address
