@@ -331,9 +331,9 @@ void read_and_process_packet() {
 }
 
 
-void blank_leds() {
-        SPCR = _BV(SPE) | _BV(MSTR) | _BV(SPIE) | _BV(SPR0);
-      //   SPSR |= _BV(SPI2X);
+void init_spi() {
+    SPCR = _BV(SPE) | _BV(MSTR) | _BV(SPIE) | _BV(SPR0);
+    //   SPSR |= _BV(SPI2X);
 
 }
 ISR(SPI_STC_vect) {
@@ -351,6 +351,7 @@ ISR(SPI_STC_vect) {
 // Main Starts from here
 int main() {
     setup_pins();
+    init_spi();
     if (MCUSR & _BV (PORF) || MCUSR & _BV(EXTRF)) {
         // Only in case of Power On Reset
         // Or external reset
