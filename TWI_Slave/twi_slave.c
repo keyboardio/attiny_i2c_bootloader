@@ -196,7 +196,6 @@ void process_page_update() {
 }
 
 void cleanup_and_run_application(void) {
-    MCUSR = 0; // clear resets
     wdt_disable(); // After Reset the WDT state does not change
 
     asm volatile ("rjmp __vectors-0x1bc8");  // jump to start of user code at 0x38
@@ -355,13 +354,16 @@ ISR(SPI_STC_vect) {
 int main() {
     setup_pins();
     init_spi();
-    if (MCUSR & _BV (PORF) || MCUSR & _BV(EXTRF)) {
+
+    uint8_t sr_temp = MCUSR;
+    MCUSR=0;
+
+    if (sr_temp & _BV (PORF) || sr_temp & _BV(EXTRF)) {
         // Only in case of Power On Reset
         // Or external reset
         // We can toggle the left hand's extrf and the right hand's
         // power
         // rewrite the vector
-        MCUSR = 0;
         init_twi();
         wdt_enable(WDTO_60MS);
 
