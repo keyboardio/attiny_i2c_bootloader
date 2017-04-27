@@ -41,6 +41,7 @@ void setup_pins() {
 
     
     DDRB &= ~(_BV(0) | _BV(1) ); // set the AD01 ports as inputs
+
     DDRB |= _BV(5)|_BV(3)|_BV(2); /* Set MOSI, SCK, SS all to outputs so we can use them to clear out the LEDs*/
     // TODO: Replace the last two lines with otentially sketchy optimization
     // DDRB = _BV(5)|_BV(3)|_BV(2); //0b0011100; 
@@ -333,7 +334,7 @@ void read_and_process_packet() {
 }
 
 
-void init_spi() {
+void init_spi_for_led_control() {
     SPCR = _BV(SPE) | _BV(MSTR) | _BV(SPIE) | _BV(SPR0);
     //   SPSR |= _BV(SPI2X);
 
@@ -352,8 +353,12 @@ ISR(SPI_STC_vect) {
 
 // Main Starts from here
 int main() {
+
+    // Turn on the interhand controllers and get the LEDs turned off
+    // before deciding what to do next.
+    
     setup_pins();
-    init_spi();
+    init_spi_for_led_control();
 
     uint8_t sr_temp = MCUSR;
     MCUSR=0;
