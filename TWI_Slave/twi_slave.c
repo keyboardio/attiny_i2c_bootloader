@@ -228,18 +228,21 @@ void process_getcrc16() {
     // get program memory address and length to calcaulate CRC16 of
     uint16_t addr = slave_receive_word();
     uint16_t len = slave_receive_word();
-    // disable sanity checks for space
-    // // overflow
-    // if (addr + len < addr) {
+    uint16_t max = addr + len;
+
+    // bail if it overflows
+    // disable sanity check for space
+    // it's actually a duplicate of the condition on the while loop
+    // so it's safe to leave disabled
+    // if (max < addr) {
     //   return;
     // }
-    // // exceeds flash capacity
-    // if (addr + len >= FLASH_SIZE) {
-    //   return;
-    // }
+    // bail if it exceeds flash capacity
+     if (  max >= FLASH_SIZE) {
+       return;
+     }
 
     sendCrc16 = 0xffff;
-    uint16_t max = addr + len;
     while (addr < max) {
       sendCrc16 = _crc16_update(sendCrc16, pgm_read_byte(addr));
       addr++;
