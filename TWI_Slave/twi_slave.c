@@ -371,8 +371,9 @@ int main() {
     }
 
     init_twi();
-    wdt_enable(WDTO_60MS);
+    // TODO - I'm not sure it's safe to not set this short little watchdog here./
 
+    wdt_enable(WDTO_60MS);
     while (1) {
         read_and_process_packet(); // Process the TWI Commands
     }
