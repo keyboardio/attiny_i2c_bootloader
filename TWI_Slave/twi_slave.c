@@ -239,9 +239,9 @@ void process_getcrc16() {
     //   return;
     // }
     // bail if it exceeds flash capacity
-     if (  max >= FLASH_SIZE) {
-       return;
-     }
+    // if (  max >= FLASH_SIZE) {
+    //   return;
+    // }
 
     sendCrc16 = 0xffff;
     while (addr < max) {
