@@ -362,19 +362,17 @@ int main() {
     uint8_t sr_temp = MCUSR;
     MCUSR=0;
 
-    if (sr_temp & _BV (PORF) || sr_temp & _BV(EXTRF)) {
-        // Only in case of Power On Reset
-        // Or external reset
-        // We can toggle the left hand's extrf and the right hand's
-        // power
-        // rewrite the vector
-        init_twi();
-        wdt_enable(WDTO_60MS);
-
-        while (1) {
-            read_and_process_packet(); // Process the TWI Commands
-        }
-    } else {
+    // If this isn't a power-on reset or an external reset 
+    // then we should skip the bootloader
+    // We can toggle the left hand's extrf and the right hand's power
+    if (sr_temp ^ (_BV(PORF)|_BV(EXTRF))) { 
         cleanup_and_run_application();
+    }
+
+    init_twi();
+    wdt_enable(WDTO_60MS);
+
+    while (1) {
+        read_and_process_packet(); // Process the TWI Commands
     }
 }
