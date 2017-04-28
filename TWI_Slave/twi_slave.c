@@ -54,7 +54,10 @@ void init_twi() {
     // Enable, but don't enable ACK until we are ready to receive packets.
 }
 
-inline void wait_for_activity() {
+inline void wait_for_activity(uint8_t ack) {
+    // possibly Enable ACK and clear pending interrupts.
+    TWCR = _BV(TWINT) | _BV(TWEN) | (ack == ACK  ? _BV(TWEA) : 0);
+
     do {} while ((TWCR & _BV(TWINT)) == 0);
     wdt_reset();
 }
@@ -68,8 +71,7 @@ void process_slave_transmit(uint8_t data) {
      // Prepare data for transmission.
     TWDR = data;
 
-    TWCR = _BV(TWINT) | _BV(TWEN) | _BV(TWEA);	// Send byte, ACK expected from master.
-    wait_for_activity();
+    wait_for_activity(ACK);
 
     // Check TWI status code for SLAVE_TX_NACK.
     if (TWSR != TWI_SLAVE_TX_ACK_RECEIVED) {
@@ -80,9 +82,7 @@ void process_slave_transmit(uint8_t data) {
 
 uint8_t slave_receive_byte(uint8_t *data, uint8_t ack) {
     // Receive byte and return ACK.
-    TWCR = _BV(TWINT) | _BV(TWEN) | (ack == ACK  ? _BV(TWEA) : 0);
-
-    wait_for_activity();
+    wait_for_activity(ack);
 
     // Check TWI status code for SLAVE_RX_ACK. or SLAVE_RX_NACK
     // Basically, if the status register has the same value as
@@ -310,10 +310,8 @@ void process_slave_receive() {
 }
 
 void read_and_process_packet() {
-    // Enable ACK and clear pending interrupts.
-    TWCR = _BV(TWINT) | _BV(TWEA) | _BV(TWEN);
 
-    wait_for_activity();
+    wait_for_activity(ACK);
     wdt_enable(WDTO_8S);  // Set WDT min for cleanup using reset
 
     // Check TWI status code for SLA+W or SLA+R.
