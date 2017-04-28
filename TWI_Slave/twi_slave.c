@@ -166,10 +166,11 @@ void process_read_address() {
 uint8_t process_read_frame() {
     // check disabled for space reasons
     // Check the SPM is ready, abort if not.
-    // if ((SPMCSR & _BV(SELFPROGEN)) != 0) {
-    //     abort_twi();
-    //     return 0;
-    // }
+     if ((SPMCSR & _BV(SELFPROGEN)) != 0) {
+        abort_twi();
+        return 0;
+     }
+ 
     uint8_t *bufferPtr = &pageBuffer[frame * FRAME_SIZE];
 
     // Receive page data in frame-sized chunks
