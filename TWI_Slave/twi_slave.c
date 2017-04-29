@@ -62,7 +62,7 @@ inline void wait_for_activity(uint8_t ack) {
     wdt_reset();
 }
 
-void abort_twi() {
+void __attribute__ ((noinline)) abort_twi() {
     // Recover from error condition by releasing bus lines.
     TWCR = _BV(TWINT) | _BV(TWSTO) | _BV(TWEN);
 }
@@ -146,7 +146,7 @@ void update_page(uint16_t pageAddress) {
     unsafe_update_page(pageAddress);
 }
 
-void erase_page_buffer() {
+void __attribute__ ((noinline)) erase_page_buffer() {
     // clear the page buffer
     for (uint8_t i = 0; i < PAGE_SIZE; i++) {
         pageBuffer[i] = 0xFF;
