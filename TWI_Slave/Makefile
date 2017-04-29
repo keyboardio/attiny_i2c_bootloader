@@ -125,6 +125,9 @@ twi_slave.hex: twi_slave.elf
 disasm:	twi_slave.elf
 	avr-objdump -d twi_slave.elf
 
+size-map: twi_slave.elf
+	avr-nm --size-sort -C -r -l twi_slave.elf
+
 cpp:
 	$(COMPILE) -E main.c
 
