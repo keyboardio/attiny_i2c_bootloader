@@ -336,7 +336,7 @@ void read_and_process_packet() {
 
 void init_spi_for_led_control() {
     SPCR = _BV(SPE) | _BV(MSTR) | _BV(SPIE) | _BV(SPR0);
-    //   SPSR = _BV(SPI2X);
+    SPSR = _BV(SPI2X);
 
 }
 ISR(SPI_STC_vect) {
