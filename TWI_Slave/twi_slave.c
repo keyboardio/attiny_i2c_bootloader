@@ -39,12 +39,12 @@ void setup_pins() {
     DDRC |= _BV(7); // C7 is COMM_EN - this turns on the PCA9614 that does differential i2c between hands
     PORTC |= _BV(7); // Without it, the right hand can't talk to the world.
 
-    
+
     // DDRB &= ~(_BV(0) | _BV(1) ); // set the AD01 ports as inputs
 
     // DDRB |= _BV(5)|_BV(3)|_BV(2); /* Set MOSI, SCK, SS all to outputs so we can use them to clear out the LEDs*/
     // TODO: Replace the last two lines with otentially sketchy optimization
-    DDRB = _BV(5)|_BV(3)|_BV(2); //0b00101100; 
+    DDRB = _BV(5)|_BV(3)|_BV(2); //0b00101100;
     PORTB &= ~(_BV(5)|_BV(3)|_BV(2)); // Drive MOSI/SCK/SS low
 }
 
@@ -68,7 +68,7 @@ void __attribute__ ((noinline)) abort_twi() {
 }
 
 void process_slave_transmit(uint8_t data) {
-     // Prepare data for transmission.
+    // Prepare data for transmission.
     TWDR = data;
 
     wait_for_activity(ACK);
@@ -112,15 +112,15 @@ uint16_t slave_receive_word() {
 
 // don't call this, call update_page unless you need to bypass safety checks
 void unsafe_update_page(uint16_t pageAddress) {
-  for (uint8_t i = 0; i < PAGE_SIZE; i += 2) {
-      uint16_t tempWord = ((pageBuffer[i+1] << 8) | pageBuffer[i]);
-      boot_spm_busy_wait();
-      boot_page_fill(pageAddress + i, tempWord); // Fill the temporary buffer with the given data
-  }
+    for (uint8_t i = 0; i < PAGE_SIZE; i += 2) {
+        uint16_t tempWord = ((pageBuffer[i+1] << 8) | pageBuffer[i]);
+        boot_spm_busy_wait();
+        boot_page_fill(pageAddress + i, tempWord); // Fill the temporary buffer with the given data
+    }
 
-  // Write page from temporary buffer to the given location in flash memory
-  boot_spm_busy_wait();
-  boot_page_write(pageAddress);
+    // Write page from temporary buffer to the given location in flash memory
+    boot_spm_busy_wait();
+    boot_page_write(pageAddress);
 }
 
 void buffer_reset_vector() {
@@ -135,7 +135,7 @@ void update_page(uint16_t pageAddress) {
     pageAddress &= ~(PAGE_SIZE - 1);
     // Protect RESET vector if this is page 0.
     if (pageAddress == INTVECT_PAGE_ADDRESS) {
-	buffer_reset_vector();
+        buffer_reset_vector();
     }
 
     // Ignore any attempt to update boot section.
@@ -155,22 +155,22 @@ void __attribute__ ((noinline)) erase_page_buffer() {
 
 
 void process_read_address() {
-  frame = 0; // reset which frame we are reading
+    frame = 0; // reset which frame we are reading
 
-  erase_page_buffer();
+    erase_page_buffer();
 
-  // Receive two-byte page address.
-  pageAddr = slave_receive_word();
+    // Receive two-byte page address.
+    pageAddr = slave_receive_word();
 }
 
 uint8_t process_read_frame() {
     // check disabled for space reasons
     // Check the SPM is ready, abort if not.
-     if ((SPMCSR & _BV(SELFPROGEN)) != 0) {
+    if ((SPMCSR & _BV(SELFPROGEN)) != 0) {
         abort_twi();
         return 0;
-     }
- 
+    }
+
     uint8_t *bufferPtr = &pageBuffer[frame * FRAME_SIZE];
 
     // Receive page data in frame-sized chunks
@@ -184,7 +184,7 @@ uint8_t process_read_frame() {
     }
     // check received CRC16
     if (crc16 != slave_receive_word()) {
-      return 0;
+        return 0;
     }
     frame++;
     return 1;
@@ -199,7 +199,7 @@ void cleanup_and_run_application(void) {
     wdt_disable(); // After Reset the WDT state does not change
 
     asm volatile ("rjmp __vectors-0x1bc8");  // jump to start of user code at 0x38
-    
+
     for (;;); // Make sure function does not return to help compiler optimize
 }
 
@@ -239,14 +239,14 @@ void process_getcrc16() {
     //   return;
     // }
     // bail if it exceeds flash capacity
-     if (  max >= FLASH_SIZE) {
-       return;
-     }
+    if (  max >= FLASH_SIZE) {
+        return;
+    }
 
     sendCrc16 = 0xffff;
     while (addr < max) {
-      sendCrc16 = _crc16_update(sendCrc16, pgm_read_byte(addr));
-      addr++;
+        sendCrc16 = _crc16_update(sendCrc16, pgm_read_byte(addr));
+        addr++;
     }
 }
 
@@ -284,19 +284,19 @@ void process_slave_receive() {
         break;
     case TWI_CMD_PAGEUPDATE_FRAME:
         if (!process_read_frame(&pageAddr)) {
-          send_transmit_error();
-          break;
+            send_transmit_error();
+            break;
         }
         if (frame == PAGE_SIZE / FRAME_SIZE) {
-          process_page_update();
+            process_page_update();
         }
         send_transmit_success();
         break;
 
     case TWI_CMD_EXECUTEAPP:
-	wdt_enable(WDTO_15MS);  // Set WDT min for cleanup using reset
+        wdt_enable(WDTO_15MS);  // Set WDT min for cleanup using reset
         asm volatile ("HERE:rjmp HERE");//Yes it's an infinite loop
-	//for (;;); // Wait for WDT reset
+    //for (;;); // Wait for WDT reset
 
     case TWI_CMD_ERASEFLASH:
         process_page_erase();
@@ -340,14 +340,14 @@ void init_spi_for_led_control() {
 
 }
 ISR(SPI_STC_vect) {
-    // Technically, we should be writing out a start frame, 
+    // Technically, we should be writing out a start frame,
     // followed by 32 LEDs worth of data frames
     // followed by an end frame.
     // But all of those would be zeros.
     //
     // Hopefully, doing this won't cause the LEDs to get into a bad state
     // when we load the user program
-   
+
     SPDR=0;
 }
 
@@ -356,14 +356,14 @@ int main() {
 
     // Turn on the interhand controllers and get the LEDs turned off
     // before deciding what to do next.
-    
+
     setup_pins();
     init_spi_for_led_control();
 
     uint8_t sr_temp = MCUSR;
     MCUSR=0;
 
-    // If this isn't a power-on reset or an external reset 
+    // If this isn't a power-on reset or an external reset
     // then we should skip the bootloader
     // We can toggle the left hand's extrf and the right hand's power
     if (sr_temp & _BV (PORF) || sr_temp & _BV(EXTRF)) {
