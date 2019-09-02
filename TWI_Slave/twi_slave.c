@@ -297,7 +297,7 @@ void process_slave_receive() {
         wdt_enable(WDTO_15MS);  // Set WDT min for cleanup using reset
         asm volatile ("HERE:rjmp HERE");//Yes it's an infinite loop
     //for (;;); // Wait for WDT reset
-
+        // fall through
     case TWI_CMD_ERASEFLASH:
         process_page_erase();
         break;
