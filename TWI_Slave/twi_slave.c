@@ -49,7 +49,7 @@ void init_twi() {
     // Enable, but don't enable ACK until we are ready to receive packets.
 }
 
-inline void wait_for_activity(uint8_t ack) {
+void wait_for_activity(uint8_t ack) {
     // possibly Enable ACK and clear pending interrupts.
     TWCR = _BV(TWINT) | _BV(TWEN) | (ack == ACK  ? _BV(TWEA) : 0);
 
@@ -252,7 +252,7 @@ void transmit_crc16_and_version() {
     process_slave_transmit(sendCrc16 >> 8);
 }
 
-inline void send_transmit_success() {
+void send_transmit_success() {
     uint8_t _;
     // nack for a last dummy byte to say we read everything
     slave_receive_byte(&_, NAK);
