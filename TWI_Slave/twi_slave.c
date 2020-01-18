@@ -39,11 +39,6 @@ void setup_pins() {
     DDRC |= _BV(7); // C7 is COMM_EN - this turns on the PCA9614 that does differential i2c between hands
     PORTC |= _BV(7); // Without it, the right hand can't talk to the world.
 
-
-    // DDRB &= ~(_BV(0) | _BV(1) ); // set the AD01 ports as inputs
-
-    // DDRB |= _BV(5)|_BV(3)|_BV(2); /* Set MOSI, SCK, SS all to outputs so we can use them to clear out the LEDs*/
-    // TODO: Replace the last two lines with otentially sketchy optimization
     DDRB = _BV(5)|_BV(3)|_BV(2); //0b00101100;
     PORTB &= ~(_BV(5)|_BV(3)|_BV(2)); // Drive MOSI/SCK/SS low
 }
