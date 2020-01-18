@@ -25,6 +25,9 @@
 #define ACK TWI_SLAVE_RX_ACK_RETURNED
 #define NAK TWI_SLAVE_RX_NACK_RETURNED
 
+#define DEVICE_KEYBOARDIO_MODEL_01
+//#define DEVICE_KEYBOARDIO_MODEL_100
+//#define DEVICE_KEYBOARDIO_MODEL_101
 
 // globals
 
@@ -35,11 +38,25 @@ uint16_t pageAddr;
 uint8_t frame = 0;
 
 void setup_pins() {
+
+#if defined DEVICE_KEYBOARDIO_MODEL_01
     DDRC |= _BV(7); // C7 is COMM_EN - this turns on the PCA9614 that does differential i2c between hands
     PORTC |= _BV(7); // Without it, the right hand can't talk to the world.
 
     DDRB = _BV(5)|_BV(3)|_BV(2); //0b00101100;
     PORTB &= ~(_BV(5)|_BV(3)|_BV(2)); // Drive MOSI/SCK/SS low
+#elif defined DEVICE_KEYBOARDIO_MODEL_100
+
+    DDRC |= (_BV(7)|_BV(3)); // C7 is COMM_EN - this turns on the PCA9614 that does differential i2c between hands
+    // We're going to use row 3, keys # 1 and 2 to force the keyboard to stay in bootloader mode
+    PORTC = _BV(7); // Without it, the right hand can't talk to the world.
+
+    DDRD = 0x00; //&= ~(0xFF); // make the col pins inputs
+    PORTD = 0xFF; // turn on pullup
+
+
+#endif
+
 }
 
 void init_twi() {
@@ -192,7 +209,19 @@ void process_page_update() {
 void cleanup_and_run_application(void) {
     wdt_disable(); // After Reset the WDT state does not change
 
+#if defined DEVICE_KEYBOARDIO_MODEL_01
+
     asm volatile ("rjmp __vectors-0x1bc8");  // jump to start of user code at 0x38
+
+#elif defined DEVICE_KEYBOARDIO_MODEL_100
+    // More precisely, this elif is about whether we're building with GCC5- or GCC7+
+    // But the Model 01 MUST use GCC5- And we strongly recommend 7+ for everything else going forward 
+	
+    asm volatile ("rjmp __vectors-0x1bd8");  // jump to start of user code at 0x28 (0x1bd8 is 0x1c00 -0x28)
+    // On GCC5 and earlier with Keyboardio's TWI implementation,
+    // this points to 0x1bc8 instead, which corresponds to 0x38.
+
+#endif
 
     for (;;); // Make sure function does not return to help compiler optimize
 }
@@ -332,6 +361,9 @@ void init_spi_for_led_control() {
     SPSR = _BV(SPI2X);
 
 }
+
+#if defined DEVICE_KEYBOARDIO_MODEL_01
+
 ISR(SPI_STC_vect) {
     // Technically, we should be writing out a start frame,
     // followed by 32 LEDs worth of data frames
@@ -344,6 +376,8 @@ ISR(SPI_STC_vect) {
     SPDR=0;
 }
 
+#endif
+
 // Main Starts from here
 int main() {
 
@@ -351,25 +385,39 @@ int main() {
     // before deciding what to do next.
 
     setup_pins();
-    init_spi_for_led_control();
-
     uint8_t sr_temp = MCUSR;
     MCUSR=0;
+
+#if defined DEVICE_KEYBOARDIO_MODEL_01
+    init_spi_for_led_control();
 
     // If this isn't a power-on reset or an external reset
     // then we should skip the bootloader
     // We can toggle the left hand's extrf and the right hand's power
     if (sr_temp & _BV (PORF) || sr_temp & _BV(EXTRF)) {
+        init_twi(); // TODO - I'm not sure it's safe to not set this short little watchdog here./
 
+        wdt_enable(WDTO_60MS);
 
+#elif defined DEVICE_KEYBOARDIO_MODEL_100
+    // If this isn't a watchdog reset and the outer keys on the fourth row aren't being held
+    // then we should skip the bootloader
+    _delay_ms(5);
+    if (!( sr_temp & _BV (WDRF) ) && (!(PIND & _BV(7)) ||
+                                      !(PIND & _BV(0)))
+       ) {
+        // Everything except the two lowest bits, aka cols 14 and 15 on the right
+        wdt_enable(WDTO_8S);
         init_twi();
         // TODO - I'm not sure it's safe to not set this short little watchdog here./
 
-        wdt_enable(WDTO_60MS);
+#endif
+
         while (1) {
             read_and_process_packet(); // Process the TWI Commands
         }
     } else {
         cleanup_and_run_application();
     }
+
 }
