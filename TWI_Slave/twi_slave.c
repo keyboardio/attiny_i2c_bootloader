@@ -215,8 +215,8 @@ void cleanup_and_run_application(void) {
 
 #elif defined DEVICE_KEYBOARDIO_MODEL_100
     // More precisely, this elif is about whether we're building with GCC5- or GCC7+
-    // But the Model 01 MUST use GCC5- And we strongly recommend 7+ for everything else going forward 
-	
+    // But the Model 01 MUST use GCC5- And we strongly recommend 7+ for everything else going forward
+
     asm volatile ("rjmp __vectors-0x1bd8");  // jump to start of user code at 0x28 (0x1bd8 is 0x1c00 -0x28)
     // On GCC5 and earlier with Keyboardio's TWI implementation,
     // this points to 0x1bc8 instead, which corresponds to 0x38.
