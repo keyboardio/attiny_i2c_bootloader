@@ -45,13 +45,13 @@ void setup_pins() {
 
     DDRB = _BV(5)|_BV(3)|_BV(2); //0b00101100;
     PORTB &= ~(_BV(5)|_BV(3)|_BV(2)); // Drive MOSI/SCK/SS low
+
 #elif defined DEVICE_KEYBOARDIO_MODEL_100
+    DDRC |= (_BV(3)); // set ROW3 to output
+    // We're going to use row 3, keys # 0 and 7 to force the keyboard to stay in bootloader mode
+    PORTC &= ~(_BV(3)); // Without it, we can't scan the keys
 
-    DDRC |= (_BV(7)|_BV(3)); // C7 is COMM_EN - this turns on the PCA9614 that does differential i2c between hands
-    // We're going to use row 3, keys # 1 and 2 to force the keyboard to stay in bootloader mode
-    PORTC = _BV(7); // Without it, the right hand can't talk to the world.
-
-    DDRD = 0x00; //&= ~(0xFF); // make the col pins inputs
+    DDRD = 0x00; // make the col pins inputs
     PORTD = 0xFF; // turn on pullup
 
 
@@ -381,38 +381,33 @@ ISR(SPI_STC_vect) {
 // Main Starts from here
 int main() {
 
-    // Turn on the interhand controllers and get the LEDs turned off
-    // before deciding what to do next.
-
+    // We're probably coming in with a 15ms watchdog if we finshed TWI programming
+    wdt_enable(WDTO_8S);
     setup_pins();
+
+#if defined DEVICE_KEYBOARDIO_MODEL_01
     uint8_t sr_temp = MCUSR;
     MCUSR=0;
 
-#if defined DEVICE_KEYBOARDIO_MODEL_01
+    // Turn on the interhand controllers and get the LEDs turned off
+    // before deciding what to do next.
     init_spi_for_led_control();
 
     // If this isn't a power-on reset or an external reset
     // then we should skip the bootloader
     // We can toggle the left hand's extrf and the right hand's power
     if (sr_temp & _BV (PORF) || sr_temp & _BV(EXTRF)) {
-        init_twi(); // TODO - I'm not sure it's safe to not set this short little watchdog here./
-
-        wdt_enable(WDTO_60MS);
 
 #elif defined DEVICE_KEYBOARDIO_MODEL_100
-    // If this isn't a watchdog reset and the outer keys on the fourth row aren't being held
-    // then we should skip the bootloader
-    _delay_ms(5);
-    if (!( sr_temp & _BV (WDRF) ) && (!(PIND & _BV(7)) ||
-                                      !(PIND & _BV(0)))
-       ) {
-        // Everything except the two lowest bits, aka cols 14 and 15 on the right
-        wdt_enable(WDTO_8S);
-        init_twi();
-        // TODO - I'm not sure it's safe to not set this short little watchdog here./
+    _delay_us(5); 
+
+    // If this isn't a watchdog reset and the innermost thumb key isn't being held
+    // If the innermost thumb key and the outermost key on row 3 are both held, then it's bootloader time
+    if (! (PIND & _BV(0)) &&  ! (PIND & _BV(7))) {
 
 #endif
 
+        init_twi();
         while (1) {
             read_and_process_packet(); // Process the TWI Commands
         }
