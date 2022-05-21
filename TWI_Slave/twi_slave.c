@@ -5,9 +5,10 @@
 #include <avr/eeprom.h>
 #include <util/crc16.h>
 #include "common_define.h"
+#include <string.h>
 
 // AD01: lower two bits of device address
-#define AD01 ((PINB & _BV(0)) | (PINB & _BV(1)))
+#define AD01 (PINB & (_BV(0) | _BV(1)))
 
 //configuring LAST_INTVECT_ADDRESS as per device selected
 /*****************************************************************************/
@@ -122,9 +123,10 @@ uint16_t slave_receive_word() {
 }
 
 // don't call this, call update_page unless you need to bypass safety checks
-void unsafe_update_page(uint16_t pageAddress) {
+void __attribute__ ((noinline)) unsafe_update_page(uint16_t pageAddress) {
     for (uint8_t i = 0; i < PAGE_SIZE; i += 2) {
-        uint16_t tempWord = ((pageBuffer[i+1] << 8) | pageBuffer[i]);
+        uint16_t tempWord;
+        memcpy(&tempWord, &pageBuffer[i], sizeof(tempWord));
         boot_spm_busy_wait();
         boot_page_fill(pageAddress + i, tempWord); // Fill the temporary buffer with the given data
     }
@@ -136,9 +138,8 @@ void unsafe_update_page(uint16_t pageAddress) {
 
 void buffer_reset_vector() {
     // Load existing RESET vector contents into buffer.
-    for(uint8_t i = 4; i != 0; i--) {
-        pageBuffer[i - 1] = pgm_read_byte(INTVECT_PAGE_ADDRESS + i - 1);
-    }
+    uint32_t v = pgm_read_dword(INTVECT_PAGE_ADDRESS);
+    memcpy(pageBuffer, &v, sizeof(v));
 }
 
 void update_page(uint16_t pageAddress) {
@@ -206,7 +207,7 @@ void process_page_update() {
     update_page(pageAddr);
 }
 
-void cleanup_and_run_application(void) {
+void __attribute__ ((noreturn)) cleanup_and_run_application(void) {
     wdt_disable(); // After Reset the WDT state does not change
 
 #if defined DEVICE_KEYBOARDIO_MODEL_01
@@ -223,7 +224,7 @@ void cleanup_and_run_application(void) {
 
 #endif
 
-    for (;;); // Make sure function does not return to help compiler optimize
+    __builtin_unreachable();
 }
 
 
@@ -239,7 +240,6 @@ void process_page_erase() {
     unsafe_update_page(0); // restore just the initial vector
 
     uint16_t addr = PAGE_SIZE;
-    update_page(addr);
 
     while (addr < BOOT_PAGE_ADDRESS) {
         boot_spm_busy_wait();
@@ -319,6 +319,7 @@ void process_slave_receive() {
     case TWI_CMD_EXECUTEAPP:
         wdt_enable(WDTO_15MS);  // Set WDT min for cleanup using reset
         asm volatile ("HERE:rjmp HERE");//Yes it's an infinite loop
+        __builtin_unreachable();
     // fall through
     case TWI_CMD_ERASEFLASH:
         process_page_erase();
