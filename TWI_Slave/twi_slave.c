@@ -371,25 +371,33 @@ void read_and_process_packet() {
     }
 }
 
+#if defined DEVICE_KEYBOARDIO_MODEL_01
+
+// Send a given byte via SPI N times
+void __attribute__ ((noinline)) spi_send_bytes(uint8_t val, uint8_t n) {
+    for (uint8_t i = 0; i < n; i++) {
+        SPDR = val;
+        loop_until_bit_is_set(SPSR, SPIF);
+    }
+}
 
 void init_spi_for_led_control() {
     SPCR = _BV(SPE) | _BV(MSTR) | _BV(SPIE) | _BV(SPR0);
     SPSR = _BV(SPI2X);
 
-}
+#define NUM_LEDS 32
 
-#if defined DEVICE_KEYBOARDIO_MODEL_01
+// LED SPI start frame: 32 zero bits
+#define LED_START_FRAME_BYTES 4
 
-ISR(SPI_STC_vect) {
-    // Technically, we should be writing out a start frame,
-    // followed by 32 LEDs worth of data frames
-    // followed by an end frame.
-    // But all of those would be zeros.
-    //
-    // Hopefully, doing this won't cause the LEDs to get into a bad state
-    // when we load the user program
+// LED SPI end frame: 32 zero bits + (NUM_LEDS / 2) bits
+#define LED_END_FRAME_BYTES (4 + (NUM_LEDS / 2 / 8))
 
-    SPDR=0;
+    spi_send_bytes(0, LED_START_FRAME_BYTES);
+    // Exploit zero global brightness to ignore RGB values, so we can
+    // save space by sending the same byte for the entire frame
+    spi_send_bytes(0xe0, NUM_LEDS * 4);
+    spi_send_bytes(0, LED_END_FRAME_BYTES);
 }
 
 #endif
