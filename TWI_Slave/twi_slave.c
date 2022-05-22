@@ -30,6 +30,11 @@
 #define DEVICE_KEYBOARDIO_MODEL_100
 //#define DEVICE_KEYBOARDIO_MODEL_101
 
+struct recv_result {
+    uint8_t val;
+    uint8_t res;
+};
+
 // globals
 
 // reuse pageAddr variable for CRC16 to save space
@@ -92,7 +97,8 @@ void process_slave_transmit(uint8_t data) {
     }
 }
 
-uint8_t slave_receive_byte(uint8_t *data, uint8_t ack) {
+struct recv_result slave_receive_byte(uint8_t ack) {
+    uint8_t val;
     // Receive byte and return ACK.
     wait_for_activity(ack);
 
@@ -102,24 +108,28 @@ uint8_t slave_receive_byte(uint8_t *data, uint8_t ack) {
 
     if (TWSR != ack) {
         abort_twi();
-        return 0;
+        return (struct recv_result) { .val = 0, .res = 0 };
     }
 
     // Get byte
-    *data = TWDR;
+    val = TWDR;
     if (ack == TWI_SLAVE_RX_NACK_RETURNED) {
         // If we're doing a NACK, then twiddle TWCR
         TWCR = _BV(TWINT) | _BV(TWEN);
     }
-    return 1;
+    return (struct recv_result) { .val = val, .res = 1 };
 }
 
 // receive two-byte word (little endian) over TWI
 uint16_t slave_receive_word() {
-    uint8_t lo, hi;
-    slave_receive_byte(&lo, ACK);
-    slave_receive_byte(&hi, ACK);
-    return (hi << 8) | lo;
+    uint8_t lo;
+    struct recv_result r;
+    r = slave_receive_byte(ACK);
+    lo = r.val;
+    if (r.res) {
+        r = slave_receive_byte(ACK);
+    }
+    return (r.val << 8) | lo;
 }
 
 // don't call this, call update_page unless you need to bypass safety checks
@@ -188,10 +198,12 @@ uint8_t process_read_frame() {
     // Receive page data in frame-sized chunks
     uint16_t crc16 = 0xffff;
     for (uint8_t i = 0; i < FRAME_SIZE; i++) {
-        if (!slave_receive_byte(bufferPtr, ACK)) {
+        struct recv_result r = slave_receive_byte(ACK);
+        *bufferPtr = r.val;
+        if (!r.res) {
             return 0;
         }
-        crc16 = _crc16_update(crc16, *bufferPtr);
+        crc16 = _crc16_update(crc16, r.val);
         bufferPtr++;
     }
     // check received CRC16
@@ -281,22 +293,20 @@ void transmit_crc16_and_version() {
 }
 
 void send_transmit_success() {
-    uint8_t _;
     // nack for a last dummy byte to say we read everything
-    slave_receive_byte(&_, NAK);
+    (void)slave_receive_byte(NAK);
 }
 
 void send_transmit_error() {
-    uint8_t _;
     // AC for a last dummy byte to say we had an error
-    slave_receive_byte(&_, ACK);
+    (void)slave_receive_byte(ACK);
 }
 
 
 void process_slave_receive() {
-    uint8_t commandCode;
-
-    if (!slave_receive_byte(&commandCode, ACK)) {
+    struct recv_result r = slave_receive_byte(ACK);
+    uint8_t commandCode = r.val;
+    if (!r.res) {
         return;
     }
 
