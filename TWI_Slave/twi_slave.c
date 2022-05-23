@@ -41,7 +41,7 @@ struct recv_result {
 uint16_t pageAddr;
 #define sendCrc16 pageAddr
 // which frame of the page we are processing
-uint8_t frame = 0;
+#define frame GPIOR0
 
 void setup_pins() {
 
@@ -193,7 +193,12 @@ uint8_t process_read_frame() {
         return 0;
     }
 
-    uint8_t *bufferPtr = &pageBuffer[frame * FRAME_SIZE];
+#if PAGE_SIZE > 256
+#error update this offset optimization for larger PAGE_SIZE
+#endif
+
+    uint8_t offset = frame * FRAME_SIZE;
+    uint8_t *bufferPtr = &pageBuffer[offset];
 
     // Receive page data in frame-sized chunks
     uint16_t crc16 = 0xffff;
