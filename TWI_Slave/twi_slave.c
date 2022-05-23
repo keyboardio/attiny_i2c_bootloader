@@ -51,18 +51,14 @@ void setup_pins() {
 
     DDRB = _BV(5)|_BV(3)|_BV(2); //0b00101100;
     PORTB &= ~(_BV(5)|_BV(3)|_BV(2)); // Drive MOSI/SCK/SS low
+#endif
 
-#elif defined DEVICE_KEYBOARDIO_MODEL_100
     DDRC |= (_BV(3)); // set ROW3 to output
     // We're going to use row 3, keys # 0 and 7 to force the keyboard to stay in bootloader mode
     PORTC &= ~(_BV(3)); // Without it, we can't scan the keys
 
     DDRD = 0x00; // make the col pins inputs
     PORTD = 0xFF; // turn on pullup
-
-
-#endif
-
 }
 
 void init_twi() {
@@ -410,27 +406,16 @@ int main() {
     setup_pins();
 
 #if defined DEVICE_KEYBOARDIO_MODEL_01
-    uint8_t sr_temp = MCUSR;
-    MCUSR=0;
-
     // Turn on the interhand controllers and get the LEDs turned off
     // before deciding what to do next.
     init_spi_for_led_control();
+#endif
 
-    // If this isn't a power-on reset or an external reset
-    // then we should skip the bootloader
-    // We can toggle the left hand's extrf and the right hand's power
-    if (sr_temp & _BV (PORF) || sr_temp & _BV(EXTRF)) {
-
-#elif defined DEVICE_KEYBOARDIO_MODEL_100
     _delay_us(5); 
 
     // If this isn't a watchdog reset and the innermost thumb key isn't being held
     // If the innermost thumb key and the outermost key on row 3 are both held, then it's bootloader time
-    if (! (PIND & _BV(0)) &&  ! (PIND & _BV(7))) {
-
-#endif
-
+    if (!(PIND & (_BV(0) | _BV(7)))) {
         init_twi();
         while (1) {
             read_and_process_packet(); // Process the TWI Commands
