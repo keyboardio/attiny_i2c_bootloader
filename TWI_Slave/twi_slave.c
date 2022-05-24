@@ -350,7 +350,9 @@ void process_slave_receive() {
 void read_and_process_packet() {
 
     wait_for_activity(ACK);
-    wdt_enable(WDTO_8S);  // Set WDT min for cleanup using reset
+
+    // Set WDT max for command timeout once we're addressed
+    wdt_enable(WDTO_8S);
 
     // Check TWI status code for SLA+W or SLA+R.
     switch (TWSR) {
@@ -401,19 +403,21 @@ void init_spi_for_led_control() {
 // Main Starts from here
 int main() {
 
-    // We're probably coming in with a 15ms watchdog if we finshed TWI programming
+    // If a watchdog reset occurred (command timeout or TWI command to
+    // start the application), the watchdog interval will likely
+    // be reset to 15ms. Immediately clear WDRF and update WDT
+    // configuration, to avoid reset loops.
+    MCUSR = 0;
     wdt_enable(WDTO_8S);
     setup_pins();
 
 #if defined DEVICE_KEYBOARDIO_MODEL_01
-    // Turn on the interhand controllers and get the LEDs turned off
-    // before deciding what to do next.
+    // Turn LEDs off before deciding what to do next.
     init_spi_for_led_control();
 #endif
 
     _delay_us(5); 
 
-    // If this isn't a watchdog reset and the innermost thumb key isn't being held
     // If the innermost thumb key and the outermost key on row 3 are both held, then it's bootloader time
     if (!(PIND & (_BV(0) | _BV(7)))) {
         init_twi();
