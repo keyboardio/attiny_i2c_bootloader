@@ -5,9 +5,10 @@
 #include <avr/eeprom.h>
 #include <util/crc16.h>
 #include "common_define.h"
+#include <string.h>
 
 // AD01: lower two bits of device address
-#define AD01 ((PINB & _BV(0)) | (PINB & _BV(1)))
+#define AD01 (PINB & (_BV(0) | _BV(1)))
 
 //configuring LAST_INTVECT_ADDRESS as per device selected
 /*****************************************************************************/
@@ -29,13 +30,18 @@
 #define DEVICE_KEYBOARDIO_MODEL_100
 //#define DEVICE_KEYBOARDIO_MODEL_101
 
+struct recv_result {
+    uint8_t val;
+    uint8_t res;
+};
+
 // globals
 
 // reuse pageAddr variable for CRC16 to save space
 uint16_t pageAddr;
 #define sendCrc16 pageAddr
 // which frame of the page we are processing
-uint8_t frame = 0;
+#define frame GPIOR0
 
 void setup_pins() {
 
@@ -45,18 +51,14 @@ void setup_pins() {
 
     DDRB = _BV(5)|_BV(3)|_BV(2); //0b00101100;
     PORTB &= ~(_BV(5)|_BV(3)|_BV(2)); // Drive MOSI/SCK/SS low
+#endif
 
-#elif defined DEVICE_KEYBOARDIO_MODEL_100
     DDRC |= (_BV(3)); // set ROW3 to output
     // We're going to use row 3, keys # 0 and 7 to force the keyboard to stay in bootloader mode
     PORTC &= ~(_BV(3)); // Without it, we can't scan the keys
 
     DDRD = 0x00; // make the col pins inputs
     PORTD = 0xFF; // turn on pullup
-
-
-#endif
-
 }
 
 void init_twi() {
@@ -91,7 +93,8 @@ void process_slave_transmit(uint8_t data) {
     }
 }
 
-uint8_t slave_receive_byte(uint8_t *data, uint8_t ack) {
+struct recv_result slave_receive_byte(uint8_t ack) {
+    uint8_t val;
     // Receive byte and return ACK.
     wait_for_activity(ack);
 
@@ -101,30 +104,35 @@ uint8_t slave_receive_byte(uint8_t *data, uint8_t ack) {
 
     if (TWSR != ack) {
         abort_twi();
-        return 0;
+        return (struct recv_result) { .val = 0, .res = 0 };
     }
 
     // Get byte
-    *data = TWDR;
+    val = TWDR;
     if (ack == TWI_SLAVE_RX_NACK_RETURNED) {
         // If we're doing a NACK, then twiddle TWCR
         TWCR = _BV(TWINT) | _BV(TWEN);
     }
-    return 1;
+    return (struct recv_result) { .val = val, .res = 1 };
 }
 
 // receive two-byte word (little endian) over TWI
 uint16_t slave_receive_word() {
-    uint8_t lo, hi;
-    slave_receive_byte(&lo, ACK);
-    slave_receive_byte(&hi, ACK);
-    return (hi << 8) | lo;
+    uint8_t lo;
+    struct recv_result r;
+    r = slave_receive_byte(ACK);
+    lo = r.val;
+    if (r.res) {
+        r = slave_receive_byte(ACK);
+    }
+    return (r.val << 8) | lo;
 }
 
 // don't call this, call update_page unless you need to bypass safety checks
-void unsafe_update_page(uint16_t pageAddress) {
+void __attribute__ ((noinline)) unsafe_update_page(uint16_t pageAddress) {
     for (uint8_t i = 0; i < PAGE_SIZE; i += 2) {
-        uint16_t tempWord = ((pageBuffer[i+1] << 8) | pageBuffer[i]);
+        uint16_t tempWord;
+        memcpy(&tempWord, &pageBuffer[i], sizeof(tempWord));
         boot_spm_busy_wait();
         boot_page_fill(pageAddress + i, tempWord); // Fill the temporary buffer with the given data
     }
@@ -136,9 +144,8 @@ void unsafe_update_page(uint16_t pageAddress) {
 
 void buffer_reset_vector() {
     // Load existing RESET vector contents into buffer.
-    for(uint8_t i = 4; i != 0; i--) {
-        pageBuffer[i - 1] = pgm_read_byte(INTVECT_PAGE_ADDRESS + i - 1);
-    }
+    uint32_t v = pgm_read_dword(INTVECT_PAGE_ADDRESS);
+    memcpy(pageBuffer, &v, sizeof(v));
 }
 
 void update_page(uint16_t pageAddress) {
@@ -182,15 +189,22 @@ uint8_t process_read_frame() {
         return 0;
     }
 
-    uint8_t *bufferPtr = &pageBuffer[frame * FRAME_SIZE];
+#if PAGE_SIZE > 256
+#error update this offset optimization for larger PAGE_SIZE
+#endif
+
+    uint8_t offset = frame * FRAME_SIZE;
+    uint8_t *bufferPtr = &pageBuffer[offset];
 
     // Receive page data in frame-sized chunks
     uint16_t crc16 = 0xffff;
     for (uint8_t i = 0; i < FRAME_SIZE; i++) {
-        if (!slave_receive_byte(bufferPtr, ACK)) {
+        struct recv_result r = slave_receive_byte(ACK);
+        *bufferPtr = r.val;
+        if (!r.res) {
             return 0;
         }
-        crc16 = _crc16_update(crc16, *bufferPtr);
+        crc16 = _crc16_update(crc16, r.val);
         bufferPtr++;
     }
     // check received CRC16
@@ -206,7 +220,7 @@ void process_page_update() {
     update_page(pageAddr);
 }
 
-void cleanup_and_run_application(void) {
+void __attribute__ ((noreturn)) cleanup_and_run_application(void) {
     wdt_disable(); // After Reset the WDT state does not change
 
 #if defined DEVICE_KEYBOARDIO_MODEL_01
@@ -223,7 +237,7 @@ void cleanup_and_run_application(void) {
 
 #endif
 
-    for (;;); // Make sure function does not return to help compiler optimize
+    __builtin_unreachable();
 }
 
 
@@ -239,7 +253,6 @@ void process_page_erase() {
     unsafe_update_page(0); // restore just the initial vector
 
     uint16_t addr = PAGE_SIZE;
-    update_page(addr);
 
     while (addr < BOOT_PAGE_ADDRESS) {
         boot_spm_busy_wait();
@@ -281,22 +294,20 @@ void transmit_crc16_and_version() {
 }
 
 void send_transmit_success() {
-    uint8_t _;
     // nack for a last dummy byte to say we read everything
-    slave_receive_byte(&_, NAK);
+    (void)slave_receive_byte(NAK);
 }
 
 void send_transmit_error() {
-    uint8_t _;
     // AC for a last dummy byte to say we had an error
-    slave_receive_byte(&_, ACK);
+    (void)slave_receive_byte(ACK);
 }
 
 
 void process_slave_receive() {
-    uint8_t commandCode;
-
-    if (!slave_receive_byte(&commandCode, ACK)) {
+    struct recv_result r = slave_receive_byte(ACK);
+    uint8_t commandCode = r.val;
+    if (!r.res) {
         return;
     }
 
@@ -319,6 +330,7 @@ void process_slave_receive() {
     case TWI_CMD_EXECUTEAPP:
         wdt_enable(WDTO_15MS);  // Set WDT min for cleanup using reset
         asm volatile ("HERE:rjmp HERE");//Yes it's an infinite loop
+        __builtin_unreachable();
     // fall through
     case TWI_CMD_ERASEFLASH:
         process_page_erase();
@@ -338,7 +350,9 @@ void process_slave_receive() {
 void read_and_process_packet() {
 
     wait_for_activity(ACK);
-    wdt_enable(WDTO_8S);  // Set WDT min for cleanup using reset
+
+    // Set WDT max for command timeout once we're addressed
+    wdt_enable(WDTO_8S);
 
     // Check TWI status code for SLA+W or SLA+R.
     switch (TWSR) {
@@ -355,25 +369,33 @@ void read_and_process_packet() {
     }
 }
 
+#if defined DEVICE_KEYBOARDIO_MODEL_01
+
+// Send a given byte via SPI N times
+void __attribute__ ((noinline)) spi_send_bytes(uint8_t val, uint8_t n) {
+    for (uint8_t i = 0; i < n; i++) {
+        SPDR = val;
+        loop_until_bit_is_set(SPSR, SPIF);
+    }
+}
 
 void init_spi_for_led_control() {
     SPCR = _BV(SPE) | _BV(MSTR) | _BV(SPIE) | _BV(SPR0);
     SPSR = _BV(SPI2X);
 
-}
+#define NUM_LEDS 32
 
-#if defined DEVICE_KEYBOARDIO_MODEL_01
+// LED SPI start frame: 32 zero bits
+#define LED_START_FRAME_BYTES 4
 
-ISR(SPI_STC_vect) {
-    // Technically, we should be writing out a start frame,
-    // followed by 32 LEDs worth of data frames
-    // followed by an end frame.
-    // But all of those would be zeros.
-    //
-    // Hopefully, doing this won't cause the LEDs to get into a bad state
-    // when we load the user program
+// LED SPI end frame: 32 zero bits + (NUM_LEDS / 2) bits
+#define LED_END_FRAME_BYTES (4 + (NUM_LEDS / 2 / 8))
 
-    SPDR=0;
+    spi_send_bytes(0, LED_START_FRAME_BYTES);
+    // Exploit zero global brightness to ignore RGB values, so we can
+    // save space by sending the same byte for the entire frame
+    spi_send_bytes(0xe0, NUM_LEDS * 4);
+    spi_send_bytes(0, LED_END_FRAME_BYTES);
 }
 
 #endif
@@ -381,32 +403,23 @@ ISR(SPI_STC_vect) {
 // Main Starts from here
 int main() {
 
-    // We're probably coming in with a 15ms watchdog if we finshed TWI programming
+    // If a watchdog reset occurred (command timeout or TWI command to
+    // start the application), the watchdog interval will likely
+    // be reset to 15ms. Immediately clear WDRF and update WDT
+    // configuration, to avoid reset loops.
+    MCUSR = 0;
     wdt_enable(WDTO_8S);
     setup_pins();
 
 #if defined DEVICE_KEYBOARDIO_MODEL_01
-    uint8_t sr_temp = MCUSR;
-    MCUSR=0;
-
-    // Turn on the interhand controllers and get the LEDs turned off
-    // before deciding what to do next.
+    // Turn LEDs off before deciding what to do next.
     init_spi_for_led_control();
-
-    // If this isn't a power-on reset or an external reset
-    // then we should skip the bootloader
-    // We can toggle the left hand's extrf and the right hand's power
-    if (sr_temp & _BV (PORF) || sr_temp & _BV(EXTRF)) {
-
-#elif defined DEVICE_KEYBOARDIO_MODEL_100
-    _delay_us(5); 
-
-    // If this isn't a watchdog reset and the innermost thumb key isn't being held
-    // If the innermost thumb key and the outermost key on row 3 are both held, then it's bootloader time
-    if (! (PIND & _BV(0)) &&  ! (PIND & _BV(7))) {
-
 #endif
 
+    _delay_us(5); 
+
+    // If the innermost thumb key and the outermost key on row 3 are both held, then it's bootloader time
+    if (!(PIND & (_BV(0) | _BV(7)))) {
         init_twi();
         while (1) {
             read_and_process_packet(); // Process the TWI Commands

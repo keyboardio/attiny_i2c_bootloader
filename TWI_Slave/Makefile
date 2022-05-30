@@ -50,7 +50,7 @@ OPTIMIZATION = -Os
 
 
 AVRDUDE = $(AVRDUDE_PATH) $(PROGRAMMER) -p $(DEVICE)
-COMPILE = $(GCC_PATH) -Wall -Wextra -Werror -pedantic $(OPTIMIZATION) -std=gnu11 -flto -mmcu=$(DEVICE) -DF_CPU=$(CLOCK)  -Wl,--section-start=.text=0x1C00
+COMPILE = $(GCC_PATH) -fverbose-asm -g -Wall -Wextra -Werror -pedantic $(OPTIMIZATION) -std=gnu11 -flto -mmcu=$(DEVICE) -DF_CPU=$(CLOCK)  -Wl,--section-start=.text=0x1C00
 
 # symbolic targets:
 all:	twi_slave.hex
