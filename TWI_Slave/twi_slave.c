@@ -1,11 +1,13 @@
+#include <avr/boot.h>
 #include <avr/interrupt.h>
-#include <avr/wdt.h>
-#include <util/delay.h>
 #include <avr/pgmspace.h>
-#include <avr/eeprom.h>
+#include <avr/wdt.h>
 #include <util/crc16.h>
-#include "common_define.h"
+#include <util/delay.h>
+#include <util/twi.h>
 #include <string.h>
+
+#include "common_define.h"
 
 // AD01: lower two bits of device address
 #define AD01 (PINB & (_BV(0) | _BV(1)))
@@ -16,15 +18,8 @@
 
 
 /*****************************************************************************/
-#define TWI_SLAW_RECEIVED         	0x60	// Status slave address and write command received
-#define TWI_SLAR_RECEIVED         	0xa8	// Status slave address and read command received
-#define TWI_SLAVE_TX_ACK_RECEIVED 	0xb8	// Status slave transmit and acknowledgement returned
-#define TWI_SLAVE_TX_NACK_RECEIVED 	0xc0	// Status slave transmit and no acknowledgement of last byte
-#define TWI_SLAVE_RX_ACK_RETURNED  	0x80	// Status slave receive and acknowledgement returned
-#define TWI_SLAVE_RX_NACK_RETURNED 	0x88	// Status slave receive and no acknowledgement of last byte
-
-#define ACK TWI_SLAVE_RX_ACK_RETURNED
-#define NAK TWI_SLAVE_RX_NACK_RETURNED
+#define ACK TW_SR_DATA_ACK
+#define NAK TW_SR_DATA_NACK
 
 //#define DEVICE_KEYBOARDIO_MODEL_01
 #define DEVICE_KEYBOARDIO_MODEL_100
@@ -87,7 +82,7 @@ void process_slave_transmit(uint8_t data) {
     wait_for_activity(ACK);
 
     // Check TWI status code for SLAVE_TX_NACK.
-    if (TWSR != TWI_SLAVE_TX_ACK_RECEIVED) {
+    if (TWSR != TW_ST_DATA_ACK) {
         abort_twi();
         return;
     }
@@ -109,7 +104,7 @@ struct recv_result slave_receive_byte(uint8_t ack) {
 
     // Get byte
     val = TWDR;
-    if (ack == TWI_SLAVE_RX_NACK_RETURNED) {
+    if (ack == TW_SR_DATA_NACK) {
         // If we're doing a NACK, then twiddle TWCR
         TWCR = _BV(TWINT) | _BV(TWEN);
     }
@@ -356,10 +351,10 @@ void read_and_process_packet() {
 
     // Check TWI status code for SLA+W or SLA+R.
     switch (TWSR) {
-    case TWI_SLAW_RECEIVED:
+    case TW_SR_SLA_ACK:
         process_slave_receive();
         break;
-    case TWI_SLAR_RECEIVED:
+    case TW_ST_SLA_ACK:
         transmit_crc16_and_version();
         init_twi();
         break;

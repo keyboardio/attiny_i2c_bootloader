@@ -1,5 +1,3 @@
-#include <avr/boot.h>
-
 /*****************************************************************************/
 #define TWI_CMD_PAGEUPDATE_ADDR         0x01	// TWI Command to program a flash page address to write
 #define TWI_CMD_PAGEUPDATE_FRAME        0x02	// TWI Command to program the next frame of the page of flash
