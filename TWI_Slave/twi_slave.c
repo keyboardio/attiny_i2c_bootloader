@@ -319,7 +319,7 @@ void process_slave_receive() {
 
     case TWI_CMD_EXECUTEAPP:
         wdt_enable(WDTO_15MS);  // Set WDT min for cleanup using reset
-        asm volatile ("HERE:rjmp HERE");//Yes it's an infinite loop
+        asm volatile ("1: rjmp 1b"); // Loop until WDT reset kicks in
         __builtin_unreachable();
     // fall through
     case TWI_CMD_ERASEFLASH:
