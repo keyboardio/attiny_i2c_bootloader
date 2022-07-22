@@ -12,11 +12,6 @@
 // AD01: lower two bits of device address
 #define AD01 (PINB & (_BV(0) | _BV(1)))
 
-//configuring LAST_INTVECT_ADDRESS as per device selected
-/*****************************************************************************/
-#define LAST_INTVECT_ADDRESS 		TWI_vect // The start of the application code
-
-
 /*****************************************************************************/
 #define ACK TW_SR_DATA_ACK
 #define NAK TW_SR_DATA_NACK

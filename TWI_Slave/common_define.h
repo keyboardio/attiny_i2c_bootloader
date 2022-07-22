@@ -27,15 +27,6 @@
 
 #define FLASH_SIZE 8192
 
-// 8KB of flash divided by pages of size 64 bytes
-#define TOTAL_NO_OF_PAGES  (FLASH_SIZE / PAGE_SIZE)
-
-// The number of pages being used for bootloader code
-#define BOOTLOADER_PAGES          	(TOTAL_NO_OF_PAGES - BOOT_PAGE_ADDRESS/PAGE_SIZE)
-
-// For bounds check during page write/erase operation to protect the bootloader code from being corrupted
-#define LAST_PAGE_NO_TO_BE_ERASED 	(TOTAL_NO_OF_PAGES - BOOTLOADER_PAGES)
-
 
 /*****************************************************************************/
 /*****************************************************************************/
@@ -44,22 +35,6 @@
 
 
 uint8_t pageBuffer[PAGE_SIZE];
-/*****************************************************************************/
-/*****************************************************************************/
-
-
-
-/*****************************************************************************/
-/*****************************************************************************/
-
-#define STATUSMASK_SPMBUSY 		0x01	// The mask bit for SPM busy status code
-#define STATUSMASK_BLSCERR              0x02    // The mask bit for attempt to override bootloader section
-#define STATUSMASK_TWIABORT             0x04    // The mask bit for indicating TWI abort fn called
-#define STATUSMASK_SLTR_BUSY            0x08    // The mask bit for slave transmit
-#define STATUSMASK_SLRBAA_BUSY          0x10    // The mask bit for slave receive and ack
-#define STATUSMASK_SLRBAN_BUSY          0x20    // The mask bit for slave receive and Nack
-#define STATUSMASK_EEPROM_BUSY          0x40    // The mask bit for EEPROM busy
-#define STATUSMASK_BOOTLOADER           0x80    // The mask bit for bootloader operations
 /*****************************************************************************/
 /*****************************************************************************/
 
